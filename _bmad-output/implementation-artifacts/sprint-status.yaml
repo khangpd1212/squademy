@@ -1,0 +1,96 @@
+# generated: 2026-03-12
+# project: squademy
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+#
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in implementation artifacts
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+generated: 2026-03-12
+project: squademy
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: in-progress
+  1-1-project-foundation-design-system-setup: done
+  1-2-user-registration: done
+  1-3-user-login-session-management: done
+  1-4-user-profile-management: done
+  1-5-personal-data-export-request: backlog
+  1-6-account-deletion-tombstoning: backlog
+  epic-1-retrospective: optional
+
+  epic-2: in-progress
+  2-1-create-configure-a-group: done
+  2-2-invite-members-link-direct-invite: done
+  2-3-member-role-management: backlog
+  2-4-group-settings-exercise-scheduling: backlog
+  2-5-delete-group: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-lesson-list-content-studio-navigation: backlog
+  3-2-wysiwyg-lesson-editor: backlog
+  3-3-markdown-file-import: backlog
+  3-4-export-lesson: backlog
+  3-5-submit-for-review-track-status: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-editor-review-queue-lesson-approval-rejection: backlog
+  4-2-line-level-comments-on-lessons: backlog
+  4-3-published-lesson-view-learning-path: backlog
+  4-4-content-moderation-soft-delete: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-flashcard-deck-management-anki-import: backlog
+  5-2-flashcard-practice-session-swipe-ui-offline-first: backlog
+  5-3-spaced-repetition-scheduling-sm-2: backlog
+  5-4-quiz-completion: backlog
+  5-5-inline-flashcard-editing-during-study: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-exercise-studio-create-exercise-with-templates: backlog
+  6-2-flashcard-macro-exercise-generator: backlog
+  6-3-weekly-exercise-submission-derangement-shuffle: backlog
+  6-4-complete-submit-assigned-exercise: backlog
+  6-5-peer-grading-with-line-level-feedback: backlog
+  6-6-threaded-debate-dispute-escalation: backlog
+  6-7-editor-arbitration-decision-error-settlement: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-in-app-notification-infrastructure: backlog
+  7-2-email-notification-service-triggers: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-daily-learning-streaks: backlog
+  8-2-live-leaderboard: backlog
+  8-3-contributor-badges: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-admin-dashboard-system-health-user-management: backlog
+  9-2-content-moderation-growth-analytics: backlog
+  epic-9-retrospective: optional
