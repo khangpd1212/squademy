@@ -24,20 +24,34 @@ export default async function JoinPage({
   const protocol = headersList.get("x-forwarded-proto") ?? "http";
   const origin = `${protocol}://${host}`;
 
-  const response = await fetch(`${origin}/api/groups/join`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      cookie: headersList.get("cookie") ?? "",
-    },
-    body: JSON.stringify({ inviteCode }),
-  });
+  let response: Response;
+  let payload: { ok?: boolean; group?: { id: string }; message?: string };
 
-  const payload = (await response.json()) as {
-    ok?: boolean;
-    group?: { id: string };
-    message?: string;
-  };
+  try {
+    response = await fetch(`${origin}/api/groups/join`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        cookie: headersList.get("cookie") ?? "",
+      },
+      body: JSON.stringify({ inviteCode }),
+    });
+    const raw = await response.json();
+    payload = raw as typeof payload;
+  } catch {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
+        <h1 className="text-2xl font-bold">Could not join group</h1>
+        <p className="text-muted-foreground">
+          A network error occurred or the server could not be reached. Please
+          try again later.
+        </p>
+        <Link href="/" className="text-primary underline">
+          Back to home
+        </Link>
+      </div>
+    );
+  }
 
   if (response.status === 404) {
     return (

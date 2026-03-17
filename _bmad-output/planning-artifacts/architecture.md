@@ -25,6 +25,7 @@ See [Section 12 — Stack Summary](#12-stack-summary) for a full quick-reference
 | Component | Technology | Role |
 |-----------|-----------|------|
 | Framework | **Next.js** (App Router) | Routing, SSR/SSG, Server Components, Route Handlers |
+| Internationalization | **next-intl** | Request-scoped locale/messages (`src/i18n/request.ts`), server/client translation APIs, and `NextIntlClientProvider` wiring in root layout |
 | Styling | **Tailwind CSS v4** | Utility-first, mobile-first, dark/light mode via class strategy |
 | UI Components | **shadcn/ui** | Form, Table, Dialog, Dropdown, Toast — copied into repo for full ownership |
 | Forms | **React Hook Form (RHF)** | Form state, minimal re-renders |
@@ -130,7 +131,7 @@ src/
 │   ├── supabase/
 │   │   ├── client.ts                   # Browser client (createBrowserClient)
 │   │   ├── server.ts                   # Server-only (RSC, Route Handlers)
-│   │   └── middleware.ts               # Session refresh logic
+│   │   └── proxy.ts               # Supabase middleware helpers (imported by proxy)
 │   ├── dexie/
 │   │   ├── db.ts                       # Dexie schema (decks, cards, gradeQueue)
 │   │   └── sync.ts                     # Sync queue → Supabase when online
@@ -147,6 +148,8 @@ src/
 │   │   └── derangement.ts              # Fisher-Yates derangement for peer swap
 │   ├── query-client.ts
 │   └── utils.ts
+├── i18n/
+│   └── request.ts                      # next-intl request config (locale + messages)
 ├── stores/                             # Zustand stores
 │   ├── flashcardStore.ts               # Active deck, current card index, session state
 │   ├── quizStore.ts                    # Active quiz, answers, timer, focus mode
@@ -157,16 +160,19 @@ src/
 │   └── app.ts                          # App-level types (roles, SRS grades, etc.)
 ├── styles/
 │   └── globals.css                     # Tailwind @theme, design tokens
-└── middleware.ts                       # Session refresh, admin route guard
+└── proxy.ts                            # Session refresh, admin route guard (Next.js 16 proxy entrypoint)
 ```
 
-Additional root-level testing files:
+Additional root-level i18n files:
 
-```
+messages/
+└── en.json                             # Default translation messages
+
+
 tests/                                  # Integration/smoke-style repository tests
 jest.config.cjs                         # next/jest-based config with @/* alias
 jest.setup.ts                           # @testing-library/jest-dom setup
-```
+
 
 ### 2.3 Data Flow
 
@@ -896,7 +902,7 @@ Platform admin (founder/developer) interface at `/admin`:
 | **Email Quotas** | Resend/Brevo API | Emails sent today, quota remaining |
 | **Growth Analytics** | Aggregate queries | MoM retention, streak velocity, contributor ratio |
 
-Admin access: `group_members` role is NOT used. Separate `admins` table or `profiles.is_admin boolean` checked in middleware. All admin routes protected by `middleware.ts` role guard.
+Admin access: `group_members` role is NOT used. Separate `admins` table or `profiles.is_admin boolean` checked in proxy logic. All admin routes protected by `proxy.ts` role guard.
 
 ---
 
@@ -945,6 +951,7 @@ Admin access: `group_members` role is NOT used. Separate `admins` table or `prof
 | Layer | Technology |
 |-------|-----------|
 | **FE Framework** | Next.js (latest, App Router) + TypeScript |
+| **Internationalization** | next-intl (request config + `NextIntlClientProvider` + `messages/*.json`) |
 | **Styling** | Tailwind CSS v4 + shadcn/ui (copy-to-repo) |
 | **Forms** | React Hook Form + Zod |
 | **State** | Zustand (client) + TanStack Query (server) |

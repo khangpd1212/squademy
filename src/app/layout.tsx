@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Code, Inter, Nunito } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Providers } from "@/components/providers";
@@ -25,20 +27,25 @@ export const metadata: Metadata = {
   description: "Community-driven English learning platform",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${nunito.variable} ${inter.variable} ${firaCode.variable} font-sans antialiased`}
       >
-        <Providers>
-          <TooltipProvider>{children}</TooltipProvider>
-          <Toaster />
-        </Providers>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <Providers>
+            <TooltipProvider>{children}</TooltipProvider>
+            <Toaster />
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
