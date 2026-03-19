@@ -1,6 +1,6 @@
 # Epic 4: Editorial Review & Learning Path
 
-Editors can view the lesson submission queue, approve or reject with line-level feedback, and soft-delete published content. Learners can view and interact with published lessons in the group learning path.
+Editors can view the lesson submission queue, approve or reject with line-level feedback, soft-delete published content, and manage a drag-and-drop Learning Path (Roadmap) editor to curate the sequential curriculum. Learners can view and interact with published lessons in the group learning path.
 
 ### Story 4.1: Editor Review Queue & Lesson Approval/Rejection
 
@@ -138,6 +138,46 @@ So that I can maintain a safe and high-quality learning environment.
 **Given** I am a regular Member (not Editor)
 **When** I view any published lesson
 **Then** the "Remove Content" button is not visible
+
+---
+
+### Story 4.5: Learning Path Roadmap Editor (FR28b)
+
+As an Editor,
+I want to manage a drag-and-drop Learning Path editor where I can order published lessons and flashcard decks into a sequential curriculum,
+So that group members follow a structured, logical progression through the learning material.
+
+**Acceptance Criteria:**
+
+**Given** I am an Editor or Admin and navigate to `/group/[groupId]/roadmap`
+**When** the page loads
+**Then** all published lessons and flashcard decks for this group are listed as draggable cards
+**And** each card shows: item type icon (lesson/deck), title, author name, and status pill
+**And** items are ordered by their current `learning_path_items.sort_order`
+
+**Given** I drag an item to a new position in the list
+**When** I drop the item
+**Then** all affected `learning_path_items.sort_order` values are updated via an optimistic UI mutation
+**And** the reordered path is saved to Supabase immediately
+**And** group members see the updated order on the group home page
+
+**Given** I click "Add to Path" and select a published lesson or deck not yet in the path
+**When** the action executes
+**Then** a new `learning_path_items` row is created with the next available `sort_order`
+**And** the item appears at the bottom of the path list
+
+**Given** I click the "Remove" (ghost button) on an item in the path
+**When** the action executes
+**Then** the `learning_path_items` row is deleted (the lesson/deck itself is NOT deleted)
+**And** remaining items' `sort_order` values are compacted
+
+**Given** I am on mobile (< 768px)
+**When** the roadmap editor loads
+**Then** "Move Up" and "Move Down" buttons replace the drag-and-drop interaction for each item
+
+**Given** I am a regular Member (not Editor/Admin)
+**When** I try to access `/group/[groupId]/roadmap`
+**Then** I am redirected to the group home page (access denied)
 
 ---
 

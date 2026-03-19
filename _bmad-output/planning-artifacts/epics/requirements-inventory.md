@@ -31,9 +31,11 @@ FR26: Editors can review, approve, or reject lesson submissions.
 FR27: Editors can provide feedback comments at the specific line-level of the submitted lesson content.
 FR28: Editors can soft-delete published content that violates guidelines.
 FR28a: Editors can arbitrate exercise disputes escalated by assignees.
+FR28b: Editors can access a dedicated Learning Path (Roadmap) editor screen to drag-and-drop reorder published lessons and flashcard decks into a sequential curriculum.
 FR29: Learners can view published lessons within their group.
 FR30: Learners can study flashcards using a mobile-optimized swipe interface or alternative accessible interactable buttons.
 FR30a: Flashcard decks are stored offline-first on the client. New decks are loaded from the server only when the learner opens a deck for the first time.
+FR30b: The flashcard practice session provides audio micro-feedback (flip, ding, tuk sounds) and haptic feedback on supported mobile devices to reinforce the tactile, game-like experience.
 FR31: The system can surface flashcards based on Spaced Repetition logic (SM-2 algorithm).
 FR31a: Learners can study ahead — completing extra cards beyond the daily SRS schedule or loading additional decks beyond the weekly plan.
 FR32: Learners can complete Quizzes attached to lessons or personal practice tests.
@@ -55,6 +57,7 @@ FR42: The system can track and display daily learning streaks.
 FR43: The system can calculate and update a live Leaderboard based on learning and review activity.
 FR44: Users can view the live Leaderboard within their group.
 FR45: The system can award badges to Contributors based on approved submissions.
+FR46: Users can view an Activity Heatmap (GitHub-style contribution calendar) on their personal profile screen, displaying daily learning activity over the past 12 months.
 
 ### NonFunctional Requirements
 
@@ -100,8 +103,8 @@ NFR14 (Input Agnosticism): All critical flows (including the Tinder-style flashc
 - **Focus Mode (Review):** Hide all navigation bars in review/grading screens; distraction-free layout (ChatGPT-inspired)
 - **Alive Text Pattern:** Tiptap custom extension — hidden content renders as animated purple pulsing dots (Framer Motion); click/tap to dissolve and reveal
 - **Social Hotspots Pattern:** Paragraph-level margin reactions (❤️ 🤔 💡) and inline comment threads; mobile uses bottom sheet overlay
-- **Sound Design:** Flip sound, "Ding" for Good, "Tuk" for Again — linked to flashcard grade actions
-- **Haptic Feedback (Mobile):** Light vibration on flip, firm vibration on grade swipe
+- **Sound Design (FR30b):** Flip sound, "Ding" for Good, "Tuk" for Again, streak chime, combo-break glass — preloaded via Web Audio API from `/public/sounds/`; user-toggleable in Settings
+- **Haptic Feedback (FR30b, Mobile):** Light vibration `navigator.vibrate([10])` on flip, decisive buzz `navigator.vibrate([30])` on grade swipe; no-op on unsupported devices; toggleable in Settings
 - **Keyboard Controller (Desktop):** Space=flip, ←/→=grade; keyboard hints displayed faded below card
 - **Zone Accent Colors:** Practice=Purple, Grammar Blog/Lesson=Teal, Studio/Review=Neutral/Dark
 - **Component System:** `sq-card`, `sq-btn`, `sq-input`, `pill` — unified border-radius 14px, shadow, spacing rhythm
@@ -140,9 +143,11 @@ NFR14 (Input Agnosticism): All critical flows (including the Tinder-style flashc
 | FR27 | Epic 4 | Line-level feedback comments on lessons |
 | FR28 | Epic 4 | Soft-delete published content |
 | FR28a | Epic 4 | Editorial arbitration authority (execution path implemented in Epic 6 dispute lifecycle) |
+| FR28b | Epic 4 | Learning Path Roadmap Editor — drag-and-drop curriculum ordering |
 | FR29 | Epic 4 | Learners view published lessons |
 | FR30 | Epic 5 | Flashcard swipe UI (mobile-optimized) |
 | FR30a | Epic 5 | Offline-first flashcard caching (Dexie.js) |
+| FR30b | Epic 5 | Audio micro-feedback & haptic for flashcard practice |
 | FR31 | Epic 5 | SRS scheduling (SM-2 algorithm) |
 | FR31a | Epic 5 | Study-ahead beyond daily SRS schedule |
 | FR32 | Epic 5 | Complete quizzes / personal practice tests |
@@ -170,6 +175,7 @@ NFR14 (Input Agnosticism): All critical flows (including the Tinder-style flashc
 | FR43 | Epic 8 | Live leaderboard calculation & updates |
 | FR44 | Epic 8 | View group leaderboard |
 | FR45 | Epic 8 | Contributor badge awards |
+| FR46 | Epic 8 | Activity Heatmap (GitHub-style contribution calendar) |
 
 ### Traceability Notes (Correct Course 2026-03-12)
 

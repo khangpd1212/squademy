@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { InviteLinkSection } from "./_components/invite-link-section";
 import { InviteByUsername } from "./_components/invite-by-username";
+import { MemberManagementList } from "./_components/member-management-list";
 
 export default async function GroupMembersPage({
   params,
@@ -79,34 +78,12 @@ export default async function GroupMembersPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="divide-y">
-            {members.map((member) => {
-              const profile = member.profiles;
-              const displayName = profile?.display_name ?? "Unknown";
-              const initials = displayName.slice(0, 2).toUpperCase();
-
-              return (
-                <li
-                  key={member.user_id}
-                  className="flex items-center gap-3 py-3"
-                >
-                  <Avatar>
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{displayName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Joined{" "}
-                      {new Date(member.joined_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="capitalize">
-                    {member.role}
-                  </Badge>
-                </li>
-              );
-            })}
-          </ul>
+          <MemberManagementList
+            members={members}
+            currentUserId={user.id}
+            isAdmin={isAdmin}
+            groupId={groupId}
+          />
         </CardContent>
       </Card>
     </div>

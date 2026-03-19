@@ -41,7 +41,7 @@ development_status:
   epic-2: in-progress
   2-1-create-configure-a-group: done
   2-2-invite-members-link-direct-invite: done
-  2-3-member-role-management: backlog
+  2-3-member-role-management: done
   2-4-group-settings-exercise-scheduling: backlog
   2-5-delete-group: backlog
   epic-2-retrospective: optional

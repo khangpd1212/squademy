@@ -97,10 +97,10 @@ These are the "make-or-break" moments that will determine if a user retains:
 - **Trạng thái Gây nghiện Đa nền tảng:**
   - *Mobile/iPad:* Thao tác vuốt (swipe) mượt mà, thẻ cong nhẹ ở góc và mờ dần tạo cảm giác vật lý.
   - *Laptop/Desktop:* Sử dụng **Bàn phím như Tay cầm chơi game** (Keyboard Controller). Dùng phím Space để lật thẻ, phím Mũi tên trái/phải để chuyển thẻ, kết hợp với hiệu ứng thị giác (thẻ trượt mượt mà theo hướng phím bẩm) tạo cảm giác vuốt vật lý giả lập.
-- **Gia vị Tương tác (Juice):**
-  - *Sound Design:* Tiếng sột soạt nhẹ (lật thẻ), tiếng "Ding" thanh mảnh (Good), tiếng "Tuk" trầm (Again).
+- **Gia vị Tương tác (Juice) — FR30b:**
+  - *Sound Design (Web Audio API):* Tiếng sột soạt nhẹ (lật thẻ), tiếng "Ding" thanh mảnh (Good), tiếng "Tuk" trầm (Again), tiếng chime khi đạt streak milestone, tiếng kính vỡ nhẹ khi mất combo. Âm thanh được preload vào AudioBuffer pool khi user mở Practice session. User có thể tắt/bật trong Settings (`uiStore.soundEnabled`).
   - *Hiệu ứng Streak:* Viền thẻ phát sáng (glowing) hoặc confetti lấp lánh nhẹ nhàng khi đạt combo trả lời đúng.
-  - *Haptic Feedback (Mobile):* Rung cực nhẹ lúc lật thẻ, rung dứt khoát khi thẻ bay đi.
+  - *Haptic Feedback (Mobile — Vibration API):* Rung cực nhẹ `navigator.vibrate([10])` lúc lật thẻ, rung dứt khoát `navigator.vibrate([30])` khi thẻ bay đi. Tự động no-op trên thiết bị không hỗ trợ. Có toggle bật/tắt trong Settings.
 - **Phân tách Ranh giới Thị giác (Visual Boundaries):**
   - *Khu vực Practice:* UX bo góc, tươi sáng, một chạm.
   - *Khu vực Review:* UI tĩnh lặng, tập trung, font chữ Serif cho bài viết, tạo cảm thái độ làm việc học thuật chuyên nghiệp. Các luồng (threaded) tranh luận cần cho phép Cite (trích dẫn nguồn) dễ dàng.
@@ -292,6 +292,28 @@ File HTML mockup: [`ux-design-directions.html`](./ux-design-directions.html)
 - **Flashcard Creator:** Form đầy đủ trường Anki: Front, Back, Pronunciation (IPA), Audio (Upload/Record), Example, Image, Tags, Extra Notes.
 - **Lesson Creator:** Thanh công cụ Confluence-style ưu tiên **text formatting** (B I U S | H1 H2 H3 | Lists Quote | Link Image Table | Alive Text | Quiz Block). Sidebar Outline + Notion-style editor.
 - **Exercise Creator:** Thanh công cụ Confluence-style ưu tiên **question templates** (MCQ | Fill Blank | Free Text | True/False | B I Link Image). Mỗi câu hỏi có header gradient nhãn màu riêng + nút xóa.
+
+### Zone 4: Learning Path Roadmap Editor (Editor-Only)
+
+- **Route:** `/group/[groupId]/roadmap` — chỉ hiện trong menu cho Editor/Admin.
+- **Layout:** Single-column danh sách kéo thả (drag-and-drop). Mỗi item là một `sq-card` nhỏ gọn hiển thị: icon loại (lesson/flashcard), tiêu đề, tác giả, status pill (Published/Draft).
+- **Tương tác:** Kéo thả để sắp xếp thứ tự bài giảng và flashcard deck thành lộ trình tuần tự. Nút "Add to Path" để thêm bài đã published vào lộ trình. Nút "Remove" (ghost) để gỡ khỏi lộ trình (không xóa nội dung).
+- **Auto-save:** Thứ tự được lưu tự động sau mỗi thao tác kéo thả (optimistic UI update).
+- **Mobile:** Danh sách dọc, nút "Move Up / Move Down" thay thế kéo thả trên màn hình nhỏ.
+- **Desktop:** Drag handle bên trái mỗi item, preview panel bên phải hiện nội dung tóm tắt khi hover.
+
+### Zone 5: Personal Profile — Activity Heatmap
+
+- **Vị trí:** Màn hình cá nhân (`/settings` hoặc profile page), phía trên thống kê tổng quan.
+- **Thiết kế:** Lưới 52 tuần (12 tháng gần nhất) dạng GitHub Contribution Calendar. Mỗi ô vuông nhỏ đại diện 1 ngày.
+- **Bảng màu:** Cường độ dựa trên `total_actions`:
+  - 0 actions: `zinc-200` (light) / `zinc-800` (dark)
+  - 1–2 actions: `emerald-200` / `emerald-900`
+  - 3–5 actions: `emerald-400` / `emerald-700`
+  - 6+ actions: `emerald-600` / `emerald-500`
+- **Hover tooltip:** "15 Mar 2026: 4 flashcards, 1 exercise, 1 review"
+- **Responsive:** Desktop hiển thị đầy đủ 52 tuần. Mobile thu gọn thành 3 tháng gần nhất + nút "Show more".
+- **Motivational text:** Dưới heatmap hiện "Current streak: 12 days" + "Longest streak: 28 days".
 
 ### Unified Design DNA
 

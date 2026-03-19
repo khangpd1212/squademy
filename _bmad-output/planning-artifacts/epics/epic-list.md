@@ -13,12 +13,12 @@ Contributors can create lessons with a WYSIWYG Markdown editor, import Markdown 
 **FRs covered:** FR13, FR14, FR15, FR16, FR17, FR18
 
 ### Epic 4: Editorial Review & Learning Path
-Editors can view the lesson submission queue, approve or reject with line-level feedback, and soft-delete published content. Learners can view published lessons in the group learning path.
-**FRs covered:** FR25, FR26, FR27, FR28, FR28a, FR29
+Editors can view the lesson submission queue, approve or reject with line-level feedback, soft-delete published content, and manage a drag-and-drop Learning Path (Roadmap) editor to curate the sequential curriculum. Learners can view published lessons in the group learning path.
+**FRs covered:** FR25, FR26, FR27, FR28, FR28a, FR28b, FR29
 
 ### Epic 5: Practice Engine — Flashcard SRS & Quizzes
-Learners can study flashcards with a mobile-optimized swipe interface, offline-first caching via Dexie.js, SM-2 spaced repetition scheduling, study-ahead capability, quiz completion, and inline card editing.
-**FRs covered:** FR30, FR30a, FR31, FR31a, FR32, FR33
+Learners can study flashcards with a mobile-optimized swipe interface, offline-first caching via Dexie.js, SM-2 spaced repetition scheduling, study-ahead capability, quiz completion, inline card editing, and audio micro-feedback with haptic support.
+**FRs covered:** FR30, FR30a, FR30b, FR31, FR31a, FR32, FR33
 
 ### Epic 6: Exercise Studio & Peer-Review Loop
 Contributors can create exercises with templates and macros. The system performs weekly derangement shuffle. Members complete assigned exercises, creators grade with line-level feedback, debates occur in threads, disputes escalate to Editors for binding decisions, and weekly exercises become public archive after the week ends.
@@ -29,8 +29,8 @@ The platform sends email and in-app notifications for all trigger events: exerci
 **FRs covered:** FR34, FR40
 
 ### Epic 8: Gamification & Engagement Engine
-The system tracks daily learning streaks, calculates and displays a live leaderboard updated in real-time via Supabase Realtime, and awards contributor badges based on approved submissions.
-**FRs covered:** FR42, FR43, FR44, FR45
+The system tracks daily learning streaks, calculates and displays a live leaderboard updated in real-time via Supabase Realtime, awards contributor badges based on approved submissions, and renders a GitHub-style Activity Heatmap on the user profile to visualize learning consistency.
+**FRs covered:** FR42, FR43, FR44, FR45, FR46
 
 ### Epic 9: Admin Dashboard & Platform Operations
 Platform admins can monitor system health (CCU, DB connections, storage), manage users (warnings, bans), moderate content, track email quotas, and review growth analytics (MoM retention, streak velocity, contributor ratio).

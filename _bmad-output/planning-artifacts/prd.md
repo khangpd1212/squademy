@@ -92,6 +92,7 @@ Core features essential for proving the concept:
 
 - **Forum / Q&A:** Stack Overflow-style forum for questions and discussions within groups.
 - **Premium Accounts:** Subscription tiers, payment gateway, premium-only features (post 1,000 users).
+- **Mock Test / Exam Simulation:** Timed mock tests simulating standardized exams (IELTS, TOEIC, etc.) with structured sections, configurable time limits, and post-test analytics.
 
 ### Vision (Phase 3+)
 
@@ -346,6 +347,7 @@ Despite the asynchronous-first design, select features require real-time updates
 - **Framework:** Hybrid SPA/MPA suggests a framework like Next.js (SSR + client-side interactivity) or similar.
 - **Infrastructure:** **Structured data** (users, groups, lessons, exercises, reviews, etc.) are stored in **Supabase** (PostgreSQL, Auth, Realtime). **Unstructured data** (audio recordings, images, exported files, and other binary assets) are stored in **Cloudflare R2**. Static assets and edge caching use **Cloudflare Free CDN**; frontend hosting on **Vercel**.
 - **State Management:** Client-side state for interactive features (flashcard progress, quiz state); server state for data persistence.
+- **Long-Form Lesson Optimization:** Grammar lessons stored as Tiptap ProseMirror JSON (`content jsonb`) may grow very large. The architecture must support lazy-loading content blocks (progressive rendering of lesson sections) and consider JSONB compression or chunked storage for lessons exceeding a configurable threshold (e.g., 500KB) to balance database performance with rich content needs.
 - **Offline Capability:** Not required for MVP (zero-OPEX constraint limits service worker complexity).
 - **PWA:** Consider Progressive Web App shell for mobile-first experience (Post-MVP).
 
@@ -380,6 +382,7 @@ Despite the asynchronous-first design, select features require real-time updates
 - In-depth Analytics Dashboard for Learners and Editors.
 - Enhanced notifications (push notifications).
 - Multi-editor queue management improvements.
+- **Mock Test / Exam Simulation:** Organize timed mock tests that simulate standardized exams (e.g., IELTS, TOEIC). Includes structured sections (Listening, Reading, Writing), configurable time limits per section, auto-scoring where possible, and post-test analytics comparing performance to target scores.
 
 **Phase 3 (Expansion):**
 - Real-time Forum / Q&A spaces.
@@ -444,12 +447,14 @@ Despite the asynchronous-first design, select features require real-time updates
 - **FR27:** Editors can provide feedback comments at the specific line-level of the submitted lesson content.
 - **FR28:** Editors can soft-delete published content that violates guidelines.
 - **FR28a:** Editors can arbitrate exercise disputes escalated by assignees (see FR40a–FR40d).
+- **FR28b:** Editors can access a dedicated Learning Path (Roadmap) editor screen where they can drag-and-drop to reorder published lessons and flashcard decks into a sequential curriculum for group members.
 
 ### Practice Engine (Learner Journey)
 
 - **FR29:** Learners can view published lessons within their group.
 - **FR30:** Learners can study flashcards using a mobile-optimized swipe interface or alternative accessible interactable buttons.
 - **FR30a:** Flashcard decks are stored offline-first on the client. New decks are loaded from the server only when the learner opens a deck for the first time.
+- **FR30b:** The flashcard practice session provides audio micro-feedback (e.g., soft flip sound, "ding" on Good, "tuk" on Again) and haptic feedback on supported mobile devices (light vibration on flip, decisive vibration on swipe) to reinforce the tactile, game-like experience.
 - **FR31:** The system can surface flashcards based on Spaced Repetition logic.
 - **FR31a:** Learners can study ahead — completing extra cards beyond the daily SRS schedule or loading additional decks beyond the weekly plan.
 - **FR32:** Learners can complete Quizzes attached to lessons or personal practice tests.
@@ -476,6 +481,7 @@ Despite the asynchronous-first design, select features require real-time updates
 - **FR43:** The system can calculate and update a live Leaderboard based on learning and review activity.
 - **FR44:** Users can view the live Leaderboard within their group.
 - **FR45:** The system can award badges to Contributors based on approved submissions.
+- **FR46:** Users can view an Activity Heatmap (GitHub-style contribution calendar) on their personal profile screen, displaying a visual grid of daily learning activity (flashcard sessions, exercises completed, reviews submitted) over the past 12 months to encourage consistency and habit formation.
 
 ## Non-Functional Requirements
 

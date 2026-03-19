@@ -1,6 +1,6 @@
 # Epic 5: Practice Engine — Flashcard SRS & Quizzes
 
-Learners can study flashcards with a mobile-optimized offline-first swipe interface, SM-2 spaced repetition scheduling, quiz completion, and inline card editing during study sessions.
+Learners can study flashcards with a mobile-optimized offline-first swipe interface, SM-2 spaced repetition scheduling, quiz completion, inline card editing during study sessions, and audio micro-feedback with haptic support for a tactile, game-like experience.
 
 ### Story 5.1: Flashcard Deck Management & Anki Import
 
@@ -180,4 +180,48 @@ So that I can fix errors or add personal context without interrupting my study f
 **Then** an inline error appears: "Front side is required." and the save is not submitted
 
 ---
-
+
+### Story 5.6: Audio Micro-Feedback & Haptic (FR30b)
+
+As a Learner,
+I want to hear satisfying audio feedback and feel haptic vibrations when interacting with flashcards,
+So that the practice session feels tactile, game-like, and engaging.
+
+**Acceptance Criteria:**
+
+**Given** I enter a flashcard practice session for the first time
+**When** the session starts
+**Then** audio feedback sound clips (flip, ding, tuk, streak chime, combo break) are preloaded as AudioBuffers via Web Audio API from `/public/sounds/`
+**And** loading is non-blocking (practice starts immediately regardless of audio load state)
+
+**Given** I flip a card (tap/Space)
+**When** the flip animation plays
+**Then** a soft paper rustle sound ("flip") plays via Web Audio API
+**And** on mobile: `navigator.vibrate([10])` fires a light tap haptic (no-op on unsupported devices)
+
+**Given** I grade a card as "Good" (swipe right / → key)
+**When** the grade animation plays
+**Then** a "ding" sound plays
+**And** on mobile: `navigator.vibrate([30])` fires a decisive buzz
+
+**Given** I grade a card as "Again" (swipe left / ← key)
+**When** the grade animation plays
+**Then** a "tuk" (low thud) sound plays
+**And** on mobile: `navigator.vibrate([30])` fires a decisive buzz
+
+**Given** I achieve a streak milestone (e.g., 5 correct in a row)
+**When** the combo counter updates
+**Then** a celebratory chime sound plays
+**And** if the streak breaks, a glass-shatter sound plays
+
+**Given** I navigate to Settings and toggle "Sound Effects" off
+**When** the toggle is saved to `uiStore.soundEnabled = false`
+**Then** all audio feedback is muted during practice sessions
+**And** haptic feedback can be toggled independently via a separate "Haptic Feedback" toggle
+
+**Given** I am on a device that does not support `navigator.vibrate()`
+**When** haptic feedback would normally trigger
+**Then** the haptic call is silently skipped (no error, no fallback) — audio still plays if enabled
+
+---
+

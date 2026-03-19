@@ -1,6 +1,6 @@
 # Epic 8: Gamification & Engagement Engine
 
-The system tracks daily learning streaks, calculates and displays a live leaderboard updated in real-time, and awards contributor badges for milestone achievements.
+The system tracks daily learning streaks, calculates and displays a live leaderboard updated in real-time, awards contributor badges for milestone achievements, and renders a GitHub-style Activity Heatmap on user profiles to visualize learning consistency.
 
 ### Story 8.1: Daily Learning Streaks
 
@@ -93,4 +93,41 @@ So that my efforts are recognized and visible to my group.
 **Then** the badge is shown once with a count indicator (e.g. "Editor Approved ×3") rather than duplicated
 
 ---
-
+
+### Story 8.4: Activity Heatmap (FR46)
+
+As a Learner,
+I want to see a GitHub-style Activity Heatmap on my profile page showing my daily learning activity over the past 12 months,
+So that I can visualize my consistency and stay motivated to fill in gaps.
+
+**Acceptance Criteria:**
+
+**Given** I navigate to my profile or settings page
+**When** the page loads
+**Then** a heatmap grid showing the past 52 weeks (12 months) is displayed
+**And** each cell represents one day and is colored by activity intensity:
+  - 0 actions: `zinc-200` (light) / `zinc-800` (dark)
+  - 1–2 actions: `emerald-200` / `emerald-900`
+  - 3–5 actions: `emerald-400` / `emerald-700`
+  - 6+ actions: `emerald-600` / `emerald-500`
+
+**Given** I hover over a specific day cell on desktop
+**When** the tooltip appears
+**Then** it shows: date, flashcards reviewed, exercises completed, reviews submitted, lessons read (e.g., "Mar 15: 4 flashcards, 1 exercise, 1 review")
+
+**Given** I complete a tracked action (flashcard grade, exercise submit, review submit, lesson read)
+**When** the action is recorded
+**Then** the corresponding counter in `daily_activity` is incremented via UPSERT on `(user_id, group_id, activity_date)`
+**And** the heatmap reflects the updated count on next page load or via React Query invalidation
+
+**Given** I am on a mobile device (< 768px)
+**When** the profile page loads
+**Then** the heatmap is collapsed to show the most recent 3 months
+**And** a "Show full year" button expands to the full 52-week view
+
+**Given** I view my heatmap
+**When** it renders
+**Then** below the grid, my "Current streak: X days" and "Longest streak: Y days" are displayed in amber/orange styling
+
+---
+

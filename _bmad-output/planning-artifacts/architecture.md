@@ -65,6 +65,7 @@ src/
 │   │   │       ├── exercises/page.tsx
 │   │   │       ├── leaderboard/page.tsx
 │   │   │       ├── members/page.tsx
+│   │   │       ├── roadmap/page.tsx     # Editor-only: drag-drop lesson/deck ordering
 │   │   │       ├── settings/page.tsx
 │   │   │       └── _components/        # Segment-local components
 │   │   ├── studio/
@@ -119,14 +120,16 @@ src/
 │   ├── quiz/                           # QuizRunner, MCQ, ClozeTest, Dictation, IPAWord
 │   ├── editor/                         # TiptapEditor, toolbar, Alive Text extension
 │   ├── peer-review/                    # ReviewLayout, LineComment, DebateThread
-│   ├── gamification/                   # StreakBadge, LeaderboardRow, ContributorBadge
+│   ├── gamification/                   # StreakBadge, LeaderboardRow, ContributorBadge, ActivityHeatmap
+│   ├── roadmap/                        # RoadmapEditor, DraggableLessonCard, LearningPathView
 │   └── notifications/                  # InAppNotification, NotificationBell
 ├── hooks/
 │   ├── useSupabase.ts
 │   ├── useAuth.ts
 │   ├── useRealtime.ts
 │   ├── useOfflineSync.ts               # Dexie.js sync logic
-│   └── useSRS.ts                       # SM-2 next interval calculation
+│   ├── useSRS.ts                       # SM-2 next interval calculation
+│   └── useSound.ts                     # Audio micro-feedback (flip, ding, tuk) + haptic (Vibration API)
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts                   # Browser client (createBrowserClient)
@@ -146,6 +149,9 @@ src/
 │   │   └── docx.ts                     # docx library client-side
 │   ├── shuffle/
 │   │   └── derangement.ts              # Fisher-Yates derangement for peer swap
+│   ├── audio/
+│   │   ├── sounds.ts                   # Preloaded AudioBuffer pool (flip, ding, tuk, streak)
+│   │   └── haptic.ts                   # Vibration API wrapper (light tap, decisive buzz)
 │   ├── query-client.ts
 │   └── utils.ts
 ├── i18n/
@@ -462,6 +468,33 @@ badges (
   awarded_at timestamptz DEFAULT now()
 )
 
+-- Daily activity log for heatmap visualization (FR46)
+daily_activity (
+  user_id uuid REFERENCES profiles(id),
+  group_id uuid REFERENCES groups(id),
+  activity_date date NOT NULL,
+  flashcards_reviewed int DEFAULT 0,
+  exercises_completed int DEFAULT 0,
+  reviews_submitted int DEFAULT 0,
+  lessons_read int DEFAULT 0,
+  total_actions int GENERATED ALWAYS AS (
+    flashcards_reviewed + exercises_completed + reviews_submitted + lessons_read
+  ) STORED,
+  PRIMARY KEY (user_id, group_id, activity_date)
+)
+
+-- Learning Path ordering for Editor roadmap editor (FR28b)
+learning_path_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id uuid REFERENCES groups(id),
+  item_type text CHECK (item_type IN ('lesson', 'flashcard_deck')),
+  item_id uuid NOT NULL,           -- lessons.id or flashcard_decks.id
+  sort_order int NOT NULL,
+  added_by uuid REFERENCES profiles(id),
+  created_at timestamptz DEFAULT now(),
+  UNIQUE (group_id, item_type, item_id)
+)
+
 -- Leaderboard: materialized view or function-based
 -- Computed from: submissions + peer_reviews + streaks + badges
 -- Updated via Realtime trigger or periodic recalc
@@ -517,6 +550,8 @@ All tables have RLS enabled. Key policies:
 | `srs_progress` | own records only | self | self |
 | `notifications` | own records only | server (service_role) | self (mark read) |
 | `leaderboard` | group member | server only | server only |
+| `daily_activity` | own records only | self (via RPC/trigger) | self |
+| `learning_path_items` | group member | editor/admin | editor/admin |
 
 Sensitive admin operations (bulk delete, tombstoning, leaderboard recalc) use `service_role` key exclusively from Route Handlers or Edge Functions — never exposed to client.
 
@@ -738,6 +773,95 @@ Framer Motion + keyboard event binding:
 
 // Mobile: tap center → flip; swipe left/right → grade
 // Visual: Keyboard Hints shown faded below card on desktop
+```
+
+### 6.5 Audio Micro-Feedback & Haptic (FR30b)
+
+Sound and haptic feedback for the flashcard practice session:
+
+```typescript
+// lib/audio/sounds.ts
+// Preload short audio clips as AudioBuffer via Web Audio API
+// Sounds: flip (soft paper rustle), ding (correct/good), tuk (again), 
+//         streak (celebratory chime), combo_break (glass shatter)
+// Files stored as static assets in /public/sounds/ (~10-50KB each)
+// Loaded on first practice session entry, cached in memory
+
+// lib/audio/haptic.ts
+// Wrapper around navigator.vibrate() for supported devices
+// Patterns: lightTap([10]) for flip, decisiveBuzz([30]) for swipe grade
+// No-op on unsupported devices (desktop browsers)
+
+// hooks/useSound.ts
+// Combines audio + haptic into a single hook for practice components
+// Respects user preference: stored in Zustand uiStore.soundEnabled
+// Usage: const { playFlip, playGood, playAgain } = useSound()
+```
+
+### 6.6 Learning Path Roadmap Editor (FR28b)
+
+Editor-only drag-and-drop interface for curriculum ordering:
+
+```typescript
+// Route: /group/[groupId]/roadmap
+// Access: editor or admin role only (checked via group_members.role)
+
+// Components: components/roadmap/
+// - RoadmapEditor: main container with DnD context
+// - DraggableLessonCard: draggable item (lesson or deck, status pill)
+// - LearningPathView: read-only sequential view for members
+
+// Data: learning_path_items table
+// - Editors drag published lessons and flashcard decks into ordered list
+// - sort_order updated on drop via optimistic mutation
+// - Members see the ordered path on group home page
+
+// DnD implementation: HTML5 Drag and Drop API (no extra library)
+// or @dnd-kit if complexity warrants — evaluate at implementation time
+```
+
+### 6.7 Activity Heatmap (FR46)
+
+GitHub-style contribution calendar on user profile:
+
+```typescript
+// Component: components/gamification/ActivityHeatmap
+// Data source: daily_activity table (aggregated per user per day)
+
+// Display: 52-week grid (12 months), color intensity based on total_actions
+// Color scale: 0 actions = zinc-200/zinc-800, 1-2 = emerald-200, 
+//              3-5 = emerald-400, 6+ = emerald-600
+// Hover tooltip: "Mar 15: 4 flashcards, 1 exercise, 1 review"
+
+// Activity recording: incremented via Supabase RPC or trigger
+// on each tracked action (flashcard grade, exercise submit, review submit, lesson read)
+// Uses UPSERT on (user_id, group_id, activity_date) to increment counters
+```
+
+### 6.8 Long-Form Lesson Content Strategy
+
+Optimization for grammar lessons that may grow very large:
+
+```typescript
+// Problem: Tiptap ProseMirror JSON stored as JSONB can exceed 500KB+
+// for comprehensive grammar lessons with examples, tables, images.
+
+// Strategy 1: Progressive Rendering (MVP)
+// - Lesson content loaded in full but rendered progressively
+// - Tiptap read-only view uses IntersectionObserver to render
+//   visible sections only, lazy-loading deep content blocks
+
+// Strategy 2: Chunked Storage (Post-MVP if needed)
+// - Split lesson content into section-level chunks
+// - Each chunk stored as separate row in lesson_sections table
+// - Table of Contents built from chunk headers
+// - Load chunks on scroll (infinite scroll per section)
+
+// Database optimization:
+// - JSONB content NOT indexed (no GIN index on lesson content)
+// - content_markdown TEXT column for full-text search (GIN tsvector index)
+// - Lesson list queries NEVER select content column (use explicit column list)
+// - Single lesson fetch: SELECT id, title, content WHERE id = $1
 ```
 
 ---

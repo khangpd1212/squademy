@@ -10,6 +10,7 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     "_bmad/**",
     "_bmad-output/**",
+    ".yarn/**",
     "docs/**",
     ".next/**",
     "out/**",
