@@ -345,7 +345,7 @@ Despite the asynchronous-first design, select features require real-time updates
 ### Implementation Considerations
 
 - **Framework:** Hybrid SPA/MPA suggests a framework like Next.js (SSR + client-side interactivity) or similar.
-- **Infrastructure:** **Structured data** (users, groups, lessons, exercises, reviews, etc.) are stored in **Supabase** (PostgreSQL, Auth, Realtime). **Unstructured data** (audio recordings, images, exported files, and other binary assets) are stored in **Cloudflare R2**. Static assets and edge caching use **Cloudflare Free CDN**; frontend hosting on **Vercel**.
+- **Infrastructure:** **Structured data** (users, groups, lessons, exercises, reviews, etc.) are stored in **self-hosted PostgreSQL 16** on Oracle Cloud VM, accessed via **NestJS 11** REST API with **Prisma 6** ORM. Authentication uses **JWT (Passport.js)** with httpOnly cookies. Next.js API routes proxy all requests to NestJS. **Unstructured data** (audio recordings, images, exported files, and other binary assets) are stored in **Cloudflare R2**. Static assets and edge caching use **Cloudflare Free CDN**; frontend hosting on **Vercel**; backend API + database hosted on **Oracle Cloud VM Always Free tier**.
 - **State Management:** Client-side state for interactive features (flashcard progress, quiz state); server state for data persistence.
 - **Long-Form Lesson Optimization:** Grammar lessons stored as Tiptap ProseMirror JSON (`content jsonb`) may grow very large. The architecture must support lazy-loading content blocks (progressive rendering of lesson sections) and consider JSONB compression or chunked storage for lessons exceeding a configurable threshold (e.g., 500KB) to balance database performance with rich content needs.
 - **Offline Capability:** Not required for MVP (zero-OPEX constraint limits service worker complexity).
@@ -392,7 +392,7 @@ Despite the asynchronous-first design, select features require real-time updates
 ### Risk Mitigation Strategy
 
 **Technical Risks (Concurrency, Privacy, Safety):**
-- *Concurrency (1k CCU):* Rely on **Supabase** for structured data (PostgreSQL database, authentication, realtime) and **Cloudflare R2** for unstructured assets (audio recordings, images, file uploads). Frontend is hosted on Vercel; static assets and edge caching use **Cloudflare Free CDN**. The system targets 1,000 CCU within free-tier constraints.
+- *Concurrency (1k CCU):* Rely on **self-hosted PostgreSQL 16 + NestJS 11** on Oracle Cloud VM (Always Free tier) for structured data and API. **Cloudflare R2** for unstructured assets (audio recordings, images, file uploads). Frontend is hosted on Vercel; static assets and edge caching use **Cloudflare Free CDN**. The system targets 1,000 CCU within free-tier constraints.
 - *Privacy (GDPR/PDPA):* Architect database to separate PII from content for easy anonymization (tombstoning) upon deletion.
 - *Safety (Content Moderation):* Empower Editors as the primary content gatekeepers, supported by peer-review reporting mechanisms.
 
@@ -499,7 +499,7 @@ Despite the asynchronous-first design, select features require real-time updates
 
 ### Scalability, Reliability & Architecture
 - **NFR9 (Concurrency):** The system architecture (database connections, API backend) must gracefully handle 1,000 Concurrent Users (CCU) without dropping requests or exceeding the 2-second response time threshold.
-- **NFR10 (Scalability Constraint):** The platform must support 1,000 CCU within free-tier infrastructure (Supabase for structured data, Cloudflare R2 for file storage, Vercel + Cloudflare CDN for delivery) without degrading the 2-second response time threshold.
+- **NFR10 (Scalability Constraint):** The platform must support 1,000 CCU within free-tier infrastructure (Oracle VM Always Free for NestJS API + PostgreSQL, Cloudflare R2 for file storage, Vercel + Cloudflare CDN for delivery) without degrading the 2-second response time threshold.
 - **NFR11 (Edge Caching):** The platform must achieve a >80% cache hit ratio for static assets and public lessons via an edge CDN layer to shift traffic away from the origin server.
 - **NFR12 (Uptime):** Core practice and review loops must maintain 99.9% uptime. The content creation studio can tolerate scheduled maintenance windows.
 

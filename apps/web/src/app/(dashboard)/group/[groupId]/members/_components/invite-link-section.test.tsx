@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { InviteLinkSection } from "./invite-link-section";
+import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
@@ -25,13 +26,13 @@ describe("InviteLinkSection", () => {
   });
 
   it("renders invite URL", () => {
-    render(<InviteLinkSection inviteCode="abc123" groupId="g1" />);
+    renderWithQueryClient(<InviteLinkSection inviteCode="abc123" groupId="g1" />);
     expect(screen.getByText(/\/join\/abc123/)).toBeInTheDocument();
   });
 
   it("copies link to clipboard and shows success message", async () => {
     const user = userEvent.setup();
-    render(<InviteLinkSection inviteCode="abc123" groupId="g1" />);
+    renderWithQueryClient(<InviteLinkSection inviteCode="abc123" groupId="g1" />);
 
     await user.click(screen.getByRole("button", { name: "Copy Invite Link" }));
 
@@ -47,7 +48,7 @@ describe("InviteLinkSection", () => {
       json: async () => ({ ok: true, inviteCode: "newcode999" }),
     });
 
-    render(<InviteLinkSection inviteCode="abc123" groupId="g1" />);
+    renderWithQueryClient(<InviteLinkSection inviteCode="abc123" groupId="g1" />);
 
     await user.click(screen.getByRole("button", { name: "Revoke Invite Link" }));
     expect(screen.getByTestId("dialog")).toBeInTheDocument();

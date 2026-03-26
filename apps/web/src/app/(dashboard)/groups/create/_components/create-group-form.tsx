@@ -8,26 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateGroup } from "@/hooks/api/use-group-queries";
 import {
   createGroupSchema,
   type CreateGroupInput,
 } from "@/app/api/groups/group-schema";
 
-type CreateGroupApiResponse = {
-  ok?: boolean;
-  message?: string;
-  field?: "name" | "description";
-  group?: {
-    id: string;
-    name: string;
-    inviteCode: string;
-  };
-};
-
 export function CreateGroupForm() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const createGroupMutation = useCreateGroup();
 
   const form = useForm<CreateGroupInput>({
     resolver: zodResolver(createGroupSchema),
@@ -40,42 +30,19 @@ export function CreateGroupForm() {
 
   async function onSubmit(values: CreateGroupInput) {
     setSubmitError(null);
-    setIsSaving(true);
 
     try {
-      const response = await fetch("/api/groups", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      const payload = (await response.json()) as CreateGroupApiResponse;
-
-      if (!response.ok) {
-        if (payload.field) {
-          form.setError(payload.field, {
-            type: "server",
-            message: payload.message ?? "Could not save this field.",
-          });
-          return;
-        }
-
-        setSubmitError(payload.message ?? "Could not create group. Please try again.");
-        return;
-      }
-
-      if (!payload.group?.id) {
+      const group = await createGroupMutation.mutateAsync(values);
+      if (!group?.id) {
         setSubmitError("Group created but redirect failed. Please refresh.");
         return;
       }
 
-      router.push(`/group/${payload.group.id}`);
-    } catch {
-      setSubmitError("Network error. Please try again.");
-    } finally {
-      setIsSaving(false);
+      router.push(`/group/${group.id}`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Network error. Please try again.";
+      setSubmitError(message);
     }
   }
 
@@ -111,8 +78,8 @@ export function CreateGroupForm() {
 
       {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
 
-      <Button type="submit" disabled={isSaving}>
-        {isSaving ? "Creating group..." : "Create Group"}
+      <Button type="submit" disabled={createGroupMutation.isPending}>
+        {createGroupMutation.isPending ? "Creating group..." : "Create Group"}
       </Button>
     </form>
   );

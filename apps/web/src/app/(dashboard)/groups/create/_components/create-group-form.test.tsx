@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CreateGroupForm } from "./create-group-form";
+import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 const pushMock = jest.fn();
 
@@ -18,7 +19,7 @@ describe("CreateGroupForm", () => {
 
   it("shows inline validation when group name is empty", async () => {
     const user = userEvent.setup();
-    render(<CreateGroupForm />);
+    renderWithQueryClient(<CreateGroupForm />);
 
     await user.click(screen.getByRole("button", { name: "Create Group" }));
 
@@ -31,12 +32,11 @@ describe("CreateGroupForm", () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
-        ok: true,
-        group: { id: "group-1", name: "IELTS Warriors", inviteCode: "abc123def456" },
+        data: { id: "group-1", name: "IELTS Warriors", inviteCode: "abc123def456" },
       }),
     });
 
-    render(<CreateGroupForm />);
+    renderWithQueryClient(<CreateGroupForm />);
 
     await user.type(screen.getByLabelText("Group name"), "IELTS Warriors");
     await user.type(

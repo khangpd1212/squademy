@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-const API_BASE_URL = process.env.API_URL || "http://localhost:3001/api";
+const API_BASE_URL = process.env.API_URL || "http://localhost:4001/api";
 
 type FetchOptions = {
   method?: string;
@@ -10,20 +10,17 @@ type FetchOptions = {
 
 /**
  * Server-side API client for calling the NestJS backend.
- * Automatically forwards auth cookies from the incoming request.
+ *
+ * Auth model: Bearer tokens are stored client-side (localStorage).
+ * Server Components cannot access localStorage, so this client is used
+ * only for unauthenticated prefetch or when an access token is explicitly
+ * provided via options.headers.
  */
 export async function apiClient<T = unknown>(
   path: string,
   options: FetchOptions = {},
 ): Promise<{ data: T | null; error: string | null; status: number }> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
-
   const headers: Record<string, string> = {
-    cookie: cookieHeader,
     ...options.headers,
   };
 
@@ -52,26 +49,25 @@ export async function apiClient<T = unknown>(
 }
 
 /**
- * Get the current user from the access_token cookie.
- * Returns null if not authenticated (no cookie or expired).
+ * Check if the user is logged in by reading the `logged_in` cookie marker.
+ *
+ * This does NOT verify the token — it only checks the marker set by
+ * browser-client.ts. Real auth verification is done by NestJS when the
+ * client-side code sends Bearer tokens.
  */
 export async function getCurrentUser(): Promise<{
   userId: string;
   email: string;
 } | null> {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("access_token");
+  const loggedIn = cookieStore.get("logged_in");
 
-  if (!accessToken?.value) {
+  if (loggedIn?.value !== "true") {
     return null;
   }
 
-  const result = await apiClient<{ userId: string; email: string }>(
-    "/auth/me",
-  );
-  if (result.error || !result.data) {
-    return null;
-  }
-
-  return result.data;
+  // We know the user was logged in (marker exists), but we can't
+  // verify the token server-side. Return a minimal placeholder.
+  // The actual profile data will be fetched client-side via browser-client.
+  return { userId: "", email: "" };
 }

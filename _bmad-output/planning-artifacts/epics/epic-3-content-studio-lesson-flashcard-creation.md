@@ -12,12 +12,12 @@ So that I can manage my contributions to the group curriculum in one place.
 
 **Given** I navigate to `/studio/lessons`
 **When** the page loads
-**Then** all lessons where `author_id = my user_id` are listed with title, status badge (Draft / In Review / Published / Rejected), and last updated date
+**Then** `GET /api/lessons?author=me` (proxied to NestJS, protected by JwtAuthGuard) returns all lessons where `author_id = my user_id` with title, status badge (Draft / In Review / Published / Rejected), and last updated date
 **And** a "New Lesson" button is prominently displayed
 
 **Given** I click "New Lesson"
 **When** the action executes
-**Then** a new `lessons` row is created with `status = 'draft'` and a placeholder title
+**Then** `POST /api/lessons` (proxied to NestJS) creates a new `lessons` row via Prisma with `status = 'draft'` and a placeholder title
 **And** I am redirected to the lesson editor at `/studio/lessons/[lessonId]`
 
 **Given** I have no lessons yet
@@ -41,18 +41,17 @@ So that I can produce well-structured, high-quality lesson content without knowi
 **Given** I open a lesson in the editor at `/studio/lessons/[lessonId]`
 **When** the page loads
 **Then** the Tiptap editor is rendered with the Confluence-style toolbar: Bold, Italic, Underline, Strikethrough | H1, H2, H3 | Bullet List, Ordered List, Blockquote | Link, Image, Table | Alive Text block
-**And** existing lesson content (stored as Tiptap ProseMirror JSON in `lessons.content`) is loaded into the editor
+**And** existing lesson content (stored as Tiptap ProseMirror JSON in `lessons.content`) is loaded into the editor via `GET /api/lessons/:lessonId` (proxied to NestJS, protected by ResourceOwnerGuard)
 **And** a sidebar outline panel shows H1/H2 headings for navigation
 
 **Given** I type or format content in the editor
 **When** I pause typing for 2 seconds
-**Then** the lesson content is auto-saved to `lessons.content` (Tiptap JSON) and `lessons.content_markdown` (denormalized Markdown)
+**Then** the lesson content is auto-saved via `PATCH /api/lessons/:lessonId` (proxied to NestJS) updating `lessons.content` (Tiptap JSON) and `lessons.content_markdown` (denormalized Markdown) via Prisma
 **And** a subtle "Saved" indicator appears near the title field
 
 **Given** I edit the lesson title (bare input at top)
 **When** I update the title
-**Then** `lessons.title` is updated on blur or auto-save
-**And** the new title is reflected in the browser tab
+**Then** `lessons.title` is updated on blur or auto-save via NestJS API
 
 **Given** I insert an image via the toolbar
 **When** I select an image file (JPG/PNG, max 5MB)
@@ -85,7 +84,7 @@ So that I can reuse content I've already written without manual copy-paste refor
 **Given** I confirm the import
 **When** the action executes
 **Then** the editor's existing content is replaced with the imported content
-**And** auto-save triggers immediately, persisting the imported content to Supabase
+**And** auto-save triggers immediately, persisting the imported content via `PATCH /api/lessons/:lessonId` (proxied to NestJS)
 
 **Given** I select a file that is not a `.md` file
 **When** the file picker validates the selection
@@ -136,7 +135,7 @@ So that I know when my lesson is live or if I need to revise it based on editor 
 
 **Given** I have a lesson with `status = 'draft'` in the editor
 **When** I click "Submit for Review"
-**Then** `lessons.status` is updated to `'review'`
+**Then** `PATCH /api/lessons/:lessonId/submit` (proxied to NestJS, protected by ResourceOwnerGuard) updates `lessons.status` to `'review'` via Prisma
 **And** the "Submit for Review" button is replaced with a "In Review" status badge
 **And** the editor toolbar is disabled (read-only) while the lesson is in review
 
@@ -158,8 +157,7 @@ So that I know when my lesson is live or if I need to revise it based on editor 
 
 **Given** I have revised a rejected lesson and click "Resubmit for Review"
 **When** the action executes
-**Then** `lessons.status` is updated back to `'review'`
+**Then** `lessons.status` is updated back to `'review'` via NestJS API
 **And** the editor is locked again pending the next editorial review
 
 ---
-

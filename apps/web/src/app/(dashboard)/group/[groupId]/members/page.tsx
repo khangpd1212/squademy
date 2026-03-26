@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient, getCurrentUser } from "@/lib/api/client";
+import { queryKeys } from "@/lib/api/query-keys";
 import { InviteLinkSection } from "./_components/invite-link-section";
 import { InviteByUsername } from "./_components/invite-by-username";
 import { MemberManagementList } from "./_components/member-management-list";
@@ -31,8 +33,15 @@ export default async function GroupMembersPage({
   if (!user) {
     redirect("/login");
   }
-
-  const { data: group } = await apiClient<GroupData>(`/groups/${groupId}`);
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.groups.detail(groupId),
+    queryFn: async () => {
+      const { data } = await apiClient<GroupData>(`/groups/${groupId}`);
+      return data ?? null;
+    },
+  });
+  const group = queryClient.getQueryData<GroupData | null>(queryKeys.groups.detail(groupId));
 
   if (!group) {
     redirect(`/group/${groupId}`);
@@ -55,37 +64,39 @@ export default async function GroupMembersPage({
   }));
 
   return (
-    <div className="space-y-6">
-      {isAdmin && group.inviteCode ? (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="space-y-6">
+        {isAdmin && group.inviteCode ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Invite Members</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <InviteLinkSection
+                inviteCode={group.inviteCode}
+                groupId={groupId}
+              />
+              <InviteByUsername groupId={groupId} />
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Invite Members</CardTitle>
+            <CardTitle className="text-base">
+              Members ({members.length})
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <InviteLinkSection
-              inviteCode={group.inviteCode}
+          <CardContent>
+            <MemberManagementList
+              members={members}
+              currentUserId={user.userId}
+              isAdmin={isAdmin}
               groupId={groupId}
             />
-            <InviteByUsername groupId={groupId} />
           </CardContent>
         </Card>
-      ) : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Members ({members.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <MemberManagementList
-            members={members}
-            currentUserId={user.userId}
-            isAdmin={isAdmin}
-            groupId={groupId}
-          />
-        </CardContent>
-      </Card>
-    </div>
+      </div>
+    </HydrationBoundary>
   );
 }

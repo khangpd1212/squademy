@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -22,13 +23,13 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    if (!dto.gdprConsent) {
-      throw new BadRequestException("GDPR consent is required");
+    if (!dto.acceptPrivacy) {
+      throw new BadRequestException("You must accept the privacy policy");
     }
 
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) {
-      throw new BadRequestException("Email already registered");
+      throw new ConflictException("An account with this email already exists.");
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -37,7 +38,7 @@ export class AuthService {
       email: dto.email,
       passwordHash,
       displayName: dto.displayName,
-      gdprConsentAt: new Date(),
+      acceptPrivacyAt: new Date(),
     });
 
     const tokens = await this.generateTokens(user.id, user.email);
@@ -84,6 +85,20 @@ export class AuthService {
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
     return tokens;
+  }
+
+  async refreshTokensFromRaw(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        email: string;
+      }>(refreshToken, {
+        secret: this.configService.getOrThrow<string>("JWT_REFRESH_SECRET"),
+      });
+      return this.refreshTokens(payload.sub, refreshToken);
+    } catch {
+      throw new ForbiddenException("Access denied");
+    }
   }
 
   async generateTokens(userId: string, email: string) {

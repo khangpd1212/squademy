@@ -15,7 +15,7 @@ export const registerSchema = z.object({
     .trim()
     .min(1, "Display name is required.")
     .max(50, "Display name must be 50 characters or less."),
-  gdprConsent: z.boolean().refine((v) => v === true, {
+  acceptPrivacy: z.boolean().refine((v) => v === true, {
     message: "You must accept the privacy policy.",
   }),
 });

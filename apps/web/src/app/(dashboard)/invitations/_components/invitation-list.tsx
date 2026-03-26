@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useRespondInvitation } from "@/hooks/api/use-invitation-queries";
 import type { InvitationType } from "../page";
 
 type InvitationListProps = {
@@ -14,6 +15,7 @@ export function InvitationList({ invitations: initial }: InvitationListProps) {
   const [invitations, setInvitations] = useState(initial);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const respondInvitationMutation = useRespondInvitation();
 
   async function handleAction(id: string, action: "accept" | "decline") {
     setProcessingId(id);
@@ -24,37 +26,21 @@ export function InvitationList({ invitations: initial }: InvitationListProps) {
     });
 
     try {
-      const response = await fetch(`/api/invitations/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+      const result = await respondInvitationMutation.mutateAsync({
+        id,
+        action,
       });
-
-      const payload = (await response.json()) as {
-        ok?: boolean;
-        groupId?: string;
-        message?: string;
-      };
-
-      if (!response.ok) {
-        setErrors((prev) => ({
-          ...prev,
-          [id]: payload.message ?? "Action failed.",
-        }));
-        return;
-      }
-
-      if (action === "accept" && payload.groupId) {
-        router.push(`/group/${payload.groupId}`);
+      if (action === "accept" && result.groupId) {
+        router.push(`/group/${result.groupId}`);
         return;
       }
 
       // Decline — remove from list
       setInvitations((prev) => prev.filter((inv) => inv.id !== id));
-    } catch {
+    } catch (err) {
       setErrors((prev) => ({
         ...prev,
-        [id]: "Network error. Please try again.",
+        [id]: err instanceof Error ? err.message : "Network error. Please try again.",
       }));
     } finally {
       setProcessingId(null);

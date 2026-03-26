@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProfileForm } from "./profile-form";
+import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 function createDeferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -22,7 +23,7 @@ describe("ProfileForm", () => {
   it("blocks save with inline validation when display name is empty", async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <ProfileForm
         initialProfile={{
           displayName: "Tina",
@@ -46,7 +47,7 @@ describe("ProfileForm", () => {
   it("shows avatar size validation error and blocks upload", async () => {
     const user = userEvent.setup();
 
-    render(
+    renderWithQueryClient(
       <ProfileForm
         initialProfile={{
           displayName: "Tina",
@@ -74,7 +75,7 @@ describe("ProfileForm", () => {
     const deferred = createDeferred<Response>();
     (global.fetch as jest.Mock).mockReturnValue(deferred.promise);
 
-    render(
+    renderWithQueryClient(
       <ProfileForm
         initialProfile={{
           displayName: "Tina",

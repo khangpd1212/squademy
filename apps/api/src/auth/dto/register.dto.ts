@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsString, MinLength } from "class-validator";
+import { IsBoolean, IsEmail, IsString, MaxLength, MinLength } from "class-validator";
 
 export class RegisterDto {
   @IsEmail()
@@ -6,12 +6,14 @@ export class RegisterDto {
 
   @IsString()
   @MinLength(6)
+  @MaxLength(128)
   password: string;
 
   @IsString()
   @MinLength(1)
+  @MaxLength(50)
   displayName: string;
 
   @IsBoolean()
-  gdprConsent: boolean;
+  acceptPrivacy: boolean;
 }

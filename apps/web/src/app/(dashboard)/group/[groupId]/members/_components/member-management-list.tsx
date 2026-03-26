@@ -5,14 +5,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  type MemberRole,
+  useRemoveMember,
+  useUpdateMemberRole,
+} from "@/hooks/api/use-member-queries";
+import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-type MemberRole = "admin" | "editor" | "member";
 
 type Member = {
   user_id: string;
@@ -39,6 +42,8 @@ export function MemberManagementList({
   const [updatingRoleFor, setUpdatingRoleFor] = useState<string | null>(null);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [removeDialogUserId, setRemoveDialogUserId] = useState<string | null>(null);
+  const updateMemberRoleMutation = useUpdateMemberRole(groupId);
+  const removeMemberMutation = useRemoveMember(groupId);
 
   const removeTarget = useMemo(
     () => members.find((member) => member.user_id === removeDialogUserId) ?? null,
@@ -57,28 +62,12 @@ export function MemberManagementList({
     );
 
     try {
-      const response = await fetch(
-        `/api/groups/${groupId}/members/${userId}/role`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role }),
-        }
-      );
-
-      const payload = (await response.json()) as { message?: string };
-      if (!response.ok) {
-        setMembers(previousMembers);
-        setErrorsByUser((prev) => ({
-          ...prev,
-          [userId]: payload.message ?? "Could not update role.",
-        }));
-      }
-    } catch {
+      await updateMemberRoleMutation.mutateAsync({ userId, role });
+    } catch (err) {
       setMembers(previousMembers);
       setErrorsByUser((prev) => ({
         ...prev,
-        [userId]: "Network error. Please try again.",
+        [userId]: err instanceof Error ? err.message : "Network error. Please try again.",
       }));
     } finally {
       setUpdatingRoleFor(null);
@@ -96,26 +85,15 @@ export function MemberManagementList({
     setMembers((prev) => prev.filter((member) => member.user_id !== userId));
 
     try {
-      const response = await fetch(`/api/groups/${groupId}/members/${userId}`, {
-        method: "DELETE",
-      });
-      const payload = (await response.json()) as { message?: string };
-
-      setRemoveDialogUserId(null);
-      if (!response.ok) {
-        setMembers(previousMembers);
-        setErrorsByUser((prev) => ({
-          ...prev,
-          [userId]: payload.message ?? "Could not remove member.",
-        }));
-      }
-    } catch {
+      await removeMemberMutation.mutateAsync(userId);
+    } catch (err) {
       setMembers(previousMembers);
       setErrorsByUser((prev) => ({
         ...prev,
-        [userId]: "Network error. Please try again.",
+        [userId]: err instanceof Error ? err.message : "Network error. Please try again.",
       }));
     } finally {
+      setRemoveDialogUserId(null);
       setRemovingUserId(null);
     }
   }

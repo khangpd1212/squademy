@@ -16,6 +16,27 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get("me")
+  async getProfile(@CurrentUser() user: JwtPayload) {
+    const profile = await this.usersService.findById(user.userId);
+    if (!profile) {
+      return { ok: false, error: "User not found" };
+    }
+    return {
+      ok: true,
+      data: {
+        id: profile.id,
+        email: profile.email,
+        displayName: profile.displayName,
+        fullName: profile.fullName,
+        avatarUrl: profile.avatarUrl,
+        school: profile.school,
+        location: profile.location,
+        age: profile.age,
+      },
+    };
+  }
+
   @Patch("me")
   async updateProfile(
     @CurrentUser() user: JwtPayload,

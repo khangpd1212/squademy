@@ -44,6 +44,7 @@ yarn-error.log*
 .env*
 !.env.example
 !apps/api/.env.example
+!packages/database/.env.example
 
 # --- deploy / hosting ---
 .vercel

@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RegisterForm } from "./register-form";
+import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 const pushMock = jest.fn();
 
@@ -19,16 +20,16 @@ describe("RegisterForm", () => {
   it("shows inline validation when password is too short", async () => {
     const user = userEvent.setup();
 
-    render(<RegisterForm />);
+    renderWithQueryClient(<RegisterForm />);
 
     await user.type(screen.getByLabelText("Display name"), "Tina");
     await user.type(screen.getByLabelText("Email"), "tina@example.com");
-    await user.type(screen.getByLabelText("Password"), "1234567");
+    await user.type(screen.getByLabelText("Password"), "12345");
     await user.click(screen.getByRole("checkbox"));
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(
-      await screen.findByText("Password must be at least 8 characters.")
+      await screen.findByText("Password must be at least 6 characters.")
     ).toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalled();
   });
@@ -43,7 +44,7 @@ describe("RegisterForm", () => {
       }),
     });
 
-    render(<RegisterForm />);
+    renderWithQueryClient(<RegisterForm />);
 
     await user.type(screen.getByLabelText("Display name"), "Tina");
     await user.type(screen.getByLabelText("Email"), "tina@example.com");
@@ -60,17 +61,19 @@ describe("RegisterForm", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("redirects to check-email page on success", async () => {
+  it("redirects to dashboard on success", async () => {
     const user = userEvent.setup();
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
-        ok: true,
-        redirectTo: "/register/check-email?email=tina%40example.com",
+        data: {
+          accessToken: "token-a",
+          refreshToken: "token-r",
+        },
       }),
     });
 
-    render(<RegisterForm />);
+    renderWithQueryClient(<RegisterForm />);
 
     await user.type(screen.getByLabelText("Display name"), "Tina");
     await user.type(screen.getByLabelText("Email"), "tina@example.com");
@@ -79,9 +82,7 @@ describe("RegisterForm", () => {
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() =>
-      expect(pushMock).toHaveBeenCalledWith(
-        "/register/check-email?email=tina%40example.com"
-      )
+      expect(pushMock).toHaveBeenCalledWith("/dashboard")
     );
   });
 });

@@ -7,11 +7,11 @@ export const registerSchema = z.object({
     .string()
     .trim()
     .min(1, "Display name is required.")
-    .max(80, "Display name is too long."),
+    .max(50, "Display name is too long."),
   email: z.email("Please enter a valid email address."),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters.")
+    .min(6, "Password must be at least 6 characters.")
     .max(128, "Password is too long."),
   acceptPrivacy: z
     .boolean()

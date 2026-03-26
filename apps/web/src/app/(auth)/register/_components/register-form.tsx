@@ -8,23 +8,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRegister } from "@/hooks/api/use-auth-queries";
 import {
   duplicateEmailMessage,
   registerSchema,
   type RegisterInput,
 } from "../register-schema";
 
-type RegisterApiResponse = {
-  ok?: boolean;
-  message?: string;
-  field?: "email" | "password" | "displayName" | "acceptPrivacy";
-  redirectTo?: string;
-};
-
 export function RegisterForm() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const registerMutation = useRegister();
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -39,39 +33,24 @@ export function RegisterForm() {
 
   async function onSubmit(values: RegisterInput) {
     setSubmitError(null);
-    setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      const payload = (await response.json()) as RegisterApiResponse;
-
-      if (!response.ok) {
-        if (payload.field) {
-          form.setError(payload.field, {
-            type: "server",
-            message:
-              payload.message ??
-              (payload.field === "email" ? duplicateEmailMessage : "Request failed."),
-          });
-          return;
-        }
-
-        setSubmitError(payload.message ?? "Could not create account. Please try again.");
+      await registerMutation.mutateAsync(values);
+      router.push("/dashboard");
+    } catch (error) {
+      const typedError = error as Error & {
+        field?: "email" | "password" | "displayName" | "acceptPrivacy";
+      };
+      if (typedError.field) {
+        form.setError(typedError.field, {
+          type: "server",
+          message:
+            typedError.message ??
+            (typedError.field === "email" ? duplicateEmailMessage : "Request failed."),
+        });
         return;
       }
-
-      router.push(payload.redirectTo ?? "/register/check-email");
-    } catch {
-      setSubmitError("Network error. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      setSubmitError(typedError.message ?? "Network error. Please try again.");
     }
   }
 
@@ -112,7 +91,7 @@ export function RegisterForm() {
           id="password"
           type="password"
           autoComplete="new-password"
-          placeholder="At least 8 characters"
+          placeholder="At least 6 characters"
           {...form.register("password")}
           aria-invalid={form.formState.errors.password ? "true" : "false"}
         />
@@ -144,8 +123,8 @@ export function RegisterForm() {
 
       {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Creating account..." : "Create account"}
+      <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+        {registerMutation.isPending ? "Creating account..." : "Create account"}
       </Button>
     </form>
   );

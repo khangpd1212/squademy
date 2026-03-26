@@ -7,23 +7,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLogin } from "@/hooks/api/use-auth-queries";
 import {
   invalidCredentialsMessage,
   loginSchema,
   type LoginInput,
 } from "../login-schema";
 
-type LoginApiResponse = {
-  ok?: boolean;
-  message?: string;
-  redirectTo?: string;
-};
-
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const loginMutation = useLogin();
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -36,36 +31,18 @@ export function LoginForm() {
 
   async function onSubmit(values: LoginInput) {
     setSubmitError(null);
-    setIsSubmitting(true);
 
     try {
+      await loginMutation.mutateAsync(values);
       const redirect = searchParams.get("redirect");
-      const query = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
-
-      const response = await fetch(`/api/auth/login${query}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      const payload = (await response.json()) as LoginApiResponse;
-
-      if (!response.ok) {
-        const message = payload.message ?? invalidCredentialsMessage;
-        setSubmitError(message);
-        if (message === invalidCredentialsMessage) {
-          form.resetField("password");
-        }
-        return;
+      router.push(redirect ?? "/dashboard");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Network error. Please try again.";
+      setSubmitError(message);
+      if (message === invalidCredentialsMessage) {
+        form.resetField("password");
       }
-
-      router.push(payload.redirectTo ?? "/dashboard");
-    } catch {
-      setSubmitError("Network error. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
@@ -103,8 +80,8 @@ export function LoginForm() {
 
       {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Logging in..." : "Log in"}
+      <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+        {loginMutation.isPending ? "Logging in..." : "Log in"}
       </Button>
 
     </form>

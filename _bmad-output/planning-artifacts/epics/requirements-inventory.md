@@ -70,7 +70,7 @@ NFR6 (Data Minimization & Deletion): The database schema must separate PII from 
 NFR7 (Tombstoning): Upon account deletion, the user's educational contributions must be anonymized to "Anonymous Learner" to preserve threaded debate integrity (GDPR/PDPA compliance).
 NFR8 (Access Control): Private group content and exercises must strictly reject access attempts from non-members or unauthenticated users (API-level verification on every request).
 NFR9 (Concurrency): The system architecture must gracefully handle 1,000 Concurrent Users (CCU) without dropping requests or exceeding the 2-second response time threshold.
-NFR10 (Scalability Constraint): The platform must support 1,000 CCU within free-tier infrastructure (Supabase, Cloudflare R2, Vercel + Cloudflare CDN).
+NFR10 (Scalability Constraint): The platform must support 1,000 CCU within free-tier infrastructure (Oracle VM Always Free for NestJS API + PostgreSQL, Cloudflare R2, Vercel + Cloudflare CDN).
 NFR11 (Edge Caching): The platform must achieve a >80% cache hit ratio for static assets and public lessons via an edge CDN layer.
 NFR12 (Uptime): Core practice and review loops must maintain 99.9% uptime.
 NFR13 (Standards): The platform must comply with WCAG 2.1 Level AA standards.
@@ -82,18 +82,19 @@ NFR14 (Input Agnosticism): All critical flows (including the Tinder-style flashc
 
 - **Framework:** Next.js (App Router) with TypeScript — all routing, SSR/RSC, Server Components, Route Handlers
 - **Starter Template:** Greenfield project — no starter template specified; initialize with `create-next-app` + TypeScript + Tailwind CSS v4 + shadcn/ui setup (Epic 1, Story 1)
-- **Database Migrations:** Supabase CLI workflow (`supabase migration new`, `supabase db push`, `supabase gen types`)
-- **Environment Variables:** Two sets — public (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) and server-only secrets (service role, R2 keys, email API, cron secret)
+- **Monorepo:** Yarn Workspaces + Turborepo — `apps/web` (Next.js), `apps/api` (NestJS), `packages/database` (Prisma), `packages/shared` (Zod + types)
+- **Database Migrations:** Prisma workflow (`prisma migrate dev`, `prisma migrate deploy`, `prisma generate`) from `packages/database`
+- **Environment Variables:** Two sets — `apps/web` (`NEXT_PUBLIC_APP_URL`, `NESTJS_API_URL`, `JWT_SECRET`, `CLOUDFLARE_R2_*`, `CRON_SECRET`) and `apps/api` (`DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `RESEND_API_KEY`, `CLOUDFLARE_R2_*`)
 - **Cron Setup (Vercel):** 4 scheduled jobs in `vercel.json` — weekly-start (Mon 00:00), weekly-shuffle (Sat 23:59), reminders (daily 09:00), weekly-close (Sun 23:59)
-- **RLS (Row Level Security):** Every Supabase table must have RLS policies enabled; admin operations use `service_role` key from server-only context
+- **Authorization (NestJS Guards):** All API routes protected by Guards (`JwtAuthGuard`, `GroupMemberGuard`, `GroupAdminGuard`, `GroupEditorGuard`, `ResourceOwnerGuard`); no RLS — authorization enforced at API layer
 - **Derangement Shuffle Algorithm:** `lib/shuffle/derangement.ts` — Fisher-Yates derangement; edge cases for n=1 (skip) and n=2 (swap)
-- **SM-2 SRS Algorithm:** `lib/srs/sm2.ts` — client-side scheduling; stores results in Supabase `srs_progress` table
+- **SM-2 SRS Algorithm:** `lib/srs/sm2.ts` — client-side scheduling; stores results via NestJS API → Prisma → `srs_progress` table
 - **File Upload:** Two strategies — proxied upload via `/api/files/upload` for sensitive files; signed URL for large files (audio)
-- **Offline-first Flashcard Pattern:** Dexie.js IndexedDB — first open downloads and caches; subsequent opens serve locally; grade queue synced on reconnect
-- **GDPR Deletion Flow:** 5-step tombstoning process via server Route Handler (24h SLA)
+- **Offline-first Flashcard Pattern:** Dexie.js IndexedDB — first open downloads and caches; subsequent opens serve locally; grade queue synced to NestJS API on reconnect
+- **GDPR Deletion Flow:** Tombstoning process via NestJS AuthService (24h SLA) — deletes users + profiles, tombstones content references, clears personal data
 - **Email Rate Limiting:** Max 1 reminder/user/24h; large groups (>20) get batch digest; fallback to in-app notification if quota exceeded
 - **Leaderboard Score Weights:** Exercise submission +10pts, peer review +15pts, lesson approved +25pts, streak day +5pts, dispute error -5pts
-- **Admin Dashboard:** Separate `/admin` route group with middleware role guard; `is_admin` boolean on `profiles` table
+- **Admin Dashboard:** Separate `/admin` route group with `proxy.ts` role guard + NestJS `AdminGuard`; `users.is_admin` boolean checked at both proxy and API level
 
 **From UX Design Specification:**
 

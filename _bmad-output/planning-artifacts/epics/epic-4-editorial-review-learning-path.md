@@ -12,7 +12,7 @@ So that I can maintain the quality of our group's curriculum efficiently.
 
 **Given** I am an Editor and navigate to `/review/lesson`
 **When** the page loads
-**Then** all `lessons` with `status = 'review'` for my groups are listed with contributor name, lesson title, and submission date
+**Then** `GET /api/lessons?status=review&groupIds=mine` (proxied to NestJS, protected by GroupEditorGuard) returns all `lessons` with `status = 'review'` for my groups with contributor name, lesson title, and submission date
 **And** lessons are sorted oldest-first (review queue order)
 
 **Given** I click on a pending lesson to review it
@@ -21,21 +21,21 @@ So that I can maintain the quality of our group's curriculum efficiently.
 **And** an "Approve & Publish" (primary green) button and a "Request Changes" (destructive red) button are shown at the top
 
 **Given** I click "Approve & Publish"
-**When** the action executes
-**Then** `lessons.status` is updated to `'published'`
+**When** `PATCH /api/lessons/:lessonId/approve` (proxied to NestJS, protected by GroupEditorGuard) executes
+**Then** `lessons.status` is updated to `'published'` via Prisma
 **And** the lesson appears in the group's learning path
 **And** I am returned to the review queue
 **And** the lesson count in the queue decreases by one
 
 **Given** I click "Request Changes" and submit feedback text
-**When** the action executes
-**Then** `lessons.status` is updated to `'rejected'`
+**When** `PATCH /api/lessons/:lessonId/reject` (proxied to NestJS, protected by GroupEditorGuard) executes
+**Then** `lessons.status` is updated to `'rejected'` via Prisma
 **And** `lessons.editor_feedback` is saved with my feedback text
 **And** I am returned to the review queue
 
 **Given** I have no pending lessons in my queue
 **When** the review queue page loads
-**Then** an empty state is shown: "All caught up! ✅ No lessons pending review."
+**Then** an empty state is shown: "All caught up! No lessons pending review."
 
 ---
 
@@ -49,7 +49,7 @@ So that I can give precise, contextual feedback or discuss specific points with 
 
 **Given** I am viewing a lesson (published or in review)
 **When** I hover over a paragraph on desktop
-**Then** a comment icon (💬) appears in the left margin next to the paragraph
+**Then** a comment icon appears in the left margin next to the paragraph
 
 **Given** I click the comment icon on a paragraph
 **When** the comment panel opens
@@ -57,9 +57,9 @@ So that I can give precise, contextual feedback or discuss specific points with 
 **And** a text input is shown for me to type my comment
 
 **Given** I submit a comment on a paragraph
-**When** the action executes
-**Then** a `review_comments` row is created with `lesson_id`, `user_id`, `line_ref` (paragraph identifier), and `body`
-**And** my comment appears immediately in the thread via optimistic update
+**When** `POST /api/lessons/:lessonId/comments` (proxied to NestJS, protected by GroupMemberGuard) executes
+**Then** a `review_comments` row is created via Prisma with `lesson_id`, `user_id`, `line_ref` (paragraph identifier), and `body`
+**And** my comment appears immediately in the thread via React Query optimistic update
 **And** a comment count badge appears on the paragraph margin
 
 **Given** another member has already commented on a paragraph
@@ -69,7 +69,7 @@ So that I can give precise, contextual feedback or discuss specific points with 
 
 **Given** I am replying to an existing comment
 **When** I click "Reply" on a comment and submit
-**Then** a `review_comments` row is created with `parent_id` set to the comment I replied to
+**Then** a `review_comments` row is created via Prisma with `parent_id` set to the comment I replied to
 **And** the reply is nested below the parent comment in the thread
 
 **Given** I am on mobile and tap a paragraph
@@ -88,7 +88,7 @@ So that reading lessons feels engaging and community-driven rather than passive.
 
 **Given** I navigate to my group's home page at `/group/[groupId]`
 **When** the page loads
-**Then** all `lessons` with `status = 'published'` for this group are listed in `sort_order` sequence as the Learning Path
+**Then** `GET /api/groups/:groupId/learning-path` (proxied to NestJS, protected by GroupMemberGuard) returns all published lessons in `sort_order` sequence as the Learning Path
 **And** each lesson shows title, contributor name, and a "Read" button
 
 **Given** I click a lesson to read it
@@ -100,16 +100,16 @@ So that reading lessons feels engaging and community-driven rather than passive.
 **Given** I encounter an Alive Text block
 **When** I click or tap on the animated dots
 **Then** the dots dissolve (Framer Motion animation) and the hidden text is revealed
-**And** an `alive_text_interactions` event is recorded in Supabase for engagement tracking
+**And** an `alive_text_interactions` event is recorded via `POST /api/lessons/:lessonId/interactions` (proxied to NestJS) for engagement tracking
 
 **Given** paragraphs have reactions from other members
 **When** I view the lesson
-**Then** reaction counts (❤️ 🤔 💡) are visible in the left margin next to each paragraph
+**Then** reaction counts are visible in the left margin next to each paragraph
 
 **Given** I click a reaction button on a paragraph
-**When** the action executes
-**Then** a `lesson_reactions` row is created (or deleted if I already reacted with the same type — toggle behavior)
-**And** the reaction count updates immediately via optimistic update
+**When** `POST /api/lessons/:lessonId/reactions` (proxied to NestJS, protected by GroupMemberGuard) executes
+**Then** a `lesson_reactions` row is created via Prisma (or deleted if I already reacted with the same type — toggle behavior)
+**And** the reaction count updates immediately via React Query optimistic update
 
 **Given** I finish reading the lesson
 **When** I reach the bottom
@@ -130,8 +130,8 @@ So that I can maintain a safe and high-quality learning environment.
 **Then** a confirmation dialog appears: "Remove this lesson from the group? It will no longer be visible to members."
 
 **Given** I confirm the removal
-**When** the action executes
-**Then** `lessons.is_deleted` is set to `true`
+**When** `PATCH /api/lessons/:lessonId/soft-delete` (proxied to NestJS, protected by GroupEditorGuard) executes
+**Then** `lessons.is_deleted` is set to `true` via Prisma
 **And** the lesson disappears from the group's learning path immediately
 **And** the lesson remains in the database (soft-delete — not destroyed)
 
@@ -151,23 +151,23 @@ So that group members follow a structured, logical progression through the learn
 
 **Given** I am an Editor or Admin and navigate to `/group/[groupId]/roadmap`
 **When** the page loads
-**Then** all published lessons and flashcard decks for this group are listed as draggable cards
+**Then** `GET /api/groups/:groupId/learning-path/edit` (proxied to NestJS, protected by GroupEditorGuard) returns all published lessons and flashcard decks as draggable cards
 **And** each card shows: item type icon (lesson/deck), title, author name, and status pill
 **And** items are ordered by their current `learning_path_items.sort_order`
 
 **Given** I drag an item to a new position in the list
 **When** I drop the item
-**Then** all affected `learning_path_items.sort_order` values are updated via an optimistic UI mutation
-**And** the reordered path is saved to Supabase immediately
+**Then** `PATCH /api/groups/:groupId/learning-path/reorder` (proxied to NestJS, protected by GroupEditorGuard) updates all affected `learning_path_items.sort_order` values via Prisma
+**And** the reorder is applied via React Query optimistic update
 **And** group members see the updated order on the group home page
 
 **Given** I click "Add to Path" and select a published lesson or deck not yet in the path
-**When** the action executes
-**Then** a new `learning_path_items` row is created with the next available `sort_order`
+**When** `POST /api/groups/:groupId/learning-path` (proxied to NestJS, protected by GroupEditorGuard) executes
+**Then** a new `learning_path_items` row is created via Prisma with the next available `sort_order`
 **And** the item appears at the bottom of the path list
 
 **Given** I click the "Remove" (ghost button) on an item in the path
-**When** the action executes
+**When** `DELETE /api/groups/:groupId/learning-path/:itemId` executes
 **Then** the `learning_path_items` row is deleted (the lesson/deck itself is NOT deleted)
 **And** remaining items' `sort_order` values are compacted
 
@@ -177,7 +177,6 @@ So that group members follow a structured, logical progression through the learn
 
 **Given** I am a regular Member (not Editor/Admin)
 **When** I try to access `/group/[groupId]/roadmap`
-**Then** I am redirected to the group home page (access denied)
+**Then** I am redirected to the group home page (access denied — GroupEditorGuard rejects)
 
 ---
-

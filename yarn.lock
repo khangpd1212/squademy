@@ -2656,6 +2656,7 @@ __metadata:
   resolution: "@squademy/database@workspace:packages/database"
   dependencies:
     "@prisma/client": "npm:^6.9.0"
+    bcrypt: "npm:^6.0.0"
     prisma: "npm:^6.9.0"
     typescript: "npm:^5"
   languageName: unknown
@@ -4515,7 +4516,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bcrypt@npm:^6":
+"bcrypt@npm:^6, bcrypt@npm:^6.0.0":
   version: 6.0.0
   resolution: "bcrypt@npm:6.0.0"
   dependencies:

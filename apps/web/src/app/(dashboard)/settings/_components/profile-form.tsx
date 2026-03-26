@@ -14,6 +14,7 @@ import {
   toNullableProfileValue,
   type ProfileFormValues,
 } from "../profile-schema";
+import { useUpdateProfile, useUploadAvatar } from "@/hooks/api/use-user-queries";
 
 type ProfileFormProps = {
   initialProfile: {
@@ -24,26 +25,6 @@ type ProfileFormProps = {
     location: string | null;
     age: number | null;
   };
-};
-
-type ProfileApiResponse = {
-  ok?: boolean;
-  message?: string;
-  field?: "displayName" | "fullName" | "school" | "location" | "age";
-  profile?: {
-    displayName: string | null;
-    avatarUrl: string | null;
-    fullName: string | null;
-    school: string | null;
-    location: string | null;
-    age: number | null;
-  };
-};
-
-type UploadApiResponse = {
-  ok?: boolean;
-  message?: string;
-  url?: string;
 };
 
 function formatInitials(name: string) {
@@ -63,10 +44,10 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialProfile.avatarUrl);
   const [displayNamePreview, setDisplayNamePreview] = useState(initialProfile.displayName);
+  const updateProfileMutation = useUpdateProfile();
+  const uploadAvatarMutation = useUploadAvatar();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -93,51 +74,37 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     const optimisticDisplayName = values.displayName.trim();
     setDisplayNamePreview(optimisticDisplayName);
 
-    setIsSaving(true);
     try {
       const normalizedAge = values.age.trim();
-      const response = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await updateProfileMutation.mutateAsync({
           displayName: optimisticDisplayName,
           fullName: toNullableProfileValue(values.fullName),
           school: toNullableProfileValue(values.school),
           location: toNullableProfileValue(values.location),
           age: normalizedAge === "" ? null : Number(normalizedAge),
-        }),
       });
-
-      const payload = (await response.json()) as ProfileApiResponse;
-      if (!response.ok) {
-        if (payload.field) {
-          form.setError(payload.field, {
-            type: "server",
-            message: payload.message ?? "Could not save this field.",
-          });
-        } else {
-          setSubmitError(payload.message ?? "Could not save profile. Please try again.");
-        }
-
-        setDisplayNamePreview(previousDisplayName);
-        return;
+      const profile = response?.profile ?? response;
+      if (profile?.displayName) {
+        setDisplayNamePreview(profile.displayName);
       }
-
-      if (payload.profile?.displayName) {
-        setDisplayNamePreview(payload.profile.displayName);
-      }
-      if (payload.profile?.avatarUrl !== undefined) {
-        setAvatarUrl(payload.profile.avatarUrl);
+      if (profile?.avatarUrl !== undefined) {
+        setAvatarUrl(profile.avatarUrl);
       }
 
       setSaveSuccess("Profile saved.");
-    } catch {
+    } catch (error) {
+      const typedError = error as Error & {
+        field?: "displayName" | "fullName" | "school" | "location" | "age";
+      };
+      if (typedError.field) {
+        form.setError(typedError.field, {
+          type: "server",
+          message: typedError.message ?? "Could not save this field.",
+        });
+      } else {
+        setSubmitError(typedError.message ?? "Could not save profile. Please try again.");
+      }
       setDisplayNamePreview(previousDisplayName);
-      setSubmitError("Network error. Please try again.");
-    } finally {
-      setIsSaving(false);
     }
   }
 
@@ -162,30 +129,10 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     const previousAvatarUrl = avatarUrl;
     const optimisticPreviewUrl = URL.createObjectURL(file);
     setAvatarUrl(optimisticPreviewUrl);
-    setIsUploadingAvatar(true);
 
     try {
-      const formData = new FormData();
-      formData.set("file", file);
-
-      const uploadResponse = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const uploadPayload = (await uploadResponse.json()) as UploadApiResponse;
-
-      if (!uploadResponse.ok || !uploadPayload.url) {
-        setAvatarUrl(previousAvatarUrl);
-        setAvatarError(uploadPayload.message ?? "Avatar upload failed.");
-        return;
-      }
-
-      const profileResponse = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const avatar = await uploadAvatarMutation.mutateAsync(file);
+      await updateProfileMutation.mutateAsync({
           displayName: form.getValues("displayName"),
           fullName: toNullableProfileValue(form.getValues("fullName")),
           school: toNullableProfileValue(form.getValues("school")),
@@ -194,25 +141,16 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             form.getValues("age").trim() === ""
               ? null
               : Number(form.getValues("age").trim()),
-          avatarUrl: uploadPayload.url,
-        }),
+          avatarUrl: avatar,
       });
-
-      const profilePayload = (await profileResponse.json()) as ProfileApiResponse;
-      if (!profileResponse.ok) {
-        setAvatarUrl(previousAvatarUrl);
-        setAvatarError(profilePayload.message ?? "Could not save avatar URL.");
-        return;
-      }
-
-      setAvatarUrl(uploadPayload.url);
+      setAvatarUrl(avatar);
       setSaveSuccess("Profile saved.");
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Network error. Please try again.";
       setAvatarUrl(previousAvatarUrl);
-      setAvatarError("Network error. Please try again.");
+      setAvatarError(message);
     } finally {
       URL.revokeObjectURL(optimisticPreviewUrl);
-      setIsUploadingAvatar(false);
     }
   }
 
@@ -239,7 +177,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               void handleAvatarChange(selected);
               event.currentTarget.value = "";
             }}
-            disabled={isUploadingAvatar || isSaving}
+            disabled={uploadAvatarMutation.isPending || updateProfileMutation.isPending}
           />
           {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
         </div>
@@ -301,8 +239,11 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={isSaving || isUploadingAvatar}>
-            {isSaving ? "Saving..." : "Save profile"}
+          <Button
+            type="submit"
+            disabled={updateProfileMutation.isPending || uploadAvatarMutation.isPending}
+          >
+            {updateProfileMutation.isPending ? "Saving..." : "Save profile"}
           </Button>
           {saveSuccess ? (
             <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">

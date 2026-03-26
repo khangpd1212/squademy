@@ -1,7 +1,7 @@
 # Epic List
 
 ### Epic 1: Foundation — Project Setup & Authentication
-Users can register, log in, manage their profile, export their data, and request account deletion. Establishes the technical foundation (Next.js + Supabase + shadcn/ui) and GDPR-compliant auth system that all other epics depend on.
+Users can register, log in, manage their profile, export their data, and request account deletion. Establishes the technical foundation (Next.js + NestJS + Prisma + shadcn/ui monorepo) and GDPR-compliant JWT auth system that all other epics depend on.
 **FRs covered:** FR1, FR2, FR3, FR4
 
 ### Epic 2: Group Management & Membership
@@ -25,16 +25,15 @@ Contributors can create exercises with templates and macros. The system performs
 **FRs covered:** FR19, FR20, FR21, FR22, FR23, FR24, FR35, FR36, FR37, FR38, FR39, FR40a, FR40b, FR40c, FR40d, FR40e, FR41
 
 ### Epic 7: Notifications System
-The platform sends email and in-app notifications for all trigger events: exercise assignment, creation deadline reminders, grading reminders, lesson approval/rejection, dispute opened/resolved, and streak milestones. Includes rate limiting, free-tier quota management, and in-app fallback.
+The platform sends email and in-app notifications for all trigger events: exercise assignment, creation deadline reminders, grading reminders, lesson approval/rejection, dispute opened/resolved, and streak milestones. Includes rate limiting, free-tier quota management, and in-app fallback. In-app notifications use React Query polling (no WebSocket/Realtime dependency).
 **FRs covered:** FR34, FR40
 
 ### Epic 8: Gamification & Engagement Engine
-The system tracks daily learning streaks, calculates and displays a live leaderboard updated in real-time via Supabase Realtime, awards contributor badges based on approved submissions, and renders a GitHub-style Activity Heatmap on the user profile to visualize learning consistency.
+The system tracks daily learning streaks, calculates and displays a live leaderboard updated via React Query polling (refetchInterval: 30s), awards contributor badges based on approved submissions, and renders a GitHub-style Activity Heatmap on the user profile to visualize learning consistency.
 **FRs covered:** FR42, FR43, FR44, FR45, FR46
 
 ### Epic 9: Admin Dashboard & Platform Operations
-Platform admins can monitor system health (CCU, DB connections, storage), manage users (warnings, bans), moderate content, track email quotas, and review growth analytics (MoM retention, streak velocity, contributor ratio).
+Platform admins can monitor system health (CCU, DB connections, storage), manage users (warnings, bans), moderate content, track email quotas, and review growth analytics (MoM retention, streak velocity, contributor ratio). All admin operations use NestJS AdminGuard.
 **FRs covered:** Platform admin journey (Journey 5 from PRD)
 
 ---
-

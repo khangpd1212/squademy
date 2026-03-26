@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useGenerateInviteLink } from "@/hooks/api/use-group-queries";
 import {
   Dialog,
   DialogContent,
@@ -23,8 +24,8 @@ export function InviteLinkSection({
   const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [revokeOpen, setRevokeOpen] = useState(false);
-  const [isRevoking, setIsRevoking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const generateInviteLinkMutation = useGenerateInviteLink(groupId);
 
   const inviteUrl =
     typeof window !== "undefined"
@@ -43,32 +44,14 @@ export function InviteLinkSection({
   }
 
   async function handleRevoke() {
-    setIsRevoking(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/groups/${groupId}/invite-link`, {
-        method: "DELETE",
-      });
-      const payload = (await response.json()) as {
-        ok?: boolean;
-        inviteCode?: string;
-        message?: string;
-      };
-
-      if (!response.ok) {
-        setError(payload.message ?? "Could not revoke invite link.");
-        return;
-      }
-
-      if (payload.inviteCode) {
-        setInviteCode(payload.inviteCode);
-      }
+      const newCode = await generateInviteLinkMutation.mutateAsync();
+      setInviteCode(newCode);
       setRevokeOpen(false);
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setIsRevoking(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error. Please try again.");
     }
   }
 
@@ -106,16 +89,16 @@ export function InviteLinkSection({
             <Button
               variant="outline"
               onClick={() => setRevokeOpen(false)}
-              disabled={isRevoking}
+              disabled={generateInviteLinkMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleRevoke}
-              disabled={isRevoking}
+              disabled={generateInviteLinkMutation.isPending}
             >
-              {isRevoking ? "Revoking..." : "Revoke"}
+              {generateInviteLinkMutation.isPending ? "Revoking..." : "Revoke"}
             </Button>
           </DialogFooter>
         </DialogContent>

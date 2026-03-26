@@ -1,4 +1,3 @@
-import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/register", "/join", "/api", "/privacy"];
@@ -9,24 +8,14 @@ function isPublicPath(pathname: string) {
 }
 
 /**
- * Verify access JWT when JWT_SECRET is set (same secret as NestJS).
- * If JWT_SECRET is unset, fall back to non-empty cookie check (local dev).
+ * Lightweight middleware that checks the `logged_in` cookie marker.
+ *
+ * This cookie is set/cleared by the browser-client when tokens change.
+ * It contains NO secrets — just a flag so the middleware can redirect
+ * unauthenticated users to /login without a page flash.
+ *
+ * Real token verification happens on the NestJS API via Bearer header.
  */
-async function isValidAccessToken(token: string): Promise<boolean> {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    return token.length > 0;
-  }
-  try {
-    await jwtVerify(token, new TextEncoder().encode(secret), {
-      algorithms: ["HS256"],
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
@@ -34,18 +23,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const accessToken = request.cookies.get("access_token")?.value;
+  const isLoggedIn = request.cookies.get("logged_in")?.value === "true";
 
-  if (!accessToken) {
-    const url = request.nextUrl.clone();
-    const redirectTarget = `${pathname}${search}`;
-    url.pathname = "/login";
-    url.search = "";
-    url.searchParams.set("redirect", redirectTarget);
-    return NextResponse.redirect(url);
-  }
-
-  if (!(await isValidAccessToken(accessToken))) {
+  if (!isLoggedIn) {
     const url = request.nextUrl.clone();
     const redirectTarget = `${pathname}${search}`;
     url.pathname = "/login";

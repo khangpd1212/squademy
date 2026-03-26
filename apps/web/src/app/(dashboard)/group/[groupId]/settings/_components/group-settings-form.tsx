@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useUpdateGroup } from "@/hooks/api/use-group-queries";
 import {
   groupSettingsSchema,
   type GroupSettingsInput,
@@ -25,12 +26,6 @@ type GroupSettingsFormProps = {
   groupId: string;
   initialValues: GroupSettingsInput;
   isAdmin: boolean;
-};
-
-type GroupSettingsResponse = {
-  ok?: boolean;
-  message?: string;
-  field?: "name" | "description" | "exercise_deadline_day" | "exercise_deadline_time";
 };
 
 const DAY_OPTIONS = [
@@ -60,6 +55,7 @@ export function GroupSettingsForm({
   isAdmin,
 }: GroupSettingsFormProps) {
   const router = useRouter();
+  const updateGroupMutation = useUpdateGroup(groupId);
   const form = useForm<GroupSettingsInput>({
     resolver: zodResolver(groupSettingsSchema),
     defaultValues: initialValues,
@@ -84,37 +80,23 @@ export function GroupSettingsForm({
     };
 
     try {
-      const response = await fetch(`/api/groups/${groupId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      const responseBody = (await response.json()) as GroupSettingsResponse;
-
-      if (!response.ok) {
-        if (responseBody.field === "name") {
-          form.setError("name", {
-            type: "server",
-            message: responseBody.message ?? "Could not save group name.",
-          });
-          return;
-        }
-
-        form.setError("root", {
-          type: "server",
-          message: responseBody.message ?? "Could not save settings.",
-        });
-        return;
-      }
-
+      await updateGroupMutation.mutateAsync(payload);
       toast.success("Settings saved.");
       router.refresh();
-    } catch {
+    } catch (error) {
+      const typedError = error as Error & {
+        field?: "name" | "description" | "exercise_deadline_day" | "exercise_deadline_time";
+      };
+      if (typedError.field === "name") {
+          form.setError("name", {
+            type: "server",
+            message: typedError.message ?? "Could not save group name.",
+          });
+        return;
+      }
       form.setError("root", {
         type: "server",
-        message: "Network error. Please try again.",
+        message: typedError.message ?? "Network error. Please try again.",
       });
     }
   }
@@ -214,8 +196,8 @@ export function GroupSettingsForm({
         <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
       ) : null}
 
-      <Button type="submit" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? "Saving..." : "Save"}
+      <Button type="submit" disabled={form.formState.isSubmitting || updateGroupMutation.isPending}>
+        {form.formState.isSubmitting || updateGroupMutation.isPending ? "Saving..." : "Save"}
       </Button>
     </form>
   );

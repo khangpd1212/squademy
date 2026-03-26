@@ -13,7 +13,8 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "db:generate": "turbo db:generate",
-    "db:migrate": "turbo db:migrate"
+    "db:migrate": "turbo db:migrate",
+    "db:seed-root": "yarn workspace @squademy/database db:seed-root"
   },
   "devDependencies": {
     "turbo": "^2"

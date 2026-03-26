@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient, getCurrentUser } from "@/lib/api/client";
+import { queryKeys } from "@/lib/api/query-keys";
 import { InvitationList } from "./_components/invitation-list";
 
 export type InvitationType = {
@@ -27,9 +29,16 @@ export default async function InvitationsPage() {
   if (!user) {
     redirect("/login");
   }
-
-  const { data: rawInvitations } =
-    await apiClient<InvitationData[]>("/invitations");
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.invitations.list(),
+    queryFn: async () => {
+      const { data } = await apiClient<InvitationData[]>("/invitations");
+      return data ?? [];
+    },
+  });
+  const rawInvitations =
+    queryClient.getQueryData<InvitationData[]>(queryKeys.invitations.list()) ?? [];
 
   const invitations: InvitationType[] = (rawInvitations ?? []).map((inv) => ({
     id: inv.id,
@@ -40,21 +49,23 @@ export default async function InvitationsPage() {
   }));
 
   return (
-    <div className="max-w-3xl space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Invitations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {invitations.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No pending invitations.
-            </p>
-          ) : (
-            <InvitationList invitations={invitations} />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="max-w-3xl space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Invitations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {invitations.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No pending invitations.
+              </p>
+            ) : (
+              <InvitationList invitations={invitations} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </HydrationBoundary>
   );
 }

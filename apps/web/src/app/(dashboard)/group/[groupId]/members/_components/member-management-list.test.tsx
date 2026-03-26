@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemberManagementList } from "./member-management-list";
+import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
@@ -32,7 +33,7 @@ describe("MemberManagementList", () => {
   });
 
   it("renders members with role badge and joined date", () => {
-    render(
+    renderWithQueryClient(
       <MemberManagementList
         members={members}
         currentUserId="user-1"
@@ -49,7 +50,7 @@ describe("MemberManagementList", () => {
   });
 
   it("shows role and remove controls for admin", () => {
-    render(
+    renderWithQueryClient(
       <MemberManagementList
         members={members}
         currentUserId="user-1"
@@ -63,7 +64,7 @@ describe("MemberManagementList", () => {
   });
 
   it("hides management controls for non-admin", () => {
-    render(
+    renderWithQueryClient(
       <MemberManagementList
         members={members}
         currentUserId="user-2"
@@ -85,7 +86,7 @@ describe("MemberManagementList", () => {
       json: async () => ({ ok: true }),
     });
 
-    render(
+    renderWithQueryClient(
       <MemberManagementList
         members={members}
         currentUserId="user-1"
@@ -107,7 +108,7 @@ describe("MemberManagementList", () => {
       json: async () => ({ ok: true }),
     });
 
-    render(
+    renderWithQueryClient(
       <MemberManagementList
         members={members}
         currentUserId="user-1"
@@ -133,7 +134,7 @@ describe("MemberManagementList", () => {
       }),
     });
 
-    render(
+    renderWithQueryClient(
       <MemberManagementList
         members={members}
         currentUserId="user-1"
@@ -164,7 +165,7 @@ describe("MemberManagementList", () => {
       }),
     });
 
-    render(
+    renderWithQueryClient(
       <MemberManagementList
         members={members}
         currentUserId="user-1"

@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-type SearchResult = {
-  id: string;
-  display_name: string | null;
-  avatar_url: string | null;
-};
+import { useCreateInvitation } from "@/hooks/api/use-invitation-queries";
+import { useSearchUsers } from "@/hooks/api/use-user-queries";
 
 type InviteByUsernameProps = {
   groupId: string;
@@ -17,70 +13,39 @@ type InviteByUsernameProps = {
 
 export function InviteByUsername({ groupId }: InviteByUsernameProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const createInvitationMutation = useCreateInvitation();
+  const searchQuery = useSearchUsers(debouncedQuery, groupId);
 
   useEffect(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [query]);
 
-    if (query.trim().length < 2) {
-      setResults([]);
+  useEffect(() => {
+    if (searchQuery.error) {
+      setError(searchQuery.error.message);
       return;
     }
-
-    timerRef.current = setTimeout(async () => {
-      setIsSearching(true);
-      setError(null);
-      try {
-        const response = await fetch(
-          `/api/profiles/search?q=${encodeURIComponent(query.trim())}&groupId=${groupId}`
-        );
-        if (response.ok) {
-          const data = (await response.json()) as { profiles: SearchResult[] };
-          setResults(data.profiles);
-        }
-      } catch {
-        setError("Search failed.");
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [query, groupId]);
+    setError(null);
+  }, [searchQuery.error]);
 
   async function handleSendInvite(inviteeId: string) {
     setSendingId(inviteeId);
     setError(null);
 
     try {
-      const response = await fetch("/api/invitations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupId, inviteeId }),
-      });
-
-      const payload = (await response.json()) as {
-        ok?: boolean;
-        message?: string;
-      };
-
-      if (!response.ok) {
-        setError(payload.message ?? "Could not send invitation.");
-        return;
-      }
-
+      await createInvitationMutation.mutateAsync({ groupId, inviteeId });
       setSentIds((prev) => new Set(prev).add(inviteeId));
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error. Please try again.");
     } finally {
       setSendingId(null);
     }
@@ -95,14 +60,14 @@ export function InviteByUsername({ groupId }: InviteByUsernameProps) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      {isSearching ? (
+      {searchQuery.isFetching ? (
         <p className="text-xs text-muted-foreground">Searching...</p>
       ) : null}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
 
-      {results.length > 0 ? (
+      {searchQuery.data && searchQuery.data.length > 0 ? (
         <ul className="rounded border divide-y">
-          {results.map((profile) => (
+          {searchQuery.data.map((profile) => (
             <li
               key={profile.id}
               className="flex items-center justify-between px-3 py-2"
@@ -130,8 +95,8 @@ export function InviteByUsername({ groupId }: InviteByUsernameProps) {
       ) : null}
 
       {query.trim().length >= 2 &&
-      !isSearching &&
-      results.length === 0 ? (
+      !searchQuery.isFetching &&
+      (searchQuery.data?.length ?? 0) === 0 ? (
         <p className="text-xs text-muted-foreground">No users found.</p>
       ) : null}
     </div>

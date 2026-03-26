@@ -8,7 +8,7 @@ export const profileFormSchema = z.object({
     .string()
     .trim()
     .min(1, "Display name is required.")
-    .max(80, "Display name is too long."),
+    .max(50, "Display name is too long."),
   fullName: z.string().trim().max(120, "Full name is too long."),
   school: z.string().trim().max(120, "School is too long."),
   location: z.string().trim().max(120, "Location is too long."),
@@ -39,7 +39,7 @@ export const profileUpdateSchema = z.object({
     .string()
     .trim()
     .min(1, "Display name is required.")
-    .max(80, "Display name is too long."),
+    .max(50, "Display name is too long."),
   fullName: optionalTrimmedString(120, "Full name"),
   school: optionalTrimmedString(120, "School"),
   location: optionalTrimmedString(120, "Location"),

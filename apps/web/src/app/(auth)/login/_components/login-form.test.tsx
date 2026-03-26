@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LoginForm } from "./login-form";
+import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 const pushMock = jest.fn();
 const searchParamsMock = new URLSearchParams();
@@ -28,7 +29,7 @@ describe("LoginForm", () => {
       }),
     });
 
-    render(<LoginForm />);
+    renderWithQueryClient(<LoginForm />);
 
     await user.type(screen.getByLabelText("Email"), "tina@example.com");
     await user.type(screen.getByLabelText("Password"), "12345678");
@@ -48,12 +49,14 @@ describe("LoginForm", () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
-        ok: true,
-        redirectTo: "/group/abc/exercises",
+        data: {
+          accessToken: "token-a",
+          refreshToken: "token-r",
+        },
       }),
     });
 
-    render(<LoginForm />);
+    renderWithQueryClient(<LoginForm />);
 
     await user.type(screen.getByLabelText("Email"), "tina@example.com");
     await user.type(screen.getByLabelText("Password"), "12345678");
@@ -61,8 +64,8 @@ describe("LoginForm", () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        "/api/auth/login?redirect=%2Fgroup%2Fabc%2Fexercises",
-        expect.objectContaining({ method: "POST" })
+        "http://localhost:4001/api/auth/login",
+        expect.objectContaining({ credentials: "include", method: "POST" })
       );
       expect(pushMock).toHaveBeenCalledWith("/group/abc/exercises");
     });

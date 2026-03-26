@@ -1,7 +1,7 @@
 ---
 project_name: 'squademy'
 user_name: 'USER'
-date: '2026-03-17'
+date: '2026-03-26'
 sections_completed: ['technology_stack', 'language_specific_rules', 'framework_specific_rules', 'testing_rules', 'code_quality_style', 'development_workflow']
 existing_patterns_found: 30
 ---
@@ -12,9 +12,24 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ---
 
+## Monorepo Structure
+
+| Workspace | Package | Purpose |
+|-----------|---------|---------|
+| `apps/web` | `@squademy/web` | Next.js 16 frontend (Vercel) |
+| `apps/api` | `@squademy/api` | NestJS 11 backend (Oracle VM) |
+| `packages/database` | `@squademy/database` | Prisma 6 schema + generated client |
+| `packages/shared` | `@squademy/shared` | Zod schemas, constants, shared types |
+
+- **Build system**: Turborepo (`turbo.json`) + Yarn Workspaces 4 (`packageManager: "yarn@4.13.0"`)
+- **Node linker**: `node-modules` (`.yarnrc.yml`)
+- **Scripts**: `yarn dev` / `yarn build` / `yarn test` / `yarn lint` (all via Turborepo)
+
+---
+
 ## Technology Stack & Versions
 
-### Installed (production)
+### Frontend (`apps/web`) — Production
 
 | Technology | Package | Version |
 |-----------|---------|---------|
@@ -27,17 +42,39 @@ _This file contains critical rules and patterns that AI agents must follow when 
 | Validation | Zod v4 (NOT v3 — different API) | ^4.3.6 |
 | Client State | Zustand | ^5.0.11 |
 | Server State | TanStack React Query | ^5.90.21 |
-| Auth/DB (SSR) | @supabase/ssr | ^0.9.0 |
-| Auth/DB (Client) | @supabase/supabase-js | ^2.99.1 |
 | i18n | next-intl | ^4.8.3 |
 | Theming | next-themes (class strategy) | ^0.4.6 |
 | Icons | Lucide React | ^0.577.0 |
 | Notifications | sonner | ^2.0.7 |
 | ID Generation | nanoid | ^5.1.6 |
-| Testing | Jest + jest-environment-jsdom | ^29.7.0 / ^30.3.0 |
+| Testing | Jest + jest-environment-jsdom | ^30.3.0 |
 | Testing Utils | @testing-library/react, jest-dom, user-event | ^16.3.2 / ^6.9.1 / ^14.6.1 |
 
-### Planned (in architecture, NOT yet installed — do NOT import)
+### Backend (`apps/api`) — Production
+
+| Technology | Package | Version |
+|-----------|---------|---------|
+| Framework | NestJS | ^11 |
+| Language | TypeScript | ^5 |
+| ORM | Prisma (via `@squademy/database`) | 6 |
+| Auth | Passport + passport-jwt + @nestjs/jwt | ^0.7 / ^4 / ^11 |
+| Validation | class-validator + class-transformer | ^0.14 / ^0.5 |
+| Rate Limiting | @nestjs/throttler | ^6 |
+| Password Hashing | bcrypt | ^6 |
+| ID Generation | nanoid v3 (CJS compatible) | ^3 |
+| Testing | Jest + ts-jest | ^30 / ^29 |
+
+### Database (`packages/database`)
+
+| Technology | Details |
+|-----------|---------|
+| Database | PostgreSQL (self-hosted on Oracle VM) |
+| ORM | Prisma 6 |
+| Schema | `packages/database/prisma/schema.prisma` |
+| Generate | `yarn db:generate` |
+| Migrate | `yarn db:migrate` |
+
+### Planned (NOT yet installed — do NOT import)
 
 - **Tiptap Community** — Rich text editor (WYSIWYG)
 - **Framer Motion** — Animations, gestures, flashcard flip
@@ -53,47 +90,103 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **shadcn/ui base-nova** uses `@base-ui/react` primitives (NOT Radix UI) — check imports when adding new components
 - **Zod v4** has different API from v3 (e.g., type inference) — use v4 docs
 - **React 19** — Server Components are default; mark `"use client"` for client interactivity; `ref` is a prop (no `forwardRef`)
-- **jest.config.cjs** — must be CommonJS format (required by `next/jest`)
+- **jest.config.cjs** (web) — must be CommonJS format (required by `next/jest`)
+- **NestJS** uses `import cookieParser from "cookie-parser"` (default import, not namespace)
+- **nanoid v3** in API (CJS compatible), v5 in web (ESM)
 
 ---
 
 ## Critical Implementation Rules
 
+### Authentication Architecture
+
+**Pattern: Pure Bearer Token + Cookie Marker**
+
+Auth tokens are stored in **localStorage** (client-side). A non-httpOnly `logged_in=true` cookie marker is used for Next.js proxy redirect checks.
+
+**Flow:**
+1. Login/Register API returns `{ accessToken, refreshToken }` in response body
+2. `browser-client.ts` stores both tokens in localStorage via `setAuthTokens()`
+3. `browser-client.ts` sets `logged_in=true` cookie marker via `setLoginMarkerCookie()`
+4. All API requests include `Authorization: Bearer <accessToken>` header
+5. When accessToken expires, `browser-client.ts` auto-refreshes via `/auth/refresh`
+6. `proxy.ts` checks `logged_in` cookie to redirect unauthenticated users
+
+**Token Lifetimes:**
+- Access token: 15 minutes
+- Refresh token: 7 days
+- Both rotated on refresh
+
+**Backend JWT Strategy:**
+- `JwtStrategy` extracts token from `Authorization: Bearer` header only
+- `JwtRefreshStrategy` also extracts from Bearer header only
+- NO cookie-based token extraction on backend
+
+**Known Deviation:** Architecture spec recommends httpOnly cookies. Current implementation uses localStorage due to cross-origin constraints (Vercel frontend + Oracle VM backend = different domains). Will migrate to httpOnly cookies when custom domain enables same-origin setup.
+
+### API Client Pattern (Frontend)
+
+**Two clients, different contexts:**
+
+| Client | File | Context | Usage |
+|--------|------|---------|-------|
+| Server-side | `src/lib/api/client.ts` | SSR / Server Components | Checks `logged_in` cookie marker; returns placeholder user for layout |
+| Client-side | `src/lib/api/browser-client.ts` | Browser / Client Components | Full auth with auto-refresh; stores tokens in localStorage |
+
+**`browser-client.ts` key functions:**
+- `apiRequest<T>(path, init)` — typed fetch with auto Bearer header
+- `apiFetchRaw(path, init)` — raw fetch for FormData uploads
+- `setAuthTokens(access, refresh)` — saves to localStorage + sets cookie marker
+- `clearAuthTokens()` — removes from localStorage + clears cookie marker
+- `getAccessToken()` / `getRefreshToken()` — read from localStorage
+
+**API base URL:** `NEXT_PUBLIC_API_URL` env var (e.g., `http://localhost:4001/api`)
+
+### NestJS Backend Rules
+
+**Module Structure:**
+- `AuthModule` — register, login, logout, refresh, me
+- `UsersModule` — profile CRUD, search
+- `GroupsModule` — group CRUD, invite management
+- `MembersModule` — membership management
+- `InvitationsModule` — invitation accept/reject
+
+**Controller Response Format:**
+```
+Success: { ok: true, data: { ... } }
+Error:   { ok: false, message: "...", error: "..." }
+```
+
+**DTO Validation:**
+- Use `class-validator` decorators on DTOs
+- `ValidationPipe` enabled globally (transform: true, whitelist: true)
+- Always include `@MaxLength()` on all string fields
+- Password: `@MinLength(6) @MaxLength(128)`
+- Display name: `@MinLength(1) @MaxLength(50)`
+
+**Global Guards & Filters:**
+- `ThrottlerGuard` bound globally via `APP_GUARD`
+- `HttpExceptionFilter` formats all errors as `{ ok: false, message, error }`
+- `JwtAuthGuard` applied per-route via `@UseGuards(JwtAuthGuard)`
+
+**Duplicate Email:** Returns `409 Conflict` (not 400)
+
 ### Language-Specific Rules (TypeScript)
 
 **Strict Mode & Typing:**
-- TypeScript strict mode is ON — avoid `any`; use `as unknown as X` only for Supabase client type gaps
-- `src/types/database.ts` is generated — run `supabase gen types typescript` after schema changes
+- TypeScript strict mode is ON — avoid `any`
 - Zod schemas must export both schema AND inferred type: `export const fooSchema = z.object(...)` + `export type FooInput = z.infer<typeof fooSchema>`
 
 **Zod v4 API (NOT v3):**
 - Use `z.email()` instead of `z.string().email()`
 - Use `z.infer<typeof schema>` for type inference
-- Validation: always use `safeParse()`, never `parse()` in API routes
+- Validation: always use `safeParse()`, never `parse()` in shared validation
 
 **Import/Export Conventions:**
 - Always use `@/*` path alias (maps to `./src/*`) — never relative `../../` paths
-- Exception: same-directory imports use `./` (e.g., `./use-supabase` in hooks)
+- Exception: same-directory imports use `./`
 - Barrel exports in `src/hooks/index.ts` and `src/stores/index.ts` — update when adding new modules
 - Heavy modules use dynamic import: `await import("nanoid")` pattern
-
-**API Route Pattern (strict order):**
-1. Authenticate: `const { data: { user } } = await supabase.auth.getUser()`
-2. Guard: `if (!user)` → return 401
-3. Parse body: `request.json().catch(() => null) as FooInput | null`
-4. Validate: `schema.safeParse(body)` → on failure return `{ message, field }` with 400
-5. Business logic → return `{ ok: true, ...data }` on success
-
-**Supabase Client Usage:**
-- Browser components: `createBrowserClient` from `@/lib/supabase/client`
-- Server (RSC, Route Handlers): `await createClient()` from `@/lib/supabase/server` (async — Next.js 16)
-- Admin operations: `createAdminClient` from `@/lib/supabase/admin` (service_role, server-only)
-- NEVER use server client in client components or vice versa
-
-**Environment Variables:**
-- `NEXT_PUBLIC_*` prefix = safe for client bundle
-- No prefix = server-only (never exposed to client)
-- API routes: explicit null check for env vars; proxy/middleware: `!` non-null assertion OK
 
 **Component Directives:**
 - Server Components are DEFAULT — do NOT add `"use client"` unless component uses hooks, event handlers, or browser APIs
@@ -108,10 +201,10 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Dynamic routes: `[groupId]`, `[inviteCode]`, `[lessonId]` etc.
 
 **Proxy (NOT Middleware):**
-- `src/proxy.ts` handles session refresh and auth redirects (Next.js 16 pattern)
-- Matcher excludes: static assets, images, favicon, robots, sitemap, common file types
+- `src/proxy.ts` handles auth redirects (Next.js 16 pattern)
+- Checks `logged_in` cookie marker (not JWT verification)
 - Unauthenticated users redirected to `/login?redirect={original_path}`
-- Public routes (no auth required): `/`, `/login`, `/register`, `/join/*`, `/api/*`
+- Public routes (no auth required): `/`, `/login`, `/register`, `/register/check-email`, `/join/*`, `/privacy`
 
 **Layouts:**
 - Root layout (`src/app/layout.tsx`): fonts (Nunito, Inter, Fira Code), NextIntlClientProvider, Providers (theme + query client), TooltipProvider, Toaster
@@ -121,17 +214,18 @@ _This file contains critical rules and patterns that AI agents must follow when 
 **React Hook Form + Zod Pattern:**
 1. Define schema in colocated `*-schema.ts` file
 2. Component: `useForm<FooInput>({ resolver: zodResolver(fooSchema) })`
-3. Submit: `fetch("/api/...", { method: "POST", body: JSON.stringify(data) })`
+3. Submit: call mutation hook (e.g., `useLogin`, `useRegister`)
 4. Handle API errors: set field-level errors via `form.setError()` or general `submitError` state
 5. Display: inline error messages below each field
 
 **State Management Split:**
 - **Zustand** for client-only UI state (sidebar, theme, future: flashcard session, quiz state)
-  - Pattern: `interface XState {}` → `export const useXStore = create<XState>((set) => ({...}))`
+  - Pattern: `interface XState {}` -> `export const useXStore = create<XState>((set) => ({...}))`
   - Store files in `src/stores/`, kebab-case names, barrel export via `index.ts`
-- **TanStack Query** for server state (DB reads/writes)
+- **TanStack Query** for server state (API reads/writes)
   - `staleTime: 60_000` (60s) configured in `src/lib/query-client.ts`
-  - `queryFn` calls Supabase client directly — no custom REST wrapper
+  - Query keys centralized in `src/lib/api/query-keys.ts`
+  - Hooks in `src/hooks/api/use-auth-queries.ts` and `use-user-queries.ts`
 - **React Hook Form** for form state only — do not mix with Zustand
 
 **shadcn/ui Components:**
@@ -149,29 +243,26 @@ _This file contains critical rules and patterns that AI agents must follow when 
 ### Testing Rules
 
 **Framework & Config:**
-- Jest with `next/jest` plugin, `jest-environment-jsdom`, config in `jest.config.cjs` (CommonJS)
-- Setup file: `jest.setup.ts` imports `@testing-library/jest-dom`
-- Test roots: `<rootDir>/src` (colocated) + `<rootDir>/tests` (integration/smoke)
+- Frontend: Jest with `next/jest` plugin, `jest-environment-jsdom`, config in `jest.config.cjs` (CommonJS)
+- Backend: Jest with `ts-jest`, config in `jest.config.ts`
+- Setup file (web): `jest.setup.ts` imports `@testing-library/jest-dom`
 
 **Test File Conventions:**
 - Colocate tests with source: `login-form.test.tsx` next to `login-form.tsx`
 - Schema tests: `login-schema.test.ts` next to `login-schema.ts`
-- API route tests: `route.test.ts` next to `route.ts`
 - Pattern: `**/?(*.)+(spec|test).ts?(x)`
 
 **Testing Patterns:**
 - Component tests: `@testing-library/react` with `render()`, `screen`, `userEvent`
-- API route tests: direct function import, mock Supabase client
+- Use `renderWithQueryClient()` from `@/test-utils/render-with-query-client` for components using TanStack Query
 - Schema tests: test valid/invalid inputs against Zod schemas
 - Use `@testing-library/user-event` (NOT `fireEvent`) for user interactions
-
-**Coverage:**
-- Collected from `src/**/*.{ts,tsx}` excluding `.d.ts` files
-- Run: `npm test` (standard), `npm run test:watch` (TDD), `npm run test:coverage`
+- Mock `global.fetch` for API call tests
+- Mock `next/navigation` for router tests
 
 **Module Mocking:**
-- Module alias `@/*` → `<rootDir>/src/$1` configured in jest
-- Mock Supabase clients in tests — never hit real DB in unit tests
+- Module alias `@/*` -> `<rootDir>/src/$1` configured in jest
+- Mock API responses via `global.fetch` — never hit real API in unit tests
 
 ### Code Quality & Style Rules
 
@@ -179,28 +270,39 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - `eslint.config.mjs` with flat config format (ESLint 9+)
 - Extends: `eslint-config-next/core-web-vitals` + `eslint-config-next/typescript`
 - Ignored paths: `_bmad/`, `_bmad-output/`, `docs/`, `.next/`, `out/`, `build/`
-- Run: `npm run lint`
+- Run: `yarn lint`
 
 **File Naming Conventions:**
 - Components: kebab-case files (`login-form.tsx`, `invite-link-section.tsx`)
 - Component exports: PascalCase (`LoginForm`, `InviteLinkSection`)
-- Hooks: kebab-case files prefixed with `use-` (`use-auth.ts`) → camelCase export (`useAuth`)
-- Stores: kebab-case with `-store` suffix (`ui-store.ts`) → `useXStore` export
+- Hooks: kebab-case files prefixed with `use-` (`use-auth-queries.ts`) -> camelCase export (`useLogin`)
+- Stores: kebab-case with `-store` suffix (`ui-store.ts`) -> `useXStore` export
 - Schemas: kebab-case with `-schema` suffix (`login-schema.ts`)
-- API routes: always `route.ts` in descriptive directory
-- Types: kebab-case (`database.ts`, `index.ts`)
+- DTOs (backend): kebab-case with `.dto.ts` suffix (`register.dto.ts`)
+- NestJS modules: kebab-case folders (`auth/`, `users/`, `groups/`)
 
 **Directory Organization:**
-- `src/app/` — Pages and API routes (App Router)
-- `src/components/ui/` — shadcn/ui primitives (auto-generated, editable)
-- `src/components/layout/` — Header, Sidebar, MobileNav
-- `src/components/{feature}/` — Feature-specific shared components
-- `src/app/**/_components/` — Page-local private components
-- `src/hooks/` — Custom React hooks with barrel export
-- `src/stores/` — Zustand stores with barrel export
-- `src/lib/` — Utilities, Supabase clients, auth helpers
-- `src/types/` — TypeScript type definitions
-- `src/i18n/` — Internationalization config
+
+Frontend (`apps/web/src/`):
+- `app/` — Pages (App Router)
+- `components/ui/` — shadcn/ui primitives
+- `components/layout/` — Header, Sidebar, MobileNav
+- `components/{feature}/` — Feature-specific shared components
+- `app/**/_components/` — Page-local private components
+- `hooks/` — Custom React hooks with barrel export
+- `hooks/api/` — TanStack Query hooks (API data fetching)
+- `stores/` — Zustand stores with barrel export
+- `lib/api/` — API clients (browser-client.ts, client.ts, query-keys.ts)
+- `lib/` — Utilities
+- `i18n/` — Internationalization config
+
+Backend (`apps/api/src/`):
+- `auth/` — AuthModule (controller, service, DTOs, strategies, guards)
+- `users/` — UsersModule (controller, service, DTOs)
+- `groups/` — GroupsModule
+- `members/` — MembersModule
+- `invitations/` — InvitationsModule
+- `common/` — Shared filters, guards, decorators
 
 **Styling Rules:**
 - Tailwind CSS utility classes only — no custom CSS files (except `globals.css` for theme tokens)
@@ -212,25 +314,28 @@ _This file contains critical rules and patterns that AI agents must follow when 
 ### Development Workflow Rules
 
 **Database Migrations:**
-- Use Supabase MCP tools for migration operations (apply_migration, list_migrations, execute_sql, etc.)
-- After schema changes: regenerate types via `mcp__supabase__generate_typescript_types` → update `src/types/database.ts`
-- Migration naming: descriptive with date prefix (e.g., `20260315_add_groups_description_and_rls_policies`)
-- All tables MUST have RLS enabled — no exceptions
+- Prisma schema in `packages/database/prisma/schema.prisma`
+- Generate client: `yarn db:generate` (runs `prisma generate`)
+- Apply migrations: `yarn db:migrate` (runs `prisma migrate dev`)
+- All model names use PascalCase, all `@@map()` use snake_case table names
+- All field `@map()` use snake_case column names
 
-**Supabase RLS (Row Level Security):**
-- Every new table requires RLS policies before use
-- Access controlled by `auth.uid()` + `group_members` role
-- Admin operations use `service_role` key — server-only, never client
-- Test RLS policies after creation — verify both allowed and denied access paths
-
-**Zero-OPEX Constraint:**
-- All infrastructure must operate within free tiers (Vercel, Supabase, Cloudflare R2)
-- No paid services — every technology choice must be validated against free tier limits
-- Supabase free: 500 concurrent DB connections, limited Realtime connections
-- Vercel free: limited serverless invocations — most reads should bypass Vercel (direct Supabase from browser)
+**Environment Variables:**
+- Frontend: `NEXT_PUBLIC_*` prefix = safe for client bundle; no prefix = server-only
+- Backend: all env vars are server-only (loaded via `@nestjs/config` ConfigModule)
+- Key env vars: `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `JWT_EXPIRATION`, `JWT_REFRESH_EXPIRATION`
+- `.env.local` for local development (gitignored)
 
 **Deployment:**
-- Hosted on Vercel (auto-deploy from main branch)
-- Environment variables set in Vercel dashboard — never commit `.env` files
-- `.env.local` for local development (gitignored)
-- Cron jobs configured in `vercel.json` with `CRON_SECRET` authorization
+- Frontend: Vercel (auto-deploy from main branch)
+- Backend: Oracle VM (Docker Compose + Nginx + SSL)
+- Database: PostgreSQL on Oracle VM
+
+### Architecture Deviations
+
+| Spec Says | Current Implementation | Reason |
+|-----------|----------------------|--------|
+| httpOnly cookies for JWT | localStorage + cookie marker | Cross-origin (Vercel + Oracle VM = different domains) |
+| Shared Zod schemas for backend validation | class-validator DTOs on backend | NestJS convention; Zod schemas used on frontend only |
+| Separate users + profiles tables | Single `User` model with all fields | Simplified for MVP; can split later if needed |
+| Password min 8 chars | Password min 6 chars | User decision for better UX during early testing |

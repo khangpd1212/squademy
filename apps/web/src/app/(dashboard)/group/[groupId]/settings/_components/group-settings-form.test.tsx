@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { GroupSettingsForm } from "./group-settings-form";
+import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 const refreshMock = jest.fn();
 const toastSuccessMock = jest.fn();
@@ -33,14 +34,14 @@ describe("GroupSettingsForm", () => {
   });
 
   it("renders pre-populated name and description", () => {
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     expect(screen.getByLabelText("Group name")).toHaveValue("IELTS Warriors");
     expect(screen.getByLabelText("Description")).toHaveValue("Practice together");
   });
 
   it('shows "No schedule" when exercise_deadline_day is null', () => {
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     const trigger = screen.getByLabelText("Weekly exercise deadline day");
     expect(trigger).toHaveTextContent("No schedule");
@@ -48,7 +49,7 @@ describe("GroupSettingsForm", () => {
 
   it("shows time input when deadline day is selected", async () => {
     const user = userEvent.setup();
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     expect(
       screen.queryByLabelText("Weekly exercise deadline time")
@@ -62,7 +63,7 @@ describe("GroupSettingsForm", () => {
 
   it("shows inline error for empty name on submit", async () => {
     const user = userEvent.setup();
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     await user.clear(screen.getByLabelText("Group name"));
     await user.click(screen.getByRole("button", { name: "Save" }));
@@ -80,7 +81,7 @@ describe("GroupSettingsForm", () => {
     });
     (global.fetch as jest.Mock).mockReturnValue(fetchPromise);
 
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     await user.click(screen.getByRole("button", { name: "Save" }));
 
@@ -101,7 +102,7 @@ describe("GroupSettingsForm", () => {
       json: async () => ({ ok: true }),
     });
 
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     await user.click(screen.getByRole("button", { name: "Save" }));
 
@@ -118,7 +119,7 @@ describe("GroupSettingsForm", () => {
       }),
     });
 
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     await user.click(screen.getByRole("button", { name: "Save" }));
 
@@ -134,7 +135,7 @@ describe("GroupSettingsForm", () => {
       }),
     });
 
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     await user.click(screen.getByRole("button", { name: "Save" }));
 
@@ -145,12 +146,12 @@ describe("GroupSettingsForm", () => {
     const user = userEvent.setup();
     (global.fetch as jest.Mock).mockRejectedValue(new Error("Network failure"));
 
-    render(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
+    renderWithQueryClient(<GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin />);
 
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(
-      await screen.findByText("Network error. Please try again.")
+      await screen.findByText("Network failure")
     ).toBeInTheDocument();
   });
 
@@ -161,7 +162,7 @@ describe("GroupSettingsForm", () => {
       json: async () => ({ ok: true }),
     });
 
-    render(
+    renderWithQueryClient(
       <GroupSettingsForm
         groupId="group-1"
         initialValues={{
@@ -185,7 +186,7 @@ describe("GroupSettingsForm", () => {
   });
 
   it("renders read-only content for non-admin", () => {
-    render(
+    renderWithQueryClient(
       <GroupSettingsForm groupId="group-1" initialValues={getInitialValues()} isAdmin={false} />
     );
 
