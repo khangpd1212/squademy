@@ -1,8 +1,8 @@
 import { IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min, MinLength } from "class-validator";
-import { VALIDATION } from "@squademy/shared";
-import type { ProfileUpdateInput } from "@squademy/shared";
+import { ProfileFormValues, VALIDATION } from "@squademy/shared";
+import { isNull } from "util";
 
-export class UpdateUserDto implements ProfileUpdateInput {
+export class UpdateUserDto implements ProfileFormValues {
   @IsOptional()
   @IsString()
   @MinLength(VALIDATION.DISPLAY_NAME_MIN)
@@ -28,9 +28,8 @@ export class UpdateUserDto implements ProfileUpdateInput {
   @MaxLength(VALIDATION.PROFILE_FIELD_MAX)
   location?: string;
 
-  @IsOptional()
   @IsInt()
   @Min(VALIDATION.AGE_MIN)
   @Max(VALIDATION.AGE_MAX)
-  age?: number;
+  age: number | null;
 }
