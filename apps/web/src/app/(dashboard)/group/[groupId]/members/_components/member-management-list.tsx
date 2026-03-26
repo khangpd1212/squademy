@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { GROUP_ROLES } from "@squademy/shared";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ export function MemberManagementList({
     [members, removeDialogUserId]
   );
 
-  const roleOptions: MemberRole[] = ["admin", "editor", "member"];
+  const roleOptions: MemberRole[] = Object.values(GROUP_ROLES) as MemberRole[];
 
   async function handleRoleChange(userId: string, role: MemberRole) {
     setErrorsByUser((prev) => ({ ...prev, [userId]: "" }));
@@ -105,7 +106,7 @@ export function MemberManagementList({
           const profile = member.profiles;
           const displayName = profile?.display_name ?? "Unknown";
           const initials = displayName.slice(0, 2).toUpperCase();
-          const memberRole = (member.role as MemberRole) ?? "member";
+          const memberRole = (member.role as MemberRole) ?? GROUP_ROLES.MEMBER;
           const isCurrentUser = member.user_id === currentUserId;
           const isPending =
             updatingRoleFor === member.user_id || removingUserId === member.user_id;

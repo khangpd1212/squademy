@@ -1,15 +1,17 @@
 import { IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min, MinLength } from "class-validator";
+import { VALIDATION } from "@squademy/shared";
+import type { ProfileUpdateInput } from "@squademy/shared";
 
-export class UpdateUserDto {
+export class UpdateUserDto implements ProfileUpdateInput {
   @IsOptional()
   @IsString()
-  @MinLength(1)
-  @MaxLength(50)
-  displayName?: string;
+  @MinLength(VALIDATION.DISPLAY_NAME_MIN)
+  @MaxLength(VALIDATION.DISPLAY_NAME_MAX)
+  displayName: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(120)
+  @MaxLength(VALIDATION.PROFILE_FIELD_MAX)
   fullName?: string;
 
   @IsOptional()
@@ -18,17 +20,17 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(120)
+  @MaxLength(VALIDATION.PROFILE_FIELD_MAX)
   school?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(120)
+  @MaxLength(VALIDATION.PROFILE_FIELD_MAX)
   location?: string;
 
   @IsOptional()
   @IsInt()
-  @Min(5)
-  @Max(120)
+  @Min(VALIDATION.AGE_MIN)
+  @Max(VALIDATION.AGE_MAX)
   age?: number;
 }

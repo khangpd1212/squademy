@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { INVITATION_STATUS } from "@squademy/shared";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
 
@@ -70,14 +71,22 @@ export function useRespondInvitation() {
       id: string;
       action: "accept" | "decline";
     }) => {
-      const result = await apiRequest<{ groupId?: string }>(`/invitations/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ action }),
-      });
+      const statusMap = {
+        accept: INVITATION_STATUS.ACCEPTED,
+        decline: INVITATION_STATUS.DECLINED,
+      } as const;
+      const result = await apiRequest<{ groupId?: string; group?: { id: string } }>(
+        `/invitations/${id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status: statusMap[action] }),
+        },
+      );
       if (result.error) {
         throw new Error(result.error);
       }
-      return { id, action, groupId: result.data?.groupId };
+      const groupId = result.data?.groupId ?? result.data?.group?.id;
+      return { id, action, groupId };
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list() });

@@ -15,10 +15,10 @@ describe("loginSchema", () => {
     expect(result.error.issues[0]?.path).toEqual(["email"]);
   });
 
-  it("requires password to be present", () => {
+  it("rejects password shorter than 6 characters", () => {
     const result = loginSchema.safeParse({
       email: "user@example.com",
-      password: "",
+      password: "12345",
     });
 
     expect(result.success).toBe(false);
@@ -27,5 +27,14 @@ describe("loginSchema", () => {
     }
 
     expect(result.error.issues[0]?.path).toEqual(["password"]);
+  });
+
+  it("accepts valid login input", () => {
+    const result = loginSchema.safeParse({
+      email: "user@example.com",
+      password: "123456",
+    });
+
+    expect(result.success).toBe(true);
   });
 });

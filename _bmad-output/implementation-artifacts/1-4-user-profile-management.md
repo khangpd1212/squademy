@@ -1,6 +1,6 @@
 # Story 1.4: User Profile Management
 
-Status: done
+Status: in-progress
 
 ## Story
 
@@ -106,30 +106,39 @@ GPT-5.3 Codex
 ### File List
 
 - `_bmad-output/implementation-artifacts/1-4-user-profile-management.md`
-- `src/app/(dashboard)/settings/page.tsx`
-- `src/app/(dashboard)/settings/profile-schema.ts`
-- `src/app/(dashboard)/settings/_components/profile-form.tsx`
-- `src/app/(dashboard)/settings/_components/profile-form.test.tsx`
-- `src/app/api/profile/route.ts`
-- `src/app/api/profile/route.test.ts`
-- `src/app/api/files/upload/route.ts`
-- `src/app/api/files/upload/route.test.ts`
-- `src/types/database.ts`
-- `packages/database/prisma/migrations/` (extended profile fields on users table)
+- `apps/web/src/app/(dashboard)/settings/page.tsx`
+- `apps/web/src/app/(dashboard)/settings/profile-schema.ts`
+- `apps/web/src/app/(dashboard)/settings/_components/profile-form.tsx`
+- `apps/web/src/app/(dashboard)/settings/_components/profile-form.test.tsx`
+- `apps/web/src/hooks/api/use-user-queries.ts`
+- `apps/api/src/users/users.controller.ts`
+- `apps/api/src/users/users.service.ts`
+- `apps/api/src/users/dto/update-user.dto.ts`
+- `packages/database/prisma/schema.prisma` (extended profile fields on users table)
 
 ## Change Log
 
 - 2026-03-15: Implemented Story 1.4 profile management end-to-end (UI, API, validation, tests, migration).
 - 2026-03-15: Code-review pass completed with fixes applied for profile-row upsert fallback, avatar URL safety guard, and empty-file upload validation.
+- 2026-03-26: Epic 1 adversarial review — removed broken upload pipeline (route handler, upload hook, file input UI). Avatar upload deferred until Cloudflare R2 is configured. Removed dead server-side prefetch from settings page. Updated File List to match actual files.
 
 ## Senior Developer Review (AI)
 
+### Reviewer
+
+Claude claude-4.6-opus-high-thinking
+
+### Date
+
+2026-03-26
+
 ### Outcome
 
-Approve
+Changes Requested (avatar upload deferred, other issues fixed)
 
 ### Findings and Resolution
 
-- [x] [MEDIUM] `PATCH /api/profile` previously failed when a profile row was missing. Updated to upsert and then re-select by user id.
-- [x] [MEDIUM] `PATCH /api/profile` accepted arbitrary avatar URL strings. Added URL safety guard (`data:image/`, `https://`, `http://`).
-- [x] [LOW] `POST /api/files/upload` did not reject zero-byte files. Added explicit empty-file validation.
+- [x] [CRITICAL] Avatar upload pipeline entirely broken: upload hook called NestJS (no endpoint), Next.js route checked wrong cookie, base64 storage unscalable. **Resolved: removed upload code, deferred to Cloudflare R2 setup.**
+- [x] [HIGH] Settings page server-side prefetch always failed (server-side client cannot send Bearer tokens). **Resolved: removed dead prefetch.**
+- [x] [HIGH] File List contained 4 ghost files that never existed. **Resolved: corrected File List.**
+- [ ] [DEFERRED] AC 3 (avatar upload JPG/PNG <= 2MB) not implemented — blocked on Cloudflare R2 setup.

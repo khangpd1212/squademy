@@ -70,4 +70,28 @@ describe("LoginForm", () => {
       expect(pushMock).toHaveBeenCalledWith("/group/abc/exercises");
     });
   });
+
+  it("blocks open redirect and falls back to /dashboard", async () => {
+    const user = userEvent.setup();
+    searchParamsMock.set("redirect", "//evil.com");
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          accessToken: "token-a",
+          refreshToken: "token-r",
+        },
+      }),
+    });
+
+    renderWithQueryClient(<LoginForm />);
+
+    await user.type(screen.getByLabelText("Email"), "tina@example.com");
+    await user.type(screen.getByLabelText("Password"), "12345678");
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/dashboard");
+    });
+  });
 });

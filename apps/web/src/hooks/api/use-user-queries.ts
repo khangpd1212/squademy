@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiFetchRaw, apiRequest } from "@/lib/api/browser-client";
+import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
 
 export type SearchResult = {
@@ -21,11 +21,6 @@ type ProfileApiResponse = {
     location: string | null;
     age: number | null;
   };
-};
-
-type UploadApiResponse = {
-  message?: string;
-  url?: string;
 };
 
 type UpdateProfileInput = {
@@ -116,23 +111,4 @@ export function useUpdateProfile() {
   });
 }
 
-export function useUploadAvatar() {
-  return useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.set("file", file);
-
-      const uploadResponse = await apiFetchRaw("/files/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const uploadPayload = (await uploadResponse.json()) as UploadApiResponse;
-
-      if (!uploadResponse.ok || !uploadPayload.url) {
-        throw new Error(uploadPayload.message ?? "Avatar upload failed.");
-      }
-
-      return uploadPayload.url;
-    },
-  });
-}
+// TODO: Implement useUploadAvatar when Cloudflare R2 file storage is configured

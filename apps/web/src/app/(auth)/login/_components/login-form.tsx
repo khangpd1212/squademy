@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLogin } from "@/hooks/api/use-auth-queries";
+import { getLoginRedirectTarget } from "@/lib/auth/redirect";
 import {
   invalidCredentialsMessage,
   loginSchema,
@@ -34,8 +35,7 @@ export function LoginForm() {
 
     try {
       await loginMutation.mutateAsync(values);
-      const redirect = searchParams.get("redirect");
-      router.push(redirect ?? "/dashboard");
+      router.push(getLoginRedirectTarget(searchParams.get("redirect")));
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Network error. Please try again.";

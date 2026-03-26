@@ -1,10 +1,10 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
+import { UserRole } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export type MemberRole = "admin" | "editor" | "member";
 
 export type GroupMember = {
   user_id: string;
@@ -68,7 +68,7 @@ export function useUpdateMemberRole(groupId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: MemberRole }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
       const result = await apiRequest(`/groups/${groupId}/members/${userId}/role`, {
         method: "PATCH",
         body: JSON.stringify({ role }),

@@ -7,14 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  allowedAvatarMimeTypes,
-  maxAvatarSizeBytes,
-  profileFormSchema,
-  toNullableProfileValue,
-  type ProfileFormValues,
-} from "../profile-schema";
-import { useUpdateProfile, useUploadAvatar } from "@/hooks/api/use-user-queries";
+import { useUpdateProfile } from "@/hooks/api/use-user-queries";
+import { profileFormSchema, ProfileFormValues, toNullableString, VALIDATION } from "@squademy/shared";
 
 type ProfileFormProps = {
   initialProfile: {
@@ -42,12 +36,10 @@ function formatInitials(name: string) {
 
 export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [avatarError, setAvatarError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialProfile.avatarUrl);
+  const [avatarUrl] = useState<string | null>(initialProfile.avatarUrl);
   const [displayNamePreview, setDisplayNamePreview] = useState(initialProfile.displayName);
   const updateProfileMutation = useUpdateProfile();
-  const uploadAvatarMutation = useUploadAvatar();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -56,7 +48,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       fullName: initialProfile.fullName ?? "",
       school: initialProfile.school ?? "",
       location: initialProfile.location ?? "",
-      age: typeof initialProfile.age === "number" ? String(initialProfile.age) : "",
+      age: initialProfile.age,
     },
     mode: "onSubmit",
   });
@@ -75,20 +67,16 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     setDisplayNamePreview(optimisticDisplayName);
 
     try {
-      const normalizedAge = values.age.trim();
       const response = await updateProfileMutation.mutateAsync({
           displayName: optimisticDisplayName,
-          fullName: toNullableProfileValue(values.fullName),
-          school: toNullableProfileValue(values.school),
-          location: toNullableProfileValue(values.location),
-          age: normalizedAge === "" ? null : Number(normalizedAge),
+          fullName: toNullableString(values.fullName),
+          school: toNullableString(values.school),
+          location: toNullableString(values.location),
+          age: values.age,
       });
-      const profile = response?.profile ?? response;
+      const profile = response?.profile;
       if (profile?.displayName) {
         setDisplayNamePreview(profile.displayName);
-      }
-      if (profile?.avatarUrl !== undefined) {
-        setAvatarUrl(profile.avatarUrl);
       }
 
       setSaveSuccess("Profile saved.");
@@ -108,52 +96,6 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     }
   }
 
-  async function handleAvatarChange(file: File | null) {
-    setAvatarError(null);
-    setSaveSuccess(null);
-
-    if (!file) {
-      return;
-    }
-
-    if (!allowedAvatarMimeTypes.includes(file.type as (typeof allowedAvatarMimeTypes)[number])) {
-      setAvatarError("Avatar must be a JPG or PNG image.");
-      return;
-    }
-
-    if (file.size > maxAvatarSizeBytes) {
-      setAvatarError("Avatar must be 2MB or smaller.");
-      return;
-    }
-
-    const previousAvatarUrl = avatarUrl;
-    const optimisticPreviewUrl = URL.createObjectURL(file);
-    setAvatarUrl(optimisticPreviewUrl);
-
-    try {
-      const avatar = await uploadAvatarMutation.mutateAsync(file);
-      await updateProfileMutation.mutateAsync({
-          displayName: form.getValues("displayName"),
-          fullName: toNullableProfileValue(form.getValues("fullName")),
-          school: toNullableProfileValue(form.getValues("school")),
-          location: toNullableProfileValue(form.getValues("location")),
-          age:
-            form.getValues("age").trim() === ""
-              ? null
-              : Number(form.getValues("age").trim()),
-          avatarUrl: avatar,
-      });
-      setAvatarUrl(avatar);
-      setSaveSuccess("Profile saved.");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Network error. Please try again.";
-      setAvatarUrl(previousAvatarUrl);
-      setAvatarError(message);
-    } finally {
-      URL.revokeObjectURL(optimisticPreviewUrl);
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -165,21 +107,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
           <p className="font-medium" data-testid="profile-preview-name">
             {displayNamePreview}
           </p>
-          <Label htmlFor="avatar" className="text-sm">
-            Avatar (JPG/PNG, up to 2MB)
-          </Label>
-          <Input
-            id="avatar"
-            type="file"
-            accept="image/jpeg,image/png"
-            onChange={(event) => {
-              const selected = event.target.files?.[0] ?? null;
-              void handleAvatarChange(selected);
-              event.currentTarget.value = "";
-            }}
-            disabled={uploadAvatarMutation.isPending || updateProfileMutation.isPending}
-          />
-          {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
+          <p className="text-xs text-muted-foreground">
+            Avatar upload will be available after file storage is configured.
+          </p>
         </div>
       </div>
 
@@ -226,8 +156,8 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
           <Input
             id="age"
             type="number"
-            min={5}
-            max={120}
+            min={VALIDATION.AGE_MIN}
+            max={VALIDATION.AGE_MAX}
             {...form.register("age")}
             aria-invalid={form.formState.errors.age ? "true" : "false"}
           />
@@ -241,7 +171,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         <div className="flex items-center gap-3">
           <Button
             type="submit"
-            disabled={updateProfileMutation.isPending || uploadAvatarMutation.isPending}
+            disabled={updateProfileMutation.isPending}
           >
             {updateProfileMutation.isPending ? "Saving..." : "Save profile"}
           </Button>

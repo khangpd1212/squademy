@@ -1,3 +1,5 @@
+export { VALIDATION } from "./validation";
+
 export const GROUP_ROLES = {
   ADMIN: "admin",
   EDITOR: "editor",

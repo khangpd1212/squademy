@@ -12,7 +12,7 @@ import { useCreateGroup } from "@/hooks/api/use-group-queries";
 import {
   createGroupSchema,
   type CreateGroupInput,
-} from "@/app/api/groups/group-schema";
+} from "@squademy/shared";
 
 export function CreateGroupForm() {
   const router = useRouter();

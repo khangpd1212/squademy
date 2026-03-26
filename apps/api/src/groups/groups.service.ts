@@ -3,14 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { GROUP_ROLES, VALIDATION } from "@squademy/shared";
 import { customAlphabet } from "nanoid";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateGroupDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 
 const generateInviteCode = customAlphabet(
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-  8,
+  VALIDATION.INVITE_CODE_CHARSET,
+  VALIDATION.INVITE_CODE_LENGTH,
 );
 
 @Injectable()
@@ -29,7 +30,7 @@ export class GroupsService {
         members: {
           create: {
             userId,
-            role: "admin",
+            role: GROUP_ROLES.ADMIN,
           },
         },
       },
@@ -95,7 +96,7 @@ export class GroupsService {
       data: {
         groupId: group.id,
         userId,
-        role: "member",
+        role: GROUP_ROLES.MEMBER,
       },
     });
 

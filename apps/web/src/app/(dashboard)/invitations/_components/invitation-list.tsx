@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useRespondInvitation } from "@/hooks/api/use-invitation-queries";
-import type { InvitationType } from "../page";
+import type { InvitationType } from "@/hooks/api/use-invitation-queries";
 
 type InvitationListProps = {
   invitations: InvitationType[];

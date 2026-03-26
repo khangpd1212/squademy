@@ -117,20 +117,19 @@ GPT-5.3 Codex
 ### File List
 
 - `_bmad-output/implementation-artifacts/1-3-user-login-session-management.md`
-- `src/app/(auth)/login/page.tsx`
-- `src/app/(auth)/login/login-schema.ts`
-- `src/app/(auth)/login/login-schema.test.ts`
-- `src/app/(auth)/login/_components/login-form.tsx`
-- `src/app/(auth)/login/_components/login-form.test.tsx`
-- `src/app/(auth)/login/page.test.tsx`
-- `src/app/api/auth/login/route.ts`
-- `src/app/api/auth/login/route.test.ts`
-- `src/app/api/auth/logout/route.ts`
-- `src/app/api/auth/logout/route.test.ts`
-- `src/lib/auth/redirect.ts`
-- `src/proxy.ts`
-- `src/proxy.test.ts`
-- `src/components/layout/header.tsx`
+- `apps/web/src/app/(auth)/login/page.tsx`
+- `apps/web/src/app/(auth)/login/login-schema.ts`
+- `apps/web/src/app/(auth)/login/login-schema.test.ts`
+- `apps/web/src/app/(auth)/login/_components/login-form.tsx`
+- `apps/web/src/app/(auth)/login/_components/login-form.test.tsx`
+- `apps/web/src/app/(auth)/login/page.test.tsx`
+- `apps/web/src/lib/auth/redirect.ts`
+- `apps/web/src/proxy.ts`
+- `apps/web/src/components/layout/header.tsx`
+- `apps/web/src/hooks/api/use-auth-queries.ts`
+- `apps/api/src/auth/auth.controller.ts`
+- `apps/api/src/auth/auth.service.ts`
+- `apps/api/src/auth/dto/login.dto.ts`
 
 ### Change Log
 
@@ -161,3 +160,12 @@ Approve
 
 - [x] [Medium] Handle `signOut` failure in `POST /api/auth/logout` instead of always redirecting success.
 - [x] [Medium] Add regression test for logout failure path returning a server error response.
+
+### Epic 1 Review (2026-03-26)
+
+Reviewer: Claude claude-4.6-opus-high-thinking
+
+- [x] [CRITICAL] Open redirect vulnerability — login form read `redirect` query param and passed directly to `router.push()` without validation. **Fixed: now uses `getLoginRedirectTarget()` from `src/lib/auth/redirect.ts`.**
+- [x] [CRITICAL] File List contained 6 ghost files (Next.js API routes and proxy test that never existed). **Fixed: corrected File List.**
+- [x] [MEDIUM] Frontend login schema used `min(1)` while backend LoginDto used `@MinLength(6)`. **Fixed: aligned frontend to `min(6)` to match spec and backend.**
+- [x] [MEDIUM] Added test for open redirect prevention in login form.

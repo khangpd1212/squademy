@@ -44,9 +44,7 @@ describe("ProfileForm", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it("shows avatar size validation error and blocks upload", async () => {
-    const user = userEvent.setup();
-
+  it("shows avatar placeholder message when upload is not configured", () => {
     renderWithQueryClient(
       <ProfileForm
         initialProfile={{
@@ -60,14 +58,9 @@ describe("ProfileForm", () => {
       />
     );
 
-    const oversized = new File([new Uint8Array(2 * 1024 * 1024 + 1)], "big.png", {
-      type: "image/png",
-    });
-
-    await user.upload(screen.getByLabelText("Avatar (JPG/PNG, up to 2MB)"), oversized);
-
-    expect(await screen.findByText("Avatar must be 2MB or smaller.")).toBeInTheDocument();
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Avatar upload will be available after file storage is configured.")
+    ).toBeInTheDocument();
   });
 
   it("optimistically updates preview name and shows inline success", async () => {

@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { GROUP_ROLES, INVITATION_STATUS } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -15,7 +16,7 @@ export class InvitationsService {
       where: { groupId_userId: { groupId, userId: invitedBy } },
     });
 
-    if (!membership || membership.role !== "admin") {
+    if (!membership || membership.role !== GROUP_ROLES.ADMIN) {
       throw new ForbiddenException("Only admins can send invitations");
     }
 
@@ -28,7 +29,7 @@ export class InvitationsService {
     }
 
     const existingInvite = await this.prisma.groupInvitation.findFirst({
-      where: { groupId, inviteeId, status: "pending" },
+      where: { groupId, inviteeId, status: INVITATION_STATUS.PENDING },
     });
 
     if (existingInvite) {
@@ -62,7 +63,7 @@ export class InvitationsService {
       throw new ForbiddenException("You can only respond to your own invitations");
     }
 
-    if (invitation.status !== "pending") {
+    if (invitation.status !== INVITATION_STATUS.PENDING) {
       throw new BadRequestException("Invitation has already been responded to");
     }
 
@@ -74,12 +75,12 @@ export class InvitationsService {
       },
     });
 
-    if (status === "accepted") {
+    if (status === INVITATION_STATUS.ACCEPTED) {
       await this.prisma.groupMember.create({
         data: {
           groupId: invitation.groupId,
           userId,
-          role: "member",
+          role: GROUP_ROLES.MEMBER,
         },
       });
     }
@@ -89,7 +90,7 @@ export class InvitationsService {
 
   async listForUser(userId: string) {
     return this.prisma.groupInvitation.findMany({
-      where: { inviteeId: userId, status: "pending" },
+      where: { inviteeId: userId, status: INVITATION_STATUS.PENDING },
       include: {
         group: { select: { id: true, name: true } },
         inviter: { select: { id: true, displayName: true, email: true } },

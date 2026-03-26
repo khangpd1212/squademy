@@ -175,22 +175,22 @@ GPT-5.3 Codex
 ### File List
 
 - `_bmad-output/implementation-artifacts/1-1-project-foundation-design-system-setup.md`
-- `middleware.ts`
-- `package.json`
-- `src/app/page.tsx`
-- `src/app/dashboard/page.tsx`
-- `src/app/layout.tsx`
-- `src/app/globals.css`
-- `src/components/providers.tsx`
-- `src/lib/api/browser-client.ts`
-- `src/lib/api/client.ts`
+- `apps/web/src/proxy.ts`
+- `apps/web/package.json`
+- `apps/web/src/app/page.tsx`
+- `apps/web/src/app/dashboard/page.tsx`
+- `apps/web/src/app/layout.tsx`
+- `apps/web/src/app/globals.css`
+- `apps/web/src/components/providers.tsx`
+- `apps/web/src/lib/api/browser-client.ts`
+- `apps/web/src/lib/api/client.ts`
 - `.env.example`
-- `jest.config.cjs`
-- `jest.setup.ts`
+- `apps/web/.env.example`
+- `apps/web/jest.config.cjs`
+- `apps/web/jest.setup.ts`
 - `README.md`
-- `src/app/dashboard/page.test.ts`
-- `src/lib/api/browser-client.test.ts`
-- `tests/story-1-1-smoke-check.test.ts`
+- `apps/web/src/app/dashboard/page.test.ts`
+- `apps/web/src/lib/api/browser-client.test.ts`
 
 ## Change Log
 
@@ -226,3 +226,12 @@ Approve
 
 - Repository still contains unrelated pre-existing changes outside this story scope (e.g., `.gitignore`, moved/deleted planning docs).
 - Lint warnings remain in unrelated files not touched by this story implementation.
+
+### Epic 1 Review (2026-03-26)
+
+Reviewer: Claude claude-4.6-opus-high-thinking
+
+- [x] [HIGH] File List referenced `middleware.ts` and `tests/story-1-1-smoke-check.test.ts` — neither exists. Proxy is at `src/proxy.ts` (Next.js 16 pattern). **Fixed: corrected File List.**
+- [x] [HIGH] Missing `apps/web/.env.example`. **Fixed: created.**
+- [x] [HIGH] Root `.env.example` had misleading comment about JWT_SECRET being used by proxy. **Fixed: removed.**
+- [x] [MEDIUM] `packages/shared` Zod schemas exist but frontend duplicates them instead of importing. **Noted: deferred to avoid breaking error message UX.**

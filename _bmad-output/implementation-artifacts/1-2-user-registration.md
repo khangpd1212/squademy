@@ -155,16 +155,18 @@ GPT-5.3 Codex
 ### File List
 
 - `_bmad-output/implementation-artifacts/1-2-user-registration.md`
-- `src/app/(auth)/register/page.tsx`
-- `src/app/(auth)/register/check-email/page.tsx`
-- `src/app/(auth)/register/register-schema.ts`
-- `src/app/(auth)/register/register-schema.test.ts`
-- `src/app/(auth)/register/page.test.tsx`
-- `src/app/(auth)/register/_components/register-form.tsx`
-- `src/app/(auth)/register/_components/register-form.test.tsx`
-- `src/app/api/auth/register/route.ts`
-- `src/types/database.ts`
-- `packages/database/prisma/migrations/` (accept_privacy_at field on users table)
+- `apps/web/src/app/(auth)/register/page.tsx`
+- `apps/web/src/app/(auth)/register/check-email/page.tsx`
+- `apps/web/src/app/(auth)/register/register-schema.ts`
+- `apps/web/src/app/(auth)/register/register-schema.test.ts`
+- `apps/web/src/app/(auth)/register/page.test.tsx`
+- `apps/web/src/app/(auth)/register/_components/register-form.tsx`
+- `apps/web/src/app/(auth)/register/_components/register-form.test.tsx`
+- `apps/web/src/hooks/api/use-auth-queries.ts`
+- `apps/api/src/auth/auth.controller.ts`
+- `apps/api/src/auth/auth.service.ts`
+- `apps/api/src/auth/dto/register.dto.ts`
+- `packages/database/prisma/schema.prisma` (accept_privacy_at field on users table)
 
 ## Senior Developer Review (AI)
 
@@ -188,3 +190,11 @@ Approve
 - Medium issues resolved:
   - Added `/privacy` route so registration privacy link is no longer dead.
   - Removed raw backend profile error leakage from API responses.
+
+### Epic 1 Review (2026-03-26)
+
+Reviewer: Claude claude-4.6-opus-high-thinking
+
+- [x] [CRITICAL] `register-schema.test.ts` tested min 8 threshold instead of min 6 — test would always fail. **Fixed: corrected to test 5-char password (below min 6), added boundary test for 6-char.**
+- [x] [CRITICAL] File List contained ghost files (`src/app/api/auth/register/route.ts`, `src/types/database.ts`). **Fixed: corrected File List.**
+- [x] [MEDIUM] `/register/check-email` page exists but is dead code — RegisterForm redirects to `/dashboard` per AC. **Noted: kept for future email verification flow.**

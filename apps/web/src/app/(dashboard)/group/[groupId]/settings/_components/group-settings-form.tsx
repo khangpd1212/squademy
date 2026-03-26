@@ -17,10 +17,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateGroup } from "@/hooks/api/use-group-queries";
-import {
-  groupSettingsSchema,
-  type GroupSettingsInput,
-} from "@/app/api/groups/[groupId]/group-settings-schema";
+import { GroupSettingsInput, groupSettingsSchema } from "@squademy/shared";
+
 
 type GroupSettingsFormProps = {
   groupId: string;
@@ -68,7 +66,7 @@ export function GroupSettingsForm({
   async function onSubmit(values: GroupSettingsInput) {
     form.clearErrors("root");
 
-    const payload: GroupSettingsInput = {
+    const payload = {
       name: values.name,
       description: values.description ?? "",
       exercise_deadline_day:

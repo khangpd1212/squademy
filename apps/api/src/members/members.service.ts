@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { GROUP_ROLES } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -43,14 +44,14 @@ export class MembersService {
         where: { groupId_userId: { groupId, userId: requesterId } },
       });
 
-      if (!requester || requester.role !== "admin") {
+      if (!requester || requester.role !== GROUP_ROLES.ADMIN) {
         throw new ForbiddenException("Admin access required to remove others");
       }
     }
 
-    if (target.role === "admin") {
+    if (target.role === GROUP_ROLES.ADMIN) {
       const adminCount = await this.prisma.groupMember.count({
-        where: { groupId, role: "admin" },
+        where: { groupId, role: GROUP_ROLES.ADMIN },
       });
 
       if (adminCount <= 1) {
@@ -76,9 +77,9 @@ export class MembersService {
       throw new NotFoundException("Member not found");
     }
 
-    if (target.role === "admin" && role !== "admin") {
+    if (target.role === GROUP_ROLES.ADMIN && role !== GROUP_ROLES.ADMIN) {
       const adminCount = await this.prisma.groupMember.count({
-        where: { groupId, role: "admin" },
+        where: { groupId, role: GROUP_ROLES.ADMIN },
       });
 
       if (adminCount <= 1) {

@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from "@nestjs/common";
+import { GROUP_ROLES } from "@squademy/shared";
 import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
@@ -24,7 +25,7 @@ export class GroupAdminGuard implements CanActivate {
       where: { groupId_userId: { groupId, userId } },
     });
 
-    if (!membership || membership.role !== "admin") {
+    if (!membership || membership.role !== GROUP_ROLES.ADMIN) {
       throw new ForbiddenException("Admin access required");
     }
 
