@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String?   @map("password_hash")
+  displayName  String    @map("display_name")
+  fullName     String?   @map("full_name")
+  avatarUrl    String?   @map("avatar_url")
+  school       String?
+  location     String?
+  age          Int?
+  gdprConsentAt DateTime? @map("gdpr_consent_at")
+  refreshToken String?   @map("refresh_token")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  createdGroups       Group[]            @relation("GroupCreator")
+  memberships         GroupMember[]
+  sentInvitations     GroupInvitation[]   @relation("InvitedBy")
+  receivedInvitations GroupInvitation[]   @relation("Invitee")
+  lessons             Lesson[]
+
+  @@map("users")
+}
+
+model Group {
+  id                   String   @id @default(uuid())
+  name                 String
+  description          String?
+  inviteCode           String   @unique @map("invite_code")
+  exerciseDeadlineDay  Int?     @map("exercise_deadline_day")
+  exerciseDeadlineTime String?  @map("exercise_deadline_time")
+  createdBy            String   @map("created_by")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  creator     User              @relation("GroupCreator", fields: [createdBy], references: [id])
+  members     GroupMember[]
+  invitations GroupInvitation[]
+  lessons     Lesson[]
+  exercises   Exercise[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId  String   @map("group_id")
+  userId   String   @map("user_id")
+  role     String   @default("member")
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupInvitation {
+  id        String   @id @default(uuid())
+  groupId   String   @map("group_id")
+  invitedBy String   @map("invited_by")
+  inviteeId String   @map("invitee_id")
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  inviter User  @relation("InvitedBy", fields: [invitedBy], references: [id])
+  invitee User  @relation("Invitee", fields: [inviteeId], references: [id])
+
+  @@unique([groupId, inviteeId, status])
+  @@map("group_invitations")
+}
+
+model Lesson {
+  id             String   @id @default(uuid())
+  groupId        String   @map("group_id")
+  authorId       String   @map("author_id")
+  title          String
+  content        Json?
+  status         String   @default("draft")
+  editorFeedback String?  @map("editor_feedback")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author    User       @relation(fields: [authorId], references: [id])
+  exercises Exercise[]
+
+  @@map("lessons")
+}
+
+model Exercise {
+  id               String    @id @default(uuid())
+  groupId          String    @map("group_id")
+  lessonId         String?   @map("lesson_id")
+  type             String
+  payload          Json
+  isGroupChallenge Boolean   @default(false) @map("is_group_challenge")
+  scheduledAt      DateTime? @map("scheduled_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  group  Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  lesson Lesson? @relation(fields: [lessonId], references: [id])
+
+  @@map("exercises")
+}

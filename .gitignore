@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
+# --- Dependencies ---
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,47 +10,56 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# --- Monorepo build & cache (Turborepo) ---
+.turbo/
+
+# --- Next.js (apps/web and any app using Next) ---
+**/.next/
+out/
+
+# --- NestJS / Node packages (compiled output) ---
+**/dist/
+
+# --- Generic production bundles ---
+build/
+
+# --- Testing ---
+coverage/
 .nyc_output/
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
+# --- misc ---
 .DS_Store
 *.pem
 *.tgz
 .cache/
 
-# debug / logs
+# --- debug / logs ---
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# env files (can opt-in for committing if needed)
+# --- env (opt-in: commit *.env.example templates) ---
 .env*
 !.env.example
+!apps/api/.env.example
 
-# vercel
+# --- deploy / hosting ---
 .vercel
 
-# typescript
+# --- TypeScript ---
 *.tsbuildinfo
-next-env.d.ts
 
-# IDE / Editor
+# --- IDE / Editor ---
 .idea/
 *.swp
 *.swo
 
-# OS
+# --- OS ---
 Thumbs.db
 
-# agent
+# --- Local tooling / agents ---
 _bmad/
-.claude
-.cursor
+.claude/
+.cursor/

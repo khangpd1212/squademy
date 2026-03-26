@@ -1,0 +1,49 @@
+{
+  "name": "@squademy/api",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11",
+    "@nestjs/config": "^4",
+    "@nestjs/core": "^11",
+    "@nestjs/jwt": "^11",
+    "@nestjs/passport": "^11",
+    "@nestjs/platform-express": "^11",
+    "@nestjs/throttler": "^6",
+    "@squademy/database": "workspace:*",
+    "@squademy/shared": "workspace:*",
+    "bcrypt": "^6",
+    "class-transformer": "^0.5",
+    "class-validator": "^0.14",
+    "cookie-parser": "^1.4",
+    "nanoid": "^3",
+    "passport": "^0.7",
+    "passport-jwt": "^4",
+    "reflect-metadata": "^0.2",
+    "rxjs": "^7"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11",
+    "@nestjs/schematics": "^11",
+    "@nestjs/testing": "^11",
+    "@types/bcrypt": "^5",
+    "@types/cookie-parser": "^1",
+    "@types/express": "^5",
+    "@types/jest": "^30",
+    "@types/node": "^20",
+    "@types/passport-jwt": "^4",
+    "jest": "^30",
+    "ts-jest": "^29",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,13 @@
+**/node_modules
+**/.next
+**/dist
+.git
+.env
+.env.*
+**/*.md
+_bmad-output
+_bmad
+coverage
+.turbo
+apps/web/.next
+**/.cursor

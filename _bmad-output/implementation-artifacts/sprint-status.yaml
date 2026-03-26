@@ -42,16 +42,16 @@ development_status:
   2-1-create-configure-a-group: done
   2-2-invite-members-link-direct-invite: done
   2-3-member-role-management: done
-  2-4-group-settings-exercise-scheduling: backlog
-  2-5-delete-group: backlog
+  2-4-group-settings-exercise-scheduling: review
+  2-5-delete-group: ready-for-dev
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-lesson-list-content-studio-navigation: backlog
-  3-2-wysiwyg-lesson-editor: backlog
-  3-3-markdown-file-import: backlog
-  3-4-export-lesson: backlog
-  3-5-submit-for-review-track-status: backlog
+  epic-3: in-progress
+  3-1-lesson-list-content-studio-navigation: ready-for-dev
+  3-2-wysiwyg-lesson-editor: ready-for-dev
+  3-3-markdown-file-import: ready-for-dev
+  3-4-export-lesson: ready-for-dev
+  3-5-submit-for-review-track-status: ready-for-dev
   epic-3-retrospective: optional
 
   epic-4: backlog
