@@ -10,10 +10,10 @@ so that I can access the Squademy platform.
 
 ## Acceptance Criteria
 
-1. Given I navigate to `/register`, when I submit a valid email, password (min 8 chars), and display name, then Supabase Auth creates my account and sends a confirmation email, a `profiles` row is created linked to `auth.users`, and I am redirected to a "Check your email" confirmation page.
-2. Given the registration form is rendered, when I view the form, then a privacy policy acceptance checkbox is present and required before submission, and `profiles.gdpr_consent_at` is set to current timestamp on successful registration.
-3. Given I submit the registration form with an email already in use, when Supabase returns an auth error, then inline error appears below email field: "An account with this email already exists." and the form does not redirect or clear other fields.
-4. Given I submit with password under 8 characters, when client-side Zod validation runs, then inline error appears below password field before submit.
+1. Given I navigate to `/register`, when I submit a valid email, password (min 6 chars), and display name, then `browser-client.ts` calls NestJS `POST /auth/register`, a `users` row is created via Prisma with `accept_privacy_at` set, JWT tokens are stored in localStorage, `logged_in` cookie marker is set, and I am redirected to `/dashboard`.
+2. Given the registration form is rendered, when I view the form, then a privacy policy acceptance checkbox is present and required before submission.
+3. Given I submit the registration form with an email already in use, when NestJS returns a 409 Conflict, then inline error appears below email field: "An account with this email already exists." and the form does not redirect or clear other fields.
+4. Given I submit with password under 6 characters, when client-side Zod validation runs, then inline error appears below password field before submit.
 5. Given I am already logged in, when I navigate to `/register`, then I am redirected to `/dashboard`.
 
 ## Tasks / Subtasks
@@ -24,15 +24,14 @@ so that I can access the Squademy platform.
   - [x] Render inline field errors (no toast) consistent with UX guideline.
   - [x] Keep existing register page card wrapper and plug in `RegisterForm`.
 
-- [x] Implement Supabase signup flow (AC: 1, 3)
-  - [x] Call `supabase.auth.signUp()` with email/password and metadata needed for profile initialization.
+- [x] Implement NestJS registration flow (AC: 1, 3)
+  - [x] Call NestJS `POST /auth/register` via `browser-client.ts` with email/password/displayName.
   - [x] Map duplicate-email/auth conflicts to inline email error message exact copy from AC.
   - [x] Keep entered values on auth error; do not clear unrelated fields.
 
-- [x] Persist profile and consent metadata (AC: 1, 2)
-  - [x] Ensure `profiles` row is inserted/available with `id` and `display_name` at registration completion.
-  - [x] Ensure GDPR consent timestamp (`gdpr_consent_at`) is written when registration succeeds.
-  - [x] Use server-safe path for profile persistence (route handler or secure server action) if client direct insert violates current RLS/auth timing.
+- [x] Persist user and consent metadata (AC: 1, 2)
+  - [x] Ensure `users` row is created with `display_name` and `accept_privacy_at` at registration.
+  - [x] Store JWT tokens in localStorage and set `logged_in` cookie marker via `browser-client.ts`.
 
 - [x] Add post-submit confirmation page/route (AC: 1)
   - [x] Add lightweight "Check your email" confirmation page and redirect successful registration there.
@@ -53,25 +52,24 @@ so that I can access the Squademy platform.
 
 - `src/app/(auth)/register/page.tsx` exists but currently only renders static card shell and placeholder comment for form.
 - `src/app/(auth)/login/page.tsx` similarly placeholder; registration story should not implement full login logic.
-- Supabase helpers already exist and were standardized in Story 1.1:
-  - `src/lib/supabase/client.ts`
-  - `src/lib/supabase/server.ts`
-  - `src/lib/supabase/middleware.ts`
-- Middleware already allows public auth routes (`/login`, `/register`) and protects private routes.
+- API clients already exist and were standardized in Story 1.1:
+  - `src/lib/api/browser-client.ts` (client-side Bearer token management)
+  - `src/lib/api/client.ts` (server-side cookie marker check)
+- `proxy.ts` already allows public auth routes (`/login`, `/register`) and protects private routes.
 
 ### Technical Requirements
 
-- Use current stack already installed in repo: React Hook Form + Zod + Supabase SSR client helpers.
+- Use current stack already installed in repo: React Hook Form + Zod + NestJS API via browser-client.ts.
 - Keep inline validation and error feedback patterns; no toast-based UX for MVP.
 - Preserve app routing conventions and alias imports (`@/*`).
-- Do not introduce new auth library abstractions; reuse existing `src/lib/supabase/*`.
+- Do not introduce new auth library abstractions; reuse existing `src/lib/api/*`.
 - Use explicit confirmation redirect target as `/register/check-email` after successful sign-up.
 - Ensure sign-up uses Next.js-compatible confirmation redirect (`emailRedirectTo`) so auth confirmation flow returns to the app correctly.
 
 ### Architecture Compliance Guardrails
 
 - Auth/session checks that affect route entry should run server-side where possible.
-- Avoid duplicating Supabase helper creation logic in feature files.
+- Avoid duplicating API client creation logic in feature files.
 - Respect privacy/compliance requirement: consent capture is mandatory in registration success flow.
 - Keep implementation compatible with Next.js App Router and current middleware strategy.
 - Avoid assuming DB/type parity for GDPR fields; update DB schema/types first if `profiles.gdpr_consent_at` is not yet available.
@@ -84,7 +82,7 @@ so that I can access the Squademy platform.
 - Optional if needed for secure persistence:
   - `src/app/api/auth/register/route.ts` (server-side profile/consent orchestration)
 - Schema/types alignment if missing in current project state:
-  - Supabase migration for `profiles.gdpr_consent_at`
+  - Prisma migration for `users.accept_privacy_at`
   - Regenerated `src/types/database.ts` after schema update
 - Tests:
   - `src/app/(auth)/register/_components/register-form.test.tsx`
@@ -95,10 +93,10 @@ so that I can access the Squademy platform.
 - Keep auth UI pages under `src/app/(auth)/...` and route-specific components colocated in `_components`.
 - Reuse existing global UI primitives in `src/components/ui/*` (`Card`, `Input`, `Button`) instead of creating parallel auth-only primitives.
 - Keep cross-feature smoke/integration tests in root `tests/` and colocated unit/component tests under `src/`.
-- Maintain existing Supabase helper boundaries:
-  - browser: `src/lib/supabase/client.ts`
-  - server/RSC: `src/lib/supabase/server.ts`
-  - middleware/session refresh: `src/lib/supabase/middleware.ts`
+- Maintain existing API client boundaries:
+  - browser: `src/lib/api/browser-client.ts`
+  - server/RSC: `src/lib/api/client.ts`
+  - auth proxy: `src/proxy.ts`
 
 ### Previous Story Intelligence (Story 1.1)
 
@@ -126,9 +124,9 @@ so that I can access the Squademy platform.
 - [Source: `_bmad-output/planning-artifacts/ux-design-specification.md`]
 - [Source: `_bmad-output/planning-artifacts/prd.md`]
 - [Source: `src/app/(auth)/register/page.tsx`]
-- [Source: `src/lib/supabase/client.ts`]
-- [Source: `src/lib/supabase/server.ts`]
-- [Source: `src/lib/supabase/middleware.ts`]
+- [Source: `src/lib/api/browser-client.ts`]
+- [Source: `src/lib/api/client.ts`]
+- [Source: `src/proxy.ts`]
 
 ## Dev Agent Record
 
@@ -146,7 +144,7 @@ GPT-5.3 Codex
 ### Completion Notes List
 
 - Implemented full registration UX in `RegisterForm` with RHF + Zod validation, inline field errors, privacy-consent requirement, and duplicate-email mapping.
-- Added server-side registration endpoint `POST /api/auth/register` to orchestrate Supabase sign-up and profile upsert with GDPR consent timestamp.
+- Added server-side registration flow via NestJS `POST /auth/register` to create user with GDPR consent timestamp.
 - Added authenticated redirect guard in `src/app/(auth)/register/page.tsx` so logged-in users are redirected to `/dashboard`.
 - Added `/register/check-email` confirmation route and client redirect after successful registration.
 - Added schema, component, and page tests for Story 1.2 registration behavior.
@@ -166,7 +164,7 @@ GPT-5.3 Codex
 - `src/app/(auth)/register/_components/register-form.test.tsx`
 - `src/app/api/auth/register/route.ts`
 - `src/types/database.ts`
-- `supabase/migrations/20260312_add_profiles_gdpr_consent_at.sql`
+- `packages/database/prisma/migrations/` (accept_privacy_at field on users table)
 
 ## Senior Developer Review (AI)
 

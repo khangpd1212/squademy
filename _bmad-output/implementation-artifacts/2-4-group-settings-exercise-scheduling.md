@@ -18,7 +18,7 @@ so that members know what the group is about and when exercises are due.
 
 2. **Given** I update the group name or description and click Save,
    **When** the mutation runs,
-   **Then** the `groups` table is updated in Supabase,
+   **Then** the `groups` table is updated via NestJS API,
    **And** a success indicator appears inline,
    **And** the updated name is reflected immediately in the group layout header.
 
@@ -34,7 +34,7 @@ so that members know what the group is about and when exercises are due.
 ## Tasks / Subtasks
 
 - [x] **Task 1: Add exercise schedule columns to `groups` table via migration** (AC: 1, 3)
-  - [x] Apply Supabase migration using `mcp__supabase__apply_migration`:
+  - [x] Apply Prisma migration:
     - Migration name: `add_exercise_schedule_to_groups`
     - SQL:
       ```sql
@@ -43,7 +43,7 @@ so that members know what the group is about and when exercises are due.
         ADD COLUMN exercise_deadline_time time without time zone;
       ```
       (0 = Sunday, 1 = Monday … 6 = Saturday; both nullable by default)
-  - [x] Regenerate TypeScript types: call `mcp__supabase__generate_typescript_types` → overwrite `src/types/database.ts`
+  - [x] Regenerate TypeScript types: run `prisma generate` → types available via `@squademy/database`
   - [x] Verify `database.ts` `Groups.Row` now includes `exercise_deadline_day: number | null` and `exercise_deadline_time: string | null`
 
 - [x] **Task 2: Create group settings Zod schema** (AC: 2, 3, 4)
@@ -82,7 +82,7 @@ so that members know what the group is about and when exercises are due.
 
 - [x] **Task 3: Create PATCH `/api/groups/[groupId]` route** (AC: 2, 3, 4)
   - [x] Create `src/app/api/groups/[groupId]/route.ts` with `PATCH` handler following strict route order:
-    1. **Auth:** `const { data: { user } } = await supabase.auth.getUser()` → 401 if no user
+    1. **Auth:** verify JWT via `getCurrentUser()` → 401 if no user
     2. **Admin guard:** Query `group_members` where `group_id = groupId AND user_id = user.id AND role = 'admin'` → 403 if not found
     3. **Parse:** `request.json().catch(() => null) as GroupSettingsInput | null`
     4. **Validate:** `groupSettingsSchema.safeParse(body)` → 400 with `{ message, field }` on failure
@@ -127,9 +127,9 @@ so that members know what the group is about and when exercises are due.
 
 - [x] **Task 5: Update settings page server component** (AC: 1, 2, 3)
   - [x] Update `src/app/(dashboard)/group/[groupId]/settings/page.tsx`:
-    - [x] Auth guard: `createClient()` + `supabase.auth.getUser()` → redirect to `/login` if no user
-    - [x] Fetch group: `supabase.from("groups").select("id,name,description,exercise_deadline_day,exercise_deadline_time").eq("id", groupId).single()`
-    - [x] Fetch caller role: `supabase.from("group_members").select("role").eq("group_id", groupId).eq("user_id", user.id).single()`
+    - [x] Auth guard: `getCurrentUser()` from `@/lib/api/client` → redirect to `/login` if no user
+    - [x] Fetch group: `apiClient("/groups/{groupId}")` via server-side client
+    - [x] Fetch caller role: `apiClient("/groups/{groupId}/members/me")` via server-side client
     - [x] If caller is not a group member → redirect to `/group/[groupId]`
     - [x] Render heading "Group Settings" + `<GroupSettingsForm>` with pre-populated values
     - [x] Pass `isAdmin: callerRole === "admin"` prop
@@ -173,7 +173,7 @@ Files created in Story 2-3 (DO NOT modify unless adding regression test coverage
 
 ### Technical Requirements
 
-- **Stack:** Next.js 16 + React 19 + TypeScript strict + Zod v4 + React Hook Form + shadcn/ui + Supabase
+- **Stack:** Next.js 16 + React 19 + TypeScript strict + Zod v4 + React Hook Form + shadcn/ui + NestJS API
 - **No new packages needed** — all dependencies are installed
 - **Zod v4 API:** Use `z.infer<typeof schema>` (NOT `z.TypeOf`); `safeParse()` in API routes (NOT `parse()`)
 - **Path alias:** Always use `@/*` (maps to `./src/*`). Never use relative `../../` paths
@@ -183,9 +183,9 @@ Files created in Story 2-3 (DO NOT modify unless adding regression test coverage
 ### Architecture Compliance
 
 - **Migration first:** `exercise_deadline_day` and `exercise_deadline_time` must exist in Postgres AND in `database.ts` before writing any API/component code that references them
-- **Migration tool:** Use `mcp__supabase__apply_migration` — do NOT use raw psql
-- **Type regen:** After migration, run `mcp__supabase__generate_typescript_types` → overwrite `src/types/database.ts`
-- **Admin client for UPDATE:** Use `createAdminClient` from `@/lib/supabase/admin` for the group UPDATE to avoid potential RLS gaps. Service role key is server-only and must never appear in client components.
+- **Migration tool:** Use `prisma migrate dev` for local development
+- **Type regen:** After migration, run `prisma generate` → types available via `@squademy/database`
+- **Update operations:** Handled by NestJS GroupsModule service with Prisma, protected by GroupAdminGuard.
 - **Proxy not middleware:** `src/proxy.ts` handles auth redirects — do NOT create `middleware.ts`
 - **Tailwind v4:** No `tailwind.config.js` — all config in `globals.css`
 
@@ -207,7 +207,7 @@ Expected new/modified files:
 ### Testing Requirements
 
 - **Jest + Testing Library** (`jest.config.cjs`, `jsdom` environment)
-- **API route tests:** import handler directly, mock `@/lib/supabase/server` and `@/lib/supabase/admin`
+- **API route tests:** import handler directly, mock `@/lib/api/client` and API responses
 - **Component tests:** mock `fetch` + `next/navigation` (`useRouter`), assert form behavior
 - **Regression gate:** `members` and `invite` existing tests must remain green
 
@@ -230,8 +230,8 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
-- Applied Supabase migration `add_exercise_schedule_to_groups` via MCP tool.
-- Regenerated Supabase TypeScript database types via MCP tool.
+- Applied Prisma migration `add_exercise_schedule_to_groups`.
+- Regenerated Prisma TypeScript database types via `prisma generate`.
 - Verified quality gates: `npm test`, `npm run lint`, `npm run build`.
 
 ### Completion Notes List

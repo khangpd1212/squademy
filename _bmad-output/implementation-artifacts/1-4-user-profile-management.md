@@ -10,9 +10,9 @@ so that my group members can identify me and my profile reflects my current deta
 
 ## Acceptance Criteria
 
-1. Given I navigate to `/settings`, profile fields are pre-populated (display name, avatar, full name, school, location, age).
-2. Given I update display name and save, `profiles.display_name` is updated, inline success indicator appears, and UI reflects optimistic update.
-3. Given I upload avatar JPG/PNG <= 2MB, file is uploaded via `/api/files/upload`, `profiles.avatar_url` is updated, and UI updates immediately.
+1. Given I navigate to `/settings`, profile fields are pre-populated from NestJS `GET /users/me` via `browser-client.ts` (display name, avatar, full name, school, location, age).
+2. Given I update display name and save, `users.display_name` is updated via NestJS `PATCH /users/me`, inline success indicator appears, and UI reflects optimistic update.
+3. Given I upload avatar JPG/PNG <= 2MB, file is uploaded via `/api/files/upload`, `users.avatar_url` is updated, and UI updates immediately.
 4. Given avatar > 2MB, inline validation error appears and upload is blocked.
 5. Given empty display name, inline validation error appears and save is blocked.
 
@@ -24,9 +24,9 @@ so that my group members can identify me and my profile reflects my current deta
   - [x] Add inline success state near save action (no toast in MVP).
 
 - [x] Implement profile read/write (AC: 1, 2)
-  - [x] Add profile query by authenticated user id.
-  - [x] Add mutation for profile update with optimistic UI handling.
-  - [x] Ensure updates respect RLS and authenticated ownership.
+  - [x] Fetch profile via NestJS `GET /users/me` using `browser-client.ts`.
+  - [x] Update profile via NestJS `PATCH /users/me` with optimistic UI handling.
+  - [x] Ensure updates respect JwtAuthGuard and authenticated ownership.
 
 - [x] Implement avatar upload pipeline (AC: 3, 4)
   - [x] Add client-side file validation (type + <= 2MB).
@@ -115,7 +115,7 @@ GPT-5.3 Codex
 - `src/app/api/files/upload/route.ts`
 - `src/app/api/files/upload/route.test.ts`
 - `src/types/database.ts`
-- `supabase/migrations/20260315_add_profiles_extended_fields.sql`
+- `packages/database/prisma/migrations/` (extended profile fields on users table)
 
 ## Change Log
 

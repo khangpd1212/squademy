@@ -18,7 +18,7 @@ so that I can maintain a healthy group with the right people in the right roles.
 
 2. **Given** I click the role dropdown next to a member and select "Editor",  
    **When** I confirm the change,  
-   **Then** `group_members.role` is updated to `'editor'` in Supabase,  
+   **Then** `group_members.role` is updated to `'editor'` via NestJS API,  
    **And** the role badge updates immediately via optimistic update.
 
 3. **Given** I try to change my own role as the sole Admin,  
@@ -40,7 +40,7 @@ so that I can maintain a healthy group with the right people in the right roles.
 
 - [x] **Task 1: Add API endpoints for role updates and member removal** (AC: 2, 3, 4, 5)
   - [x] Create `src/app/api/groups/[groupId]/members/[memberId]/role/route.ts` with `PATCH` handler
-    - [x] Auth check via `createClient()` and `supabase.auth.getUser()`
+    - [x] Auth check via `getCurrentUser()` from `@/lib/api/client`
     - [x] Validate payload with Zod schema (`role` in `admin | editor | member`)
     - [x] Verify caller is admin in target group; return 403 if not admin
     - [x] Verify target member belongs to group; return 404 if not found
@@ -127,7 +127,7 @@ so that I can maintain a healthy group with the right people in the right roles.
 
 ### Technical Requirements
 
-- Use existing stack only (Next.js App Router + React 19 + TypeScript strict + Zod v4 + shadcn/ui + Supabase).
+- Use existing stack only (Next.js App Router + React 19 + TypeScript strict + Zod v4 + shadcn/ui + NestJS API).
 - No new dependency required for this story.
 - Keep API route implementation order consistent with project context:
   1. auth
@@ -167,14 +167,14 @@ Expected touched files for implementation:
 ### Testing Requirements
 
 - Unit/integration tests via Jest + Testing Library as current project standard.
-- Route tests should mock Supabase server/admin clients and assert HTTP status + JSON payload.
+- Route tests should mock API clients and assert HTTP status + JSON payload.
 - Component tests should mock `fetch` and validate optimistic transitions + rollback behavior.
 - Regression gate: existing members/invitations tests must remain green.
 
 ### Latest Technical Information (Web Research Highlights)
 
 - Next.js 16 officially renamed request interception from middleware to proxy (`proxy.ts`); current project already follows this. Do not introduce a new root `middleware.ts`.
-- Supabase best practice remains: anon key in client with RLS; service role key server-only for privileged mutations. Keep role/removal mutations strictly in route handlers.
+- Keep privileged mutations strictly in NestJS API endpoints protected by appropriate Guards (JwtAuthGuard, GroupAdminGuard).
 
 ### References
 

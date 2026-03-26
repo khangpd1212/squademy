@@ -92,7 +92,7 @@ so that I can produce well-structured, high-quality lesson content without knowi
 
 ### Architecture Compliance
 
-- Follow environment-specific Supabase client usage (`client` vs `server` vs `admin`).
+- Follow environment-specific API client usage (`browser-client` for client, `client` for server).
 - Keep implementation under App Router route segments and `_components` conventions.
 - Do not leak service-role key or privileged operations into client components.
 
@@ -126,7 +126,7 @@ Expected touched files:
 - Recommended baseline during implementation:
   - Next.js 16 App Router conventions
   - React 19 patched line
-  - Supabase SSR + JS patch-level updates
+  - NestJS API + Prisma patch-level updates
   - Tiptap v3 (if newly added)
 - If introducing new deps, lock to stable patches and verify compatibility with current Next/React versions.
 

@@ -70,14 +70,14 @@ so that I can manage my contributions to the group curriculum in one place.
 
 ### Technical Requirements
 
-- Use current project stack only: Next.js App Router + React + TypeScript strict + Supabase.
+- Use current project stack only: Next.js App Router + React + TypeScript strict + NestJS API.
 - API implementation sequence: auth -> validate -> authorize -> mutate -> response.
 - Use `safeParse()` in API boundaries (not `parse()`).
 - Keep queries narrow and indexed fields first (`author_id`, `updated_at`) for list performance.
 
 ### Architecture Compliance
 
-- Keep Supabase clients context-correct:
+- Keep API clients context-correct:
   - browser client in client components only
   - server client in server route/page code
   - admin/service-role only in server for privileged operations
@@ -103,13 +103,13 @@ Expected touched files:
 ### Testing Requirements
 
 - Unit/UI tests: Jest + Testing Library for list/empty state/new CTA behavior.
-- API tests: direct route handler tests with mocked Supabase clients.
+- API tests: direct route handler tests with mocked API clients.
 - Validate no regression to existing dashboard navigation and auth flow.
 
 ### Latest Technical Information
 
 - Keep Next.js 16 App Router patterns and avoid deprecated middleware naming.
-- Keep Supabase auth checks server-side (`getUser`/claims) and never trust client session for authorization.
+- Keep auth checks server-side (NestJS JwtAuthGuard) and never trust client session for authorization.
 - Prefer patch-level dependency updates only when story implementation requires it.
 
 ### References

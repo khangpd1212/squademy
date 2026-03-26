@@ -184,8 +184,8 @@ jest.setup.ts                           # @testing-library/jest-dom setup
 ### 2.3 Data Flow
 
 - **Server state (NestJS API):** React Query (`useQuery` / `useMutation`). All DB reads/writes go through `queryFn`/`mutationFn` calling Next.js API routes, which proxy to NestJS. Cache invalidation via polling (`refetchInterval`) or manual invalidation on mutations.
-- **Auth:** JWT-based (Passport.js on NestJS). Access token (15min) + refresh token (7d) stored in httpOnly cookies. `proxy.ts` (Next.js 16) verifies JWT and forwards to NestJS. Session refresh handled transparently.
-- **Polling (Realtime replacement):** Leaderboard and notification badge updates use React Query `refetchInterval` (30s / 60s). No WebSocket or Supabase Realtime dependency.
+- **Auth:** JWT-based (Passport.js on NestJS). Access token (15min) + refresh token (7d) stored in localStorage via `browser-client.ts`. A non-httpOnly `logged_in=true` cookie marker is set so `proxy.ts` can detect auth state during SSR. `proxy.ts` (Next.js 16) checks the cookie marker and redirects unauthenticated users to `/login?redirect={path}`. Real JWT verification happens on the NestJS API via `Authorization: Bearer` header. Token refresh is handled transparently by `browser-client.ts` when a 401 is received.
+- **Polling (Realtime replacement):** Leaderboard and notification badge updates use React Query `refetchInterval` (30s / 60s). No WebSocket dependency.
 - **Offline-first (Flashcards):** Decks downloaded once → stored in Dexie (IndexedDB). Practice runs fully offline. Grade results queued in Dexie `gradeQueue`. On reconnect, `sync.ts` flushes queue to NestJS API and updates SRS intervals.
 - **Client-only state:** Zustand (current card, quiz answers, sidebar open, theme preference).
 
@@ -298,15 +298,15 @@ squademy/                        # Monorepo root
 
 ### 3.1.2 Authorization (NestJS Guards)
 
-NestJS Guards replace Supabase RLS policies. All authorization is enforced at the API layer:
+All authorization is enforced at the API layer via NestJS Guards:
 
-| Guard | Purpose | Replaces |
-|-------|---------|----------|
-| **JwtAuthGuard** | Validates access token on every protected route | Supabase `auth.uid()` in RLS |
-| **GroupMemberGuard** | Checks user is a member of the target group | `groups_select_member` RLS policy |
-| **GroupAdminGuard** | Checks user has `admin` role in the group | `groups_update_admin` RLS policy |
-| **GroupEditorGuard** | Checks user has `editor` or `admin` role | Editor-level RLS policies |
-| **ResourceOwnerGuard** | Checks user owns the resource (e.g., own submission) | Row-level owner checks in RLS |
+| Guard | Purpose |
+|-------|---------|
+| **JwtAuthGuard** | Validates access token on every protected route |
+| **GroupMemberGuard** | Checks user is a member of the target group |
+| **GroupAdminGuard** | Checks user has `admin` role in the group |
+| **GroupEditorGuard** | Checks user has `editor` or `admin` role |
+| **ResourceOwnerGuard** | Checks user owns the resource (e.g., own submission) |
 
 Guards are applied via decorators: `@UseGuards(JwtAuthGuard, GroupMemberGuard)` on controllers.
 
@@ -314,30 +314,25 @@ Guards are applied via decorators: `@UseGuards(JwtAuthGuard, GroupMemberGuard)` 
 
 Database is managed by **Prisma 6** ORM. Schema lives in `packages/database/prisma/schema.prisma`. Migrations are applied via `prisma migrate deploy` in production and `prisma migrate dev` locally.
 
-#### Auth & Profile
+#### Users
 
 ```sql
--- Users table (managed by Prisma, replaces Supabase auth.users)
+-- Single User table (managed by Prisma)
+-- PII fields (full_name, school, location, age) are tombstoned on deletion
 users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text UNIQUE NOT NULL,
-  password_hash text NOT NULL,      -- bcrypt hashed
-  refresh_token_hash text,          -- hashed refresh token
+  password_hash text,              -- bcrypt hashed (nullable for future OAuth)
+  display_name text NOT NULL,
+  avatar_url text,                 -- R2 URL
+  full_name text,                  -- PII: tombstoned on deletion
+  school text,                     -- PII: tombstoned on deletion
+  location text,                   -- PII: tombstoned on deletion
+  age int,                         -- PII: tombstoned on deletion
+  accept_privacy_at timestamptz,   -- GDPR consent timestamp
+  refresh_token text,              -- hashed refresh token
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
-)
-
--- Public profile (PII separated for GDPR tombstoning)
-profiles (
-  id uuid PRIMARY KEY REFERENCES users(id),
-  display_name text,
-  avatar_url text,        -- R2 URL
-  -- PII fields (tombstoned on deletion)
-  full_name text,
-  school text,
-  location text,
-  age int,
-  created_at timestamptz DEFAULT now()
 )
 ```
 
@@ -349,13 +344,13 @@ groups (
   name text NOT NULL,
   description text,
   invite_code text UNIQUE,   -- generated slug for invite link
-  created_by uuid REFERENCES profiles(id),
+  created_by uuid REFERENCES users(id),
   created_at timestamptz DEFAULT now()
 )
 
 group_members (
   group_id uuid REFERENCES groups(id),
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   role text CHECK (role IN ('admin', 'editor', 'member')),
   joined_at timestamptz DEFAULT now(),
   PRIMARY KEY (group_id, user_id)
@@ -365,8 +360,8 @@ group_members (
 group_invitations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id uuid REFERENCES groups(id),
-  invited_by uuid REFERENCES profiles(id),
-  invitee_id uuid REFERENCES profiles(id),
+  invited_by uuid REFERENCES users(id),
+  invitee_id uuid REFERENCES users(id),
   status text CHECK (status IN ('pending', 'accepted', 'declined')),
   created_at timestamptz DEFAULT now()
 )
@@ -378,7 +373,7 @@ group_invitations (
 lessons (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id uuid REFERENCES groups(id),
-  author_id uuid REFERENCES profiles(id),
+  author_id uuid REFERENCES users(id),
   title text NOT NULL,
   content jsonb,           -- Tiptap ProseMirror JSON
   content_markdown text,   -- Denormalized for export
@@ -394,7 +389,7 @@ lessons (
 review_comments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   lesson_id uuid REFERENCES lessons(id),
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   line_ref text,           -- e.g., "paragraph-3" or character offset
   body text NOT NULL,
   parent_id uuid REFERENCES review_comments(id),  -- threaded
@@ -405,7 +400,7 @@ review_comments (
 lesson_reactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   lesson_id uuid REFERENCES lessons(id),
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   paragraph_ref text,      -- paragraph identifier
   reaction_type text CHECK (reaction_type IN ('heart', 'thinking', 'bulb')),
   created_at timestamptz DEFAULT now(),
@@ -420,7 +415,7 @@ flashcard_decks (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id uuid REFERENCES groups(id),
   lesson_id uuid REFERENCES lessons(id) NULL,  -- optional: linked lesson
-  author_id uuid REFERENCES profiles(id),
+  author_id uuid REFERENCES users(id),
   title text NOT NULL,
   status text CHECK (status IN ('draft', 'review', 'published')),
   is_deleted boolean DEFAULT false,
@@ -444,7 +439,7 @@ flashcard_cards (
 
 -- SRS progress per user per card
 srs_progress (
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   card_id uuid REFERENCES flashcard_cards(id),
   ease_factor float DEFAULT 2.5,   -- SM-2: difficulty multiplier
   interval_days int DEFAULT 1,     -- days until next review
@@ -462,7 +457,7 @@ exercises (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id uuid REFERENCES groups(id),
   lesson_id uuid REFERENCES lessons(id) NULL,
-  creator_id uuid REFERENCES profiles(id),
+  creator_id uuid REFERENCES users(id),
   title text,
   content jsonb,           -- Tiptap JSON: questions array
   type text CHECK (type IN ('group_challenge', 'personal_practice')),
@@ -477,7 +472,7 @@ exercises (
 exercise_assignments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   exercise_id uuid REFERENCES exercises(id),
-  assignee_id uuid REFERENCES profiles(id),
+  assignee_id uuid REFERENCES users(id),
   week_cycle text,
   assigned_at timestamptz DEFAULT now(),
   UNIQUE (exercise_id, assignee_id)
@@ -486,7 +481,7 @@ exercise_assignments (
 exercise_submissions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   exercise_id uuid REFERENCES exercises(id),
-  submitter_id uuid REFERENCES profiles(id),
+  submitter_id uuid REFERENCES users(id),
   answers jsonb,           -- array of {question_id, answer, auto_grade_result}
   submitted_at timestamptz DEFAULT now()
 )
@@ -494,7 +489,7 @@ exercise_submissions (
 peer_reviews (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   submission_id uuid REFERENCES exercise_submissions(id),
-  reviewer_id uuid REFERENCES profiles(id),  -- exercise creator
+  reviewer_id uuid REFERENCES users(id),  -- exercise creator
   status text CHECK (status IN ('pending', 'graded', 'disputed', 'arbitrated')),
   overall_score numeric(5,2),
   reviewed_at timestamptz
@@ -505,7 +500,7 @@ peer_review_comments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   peer_review_id uuid REFERENCES peer_reviews(id),
   question_ref text,       -- which question this comment refers to
-  author_id uuid REFERENCES profiles(id),
+  author_id uuid REFERENCES users(id),
   body text NOT NULL,
   decision text CHECK (decision IN ('correct', 'incorrect', NULL)),
   parent_id uuid REFERENCES peer_review_comments(id),  -- threaded debate
@@ -517,10 +512,10 @@ exercise_disputes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   peer_review_id uuid REFERENCES peer_reviews(id),
   question_ref text,
-  reporter_id uuid REFERENCES profiles(id),
+  reporter_id uuid REFERENCES users(id),
   reason text NOT NULL,
   status text CHECK (status IN ('open', 'resolved')),
-  arbiter_id uuid REFERENCES profiles(id) NULL,   -- editor who arbitrates
+  arbiter_id uuid REFERENCES users(id) NULL,   -- editor who arbitrates
   arbitration_decision text CHECK (arbitration_decision IN ('creator_wrong', 'taker_wrong', NULL)),
   resolved_at timestamptz,
   created_at timestamptz DEFAULT now()
@@ -531,7 +526,7 @@ exercise_disputes (
 
 ```sql
 streaks (
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   group_id uuid REFERENCES groups(id),
   current_streak int DEFAULT 0,
   longest_streak int DEFAULT 0,
@@ -541,7 +536,7 @@ streaks (
 
 -- Weekly error tracking (for dispute scoring)
 weekly_errors (
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   group_id uuid REFERENCES groups(id),
   week_cycle text,
   error_count int DEFAULT 0,
@@ -550,7 +545,7 @@ weekly_errors (
 
 badges (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   group_id uuid REFERENCES groups(id),
   badge_type text CHECK (badge_type IN ('first_contribution', 'streak_7', 'streak_30', 'top_contributor', 'editor_approved')),
   awarded_at timestamptz DEFAULT now()
@@ -558,7 +553,7 @@ badges (
 
 -- Daily activity log for heatmap visualization (FR46)
 daily_activity (
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   group_id uuid REFERENCES groups(id),
   activity_date date NOT NULL,
   flashcards_reviewed int DEFAULT 0,
@@ -578,7 +573,7 @@ learning_path_items (
   item_type text CHECK (item_type IN ('lesson', 'flashcard_deck')),
   item_id uuid NOT NULL,           -- lessons.id or flashcard_decks.id
   sort_order int NOT NULL,
-  added_by uuid REFERENCES profiles(id),
+  added_by uuid REFERENCES users(id),
   created_at timestamptz DEFAULT now(),
   UNIQUE (group_id, item_type, item_id)
 )
@@ -588,7 +583,7 @@ learning_path_items (
 -- Updated via Realtime trigger or periodic recalc
 leaderboard (
   group_id uuid REFERENCES groups(id),
-  user_id uuid REFERENCES profiles(id),
+  user_id uuid REFERENCES users(id),
   total_score int DEFAULT 0,
   week_score int DEFAULT 0,
   rank int,
@@ -602,7 +597,7 @@ leaderboard (
 ```sql
 notifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  recipient_id uuid REFERENCES profiles(id),
+  recipient_id uuid REFERENCES users(id),
   type text CHECK (type IN (
     'exercise_assigned',       -- new exercise assigned via shuffle
     'submission_received',     -- creator: peer submitted answers
@@ -625,9 +620,9 @@ notifications (
 )
 ```
 
-### 3.3 Authorization Matrix (NestJS Guards — replaces RLS)
+### 3.3 Authorization Matrix (NestJS Guards)
 
-All endpoints are protected by NestJS Guards. No RLS is used. Authorization is enforced at the controller/route level:
+All endpoints are protected by NestJS Guards. Authorization is enforced at the controller/route level:
 
 | Resource | READ | CREATE | UPDATE/DELETE |
 |----------|------|--------|---------------|
@@ -646,7 +641,7 @@ Sensitive admin operations (bulk delete, tombstoning, leaderboard recalc) are re
 ### 3.4 Database Migrations (Prisma)
 
 ```bash
-# Prisma workflow (replaces Supabase CLI)
+# Prisma workflow
 cd packages/database
 npx prisma migrate dev --name <migration_name>   # local development
 npx prisma migrate deploy                         # production (Oracle VM)
@@ -663,9 +658,10 @@ Generated types consumed by both `apps/web` and `apps/api` via workspace protoco
 ### 4.1 Structured Data (NestJS API via Proxy)
 
 - **Browser (client components):** React Query `queryFn`/`mutationFn` call Next.js API routes (`/api/*`). No direct DB access from the browser.
-- **Next.js API routes (`/api/*`):** Act as a proxy to the NestJS backend on Oracle VM. The `proxy.ts` middleware reads the `access_token` from httpOnly cookies and forwards it as `Authorization: Bearer` header to NestJS.
+- **Next.js `proxy.ts`:** Checks the `logged_in` cookie marker to redirect unauthenticated users during SSR. Does NOT verify JWTs or proxy API calls.
+- **Client-side `browser-client.ts`:** Attaches `Authorization: Bearer <accessToken>` from localStorage on every API request directly to the NestJS backend (`NEXT_PUBLIC_API_URL`).
 - **NestJS (Oracle VM):** Validates JWT, applies Guards for authorization, executes Prisma queries against PostgreSQL.
-- **Pattern:** `Browser → /api/* (Next.js proxy) → NestJS REST API → Prisma → PostgreSQL`. No Supabase client anywhere in the stack.
+- **Pattern:** `Browser (browser-client.ts) → NestJS REST API (Bearer token) → Prisma → PostgreSQL`. `proxy.ts` handles SSR auth redirects only.
 
 ### 4.2 File Storage (Cloudflare R2)
 
@@ -704,7 +700,7 @@ Per PRD NFR3: **SSE (Server-Sent Events) preferred over WebSocket** to minimize 
 
 - **Polling (MVP):** Leaderboard and notification badge updates use React Query with `refetchInterval` (30s for leaderboard, 60s for notifications). Simple, zero infrastructure overhead.
 - **SSE (Post-MVP):** If real-time feel is insufficient, NestJS can serve SSE endpoints via `@Sse()` decorator, consumed by Next.js API route proxy or `EventSource` on the client.
-- **No WebSocket server** — aligns with zero-OPEX. No Supabase Realtime dependency.
+- **No WebSocket server** — aligns with zero-OPEX.
 
 ---
 
@@ -964,23 +960,22 @@ Optimization for grammar lessons that may grow very large:
 
 ### 7.1 PII Separation
 
-The `profiles` table is the only table containing PII (`full_name`, `school`, `location`, `age`). Email is stored in the `users` table. All other tables reference `user_id` (UUID). This isolation enables clean tombstoning.
+PII fields (`full_name`, `school`, `location`, `age`, `email`) reside in the `users` table alongside non-PII fields. On account deletion, PII fields are NULLed (tombstoned) and `display_name` is set to "Anonymous Learner", while the UUID row is preserved so foreign key references in content tables remain valid.
 
 ### 7.2 Account Deletion Flow (NFR6, NFR7)
 
 ```
 User requests deletion:
   1. GDPR request logged with 24h SLA
-  2. NestJS AuthService: delete users record (invalidates all JWTs)
-  3. profiles: DELETE row (destroys all PII)
-  4. All content references updated:
+  2. NestJS AuthService: NULL PII fields on users row (full_name, school, location, age, email, avatar_url), set display_name to "Anonymous Learner", clear password_hash and refresh_token (invalidates all JWTs)
+  3. All content references updated:
      - lessons.author_id → NULL (or system "Anonymous" UUID)
      - peer_review_comments.author_id → "Anonymous" UUID
      - exercise_submissions.submitter_id → "Anonymous" UUID
      (Tombstoning: content preserved, identity severed — NFR7)
-  5. flashcard_decks, exercises by user: soft-delete (is_deleted=true)
-  6. srs_progress: DELETE (personal data, no archival value)
-  7. Confirmation email sent within 24h
+  4. flashcard_decks, exercises by user: soft-delete (is_deleted=true)
+  5. srs_progress: DELETE (personal data, no archival value)
+  6. Confirmation email sent within 24h
 ```
 
 ### 7.3 Data Export (FR3, GDPR Article 20)
@@ -993,7 +988,7 @@ User requests deletion:
 
 - Consent banner on first visit (pre-auth)
 - Stored in `localStorage` + `profiles.gdpr_consent_at`
-- Required fields disclosed: session cookies (JWT httpOnly), analytics (post-MVP)
+- Required fields disclosed: `logged_in` marker cookie (auth state detection), localStorage (JWT tokens), analytics (post-MVP)
 
 ---
 
@@ -1175,7 +1170,7 @@ External
 │  Zustand • React Query • Tiptap • Dexie.js (IndexedDB)             │
 │                                                                    │
 │  All API calls via fetch → /api/* (Next.js proxy)                  │
-│  Auth: httpOnly JWT cookies (access + refresh)                     │
+│  Auth: localStorage JWT tokens + `logged_in` cookie marker         │
 │  File upload: → /api/files/upload  or  R2 signed URL              │
 └─────────────────────────────┬──────────────────────────────────────┘
                               │
@@ -1217,15 +1212,15 @@ External
 
 ```
 Auth Flow:
-  1. Client POST /api/auth/login → Next.js API route → NestJS /auth/login
-  2. NestJS validates credentials via bcrypt → generates access token (15min) + refresh token (7d)
-  3. Next.js API route sets httpOnly cookies → returns success to client
+  1. Client calls NestJS /auth/login directly via browser-client.ts
+  2. NestJS validates credentials via bcrypt → returns access token (15min) + refresh token (7d) in response body
+  3. browser-client.ts stores tokens in localStorage + sets `logged_in=true` cookie marker
 
 Session Management:
-  1. proxy.ts (Next.js 16) reads access_token from httpOnly cookie
-  2. Verifies JWT signature via jose library
-  3. If expired → calls /api/auth/refresh → NestJS rotates tokens
-  4. If invalid → redirects to /login?redirect={original_path}
+  1. proxy.ts (Next.js 16) checks `logged_in` cookie marker (no JWT verification)
+  2. If marker absent → redirects to /login?redirect={original_path}
+  3. browser-client.ts auto-refreshes via NestJS /auth/refresh when 401 received
+  4. On logout → clearAuthTokens() removes localStorage tokens + clears cookie marker
 ```
 
 ---
@@ -1246,7 +1241,7 @@ Session Management:
 | **BE Framework** | NestJS 11 (REST API, Guards, Modules, DI) |
 | **ORM** | Prisma 6 (type-safe queries, migrations, schema) |
 | **Database** | Self-hosted PostgreSQL 16 on Oracle VM (Docker) |
-| **Auth** | Passport.js + JWT (access/refresh tokens, httpOnly cookies) |
+| **Auth** | Passport.js + JWT (access/refresh tokens, localStorage + cookie marker) |
 | **File Storage** | Cloudflare R2 (audio, images, exports, avatars) |
 | **Email** | Resend or Brevo (free tier, cron-triggered reminders) |
 | **Cron** | Vercel Cron (weekly shuffle, reminders, leaderboard recalc) |

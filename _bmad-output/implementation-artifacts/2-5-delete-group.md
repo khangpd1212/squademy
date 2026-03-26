@@ -32,7 +32,7 @@ so that inactive groups do not clutter the platform.
 
 - [ ] **Task 1: Create DELETE `/api/groups/[groupId]` route** (AC: 2)
   - [ ] Create (or add `DELETE` export to) `src/app/api/groups/[groupId]/route.ts`
-    - [ ] **Auth:** `createClient()` + `supabase.auth.getUser()` → 401 if no user
+    - [ ] **Auth:** verify JWT via `getCurrentUser()` → 401 if no user
     - [ ] **Admin guard:** Query `group_members` where `group_id = groupId AND user_id = user.id AND role = 'admin'` → 403 if not admin
     - [ ] **Confirm group exists:** Query `groups` by `groupId` → 404 if not found
     - [ ] **Soft-delete content** using `createAdminClient()`:
@@ -122,11 +122,11 @@ From Story 2-3 (member management):
 ### Technical Requirements
 
 - **Must use `createAdminClient()` (service_role key) for all delete operations** — RLS does not allow bulk cross-user deletes; `service_role` bypasses RLS for these privileged mutations
-- **`createAdminClient` import:** `import { createAdminClient } from "@/lib/supabase/admin"`
+- **Admin operations:** handled by NestJS service layer with Prisma (no client-side admin needed)
 - **`service_role` key is server-only** — never imported into client components
 - **Soft-delete for content:** `lessons`, `exercises`, `flashcard_decks` use `is_deleted boolean` column — set to `true` (do NOT hard-delete content rows)
 - **Hard-delete:** `groups` and `group_members` rows are permanently deleted
-- **No transaction support in Supabase RLS client** — execute operations sequentially; if a step fails, return 500 without rollback (acceptable for MVP)
+- **Transaction support:** NestJS service uses Prisma transactions for atomic multi-table operations
 - **Confirmation dialog input:** must be case-sensitive exact match of `groupName`
 - **Dialog pattern:** Use shadcn `Dialog` component (already in `src/components/ui/`) — use `AlertDialog` variant if available, otherwise standard `Dialog`
 - **Router:** Use `useRouter` from `next/navigation` in client component
@@ -166,7 +166,7 @@ Expected new/modified files:
 - **Tailwind CSS v4:** Config in `globals.css` — no `tailwind.config.js`
 - **shadcn/ui base-nova:** Uses `@base-ui/react` primitives — check existing Dialog import in `src/components/ui/dialog.tsx` before using it
 - **React 19:** `"use client"` on first line; `ref` is a regular prop (no `forwardRef`)
-- **Supabase service_role:** Never expose to client; only in `src/lib/supabase/admin.ts` import chain
+- **Privileged operations:** All destructive operations handled server-side in NestJS behind appropriate Guards
 
 ### References
 
@@ -177,7 +177,7 @@ Expected new/modified files:
 - [Source: `_bmad-output/implementation-artifacts/2-3-member-role-management.md`]
 - [Source: `src/app/(dashboard)/group/[groupId]/settings/page.tsx`]
 - [Source: `src/app/api/groups/[groupId]/route.ts`]
-- [Source: `src/lib/supabase/admin.ts`]
+- [Source: NestJS GroupsModule service layer]
 
 ## Dev Agent Record
 

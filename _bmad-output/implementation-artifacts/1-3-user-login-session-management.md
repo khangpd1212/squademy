@@ -10,11 +10,11 @@ so that I can access my groups and learning content without logging in repeatedl
 
 ## Acceptance Criteria
 
-1. Given I navigate to `/login`, when I submit a valid email and password, then Supabase Auth authenticates me, sets session cookie, and redirects me to `/dashboard`.
+1. Given I navigate to `/login`, when I submit a valid email and password, then `browser-client.ts` calls NestJS `POST /auth/login`, tokens are stored in localStorage, `logged_in` cookie marker is set, and I am redirected to `/dashboard`.
 2. Given I submit incorrect credentials on `/login`, then inline error is shown: "Invalid email or password.", password field is cleared, and email field is retained.
-3. Given I am unauthenticated and request a protected route, then middleware redirects to `/login?redirect=<original-path>`.
+3. Given I am unauthenticated and request a protected route, then `proxy.ts` redirects to `/login?redirect=<original-path>`.
 4. Given I complete login with a valid `redirect` query param, then I am redirected back to that original destination instead of default `/dashboard`.
-5. Given I am logged in and click logout, then session is destroyed and I am redirected to `/login`.
+5. Given I am logged in and click logout, then `browser-client.ts` calls NestJS `POST /auth/logout`, localStorage tokens are cleared, `logged_in` cookie marker is removed, and I am redirected to `/login`.
 6. Given I am already logged in and open `/login`, then I am redirected to `/dashboard`.
 
 ## Tasks / Subtasks
@@ -24,8 +24,8 @@ so that I can access my groups and learning content without logging in repeatedl
   - [x] Add schema for email/password validation.
   - [x] Show inline errors only (no toast), clear password on auth failure, keep email.
 
-- [x] Implement login endpoint/flow (AC: 1, 2, 4)
-  - [x] Add `POST /api/auth/login` route (or secure server action) for `auth.signInWithPassword`.
+- [x] Implement login flow (AC: 1, 2, 4)
+  - [x] Call NestJS `POST /auth/login` via `browser-client.ts` for `auth.signInWithPassword`.
   - [x] Normalize invalid-credential errors to exact AC copy.
   - [x] Return redirect target based on validated `redirect` query param.
 
@@ -33,11 +33,12 @@ so that I can access my groups and learning content without logging in repeatedl
   - [x] Update login page to check session server-side and redirect authenticated users to `/dashboard`.
 
 - [x] Add logout action (AC: 5)
-  - [x] Add `POST /api/auth/logout` route to sign out and redirect to `/login`.
-  - [x] Ensure cookie/session is cleared.
+  - [x] Call NestJS `POST /auth/logout` via `browser-client.ts` to NULL the refresh_token.
+  - [x] Clear localStorage tokens and `logged_in` cookie marker.
+  - [x] Redirect to `/login`.
 
-- [x] Align middleware redirect preservation (AC: 3, 4)
-  - [x] Ensure unauthenticated protected-route redirect includes encoded `redirect` param.
+- [x] Align proxy redirect preservation (AC: 3, 4)
+  - [x] Ensure `proxy.ts` redirect for unauthenticated users includes encoded `redirect` param.
   - [x] Ensure login flow consumes and validates that param safely (same-origin path only).
 
 - [x] Test and validate (AC: 1-6)
@@ -51,11 +52,11 @@ so that I can access my groups and learning content without logging in repeatedl
 
 - `src/app/(auth)/login/page.tsx` currently still placeholder UI with no login logic.
 - Registration endpoint exists at `src/app/api/auth/register/route.ts` and already demonstrates server-driven auth orchestration patterns.
-- Session refresh and route protection currently live in `src/lib/supabase/middleware.ts` and are wired at root middleware/proxy layer.
+- Session refresh is handled by `browser-client.ts` (auto-refresh on 401). Route protection uses `proxy.ts` cookie marker check.
 
 ### Technical Requirements
 
-- Reuse existing auth stack: Supabase SSR helpers in `src/lib/supabase/*`.
+- Reuse existing auth stack: NestJS API endpoints via `browser-client.ts`.
 - Keep UX consistent with Story 1.2 (inline form errors, no toast).
 - Preserve compatibility with current middleware strategy and protected route model.
 - Validate `redirect` target as internal app path to prevent open redirect risk.
@@ -82,8 +83,8 @@ so that I can access my groups and learning content without logging in repeatedl
 
 - [Source: `_bmad-output/planning-artifacts/epics/epic-1-foundation-project-setup-authentication.md`]
 - [Source: `src/app/(auth)/login/page.tsx`]
-- [Source: `src/lib/supabase/middleware.ts`]
-- [Source: `src/lib/supabase/server.ts`]
+- [Source: `src/proxy.ts`]
+- [Source: `src/lib/api/client.ts`]
 - [Source: `_bmad-output/implementation-artifacts/1-2-user-registration.md`]
 
 ## Dev Agent Record
@@ -97,7 +98,7 @@ GPT-5.3 Codex
 - `npx jest --runTestsByPath "src/app/(auth)/login/login-schema.test.ts"` (RED then GREEN)
 - `npx jest --runTestsByPath "src/app/(auth)/login/_components/login-form.test.tsx"` (RED then GREEN)
 - `npx jest --runTestsByPath "src/app/(auth)/login/page.test.tsx"` (RED then GREEN)
-- `npx jest --runTestsByPath "src/lib/supabase/middleware.test.ts"` (RED then GREEN)
+- `npx jest --runTestsByPath "src/proxy.test.ts"` (RED then GREEN)
 - `npx jest --runTestsByPath "src/app/api/auth/login/route.test.ts" "src/app/api/auth/logout/route.test.ts"`
 - `npm test` (pass)
 - `npm run lint` (pass with unrelated pre-existing warnings)
@@ -108,7 +109,7 @@ GPT-5.3 Codex
 - Story context generated in batch mode for Epic 1 implementation wave.
 - Implemented complete login flow with inline error handling and password clearing behavior.
 - Added secure redirect handling to prevent open redirects while preserving internal destination paths.
-- Added `/api/auth/login` and `/api/auth/logout` route handlers with Supabase SSR cookie integration.
+- Added login and logout flows via NestJS `POST /auth/login` and `POST /auth/logout` with localStorage token management.
 - Added server-side `/login` guard for authenticated users and wired dashboard header logout action.
 - Added unit/component/route/middleware tests covering ACs 1-6.
 - Code review follow-up: added explicit logout error handling and test coverage for sign-out failure path.
@@ -127,8 +128,8 @@ GPT-5.3 Codex
 - `src/app/api/auth/logout/route.ts`
 - `src/app/api/auth/logout/route.test.ts`
 - `src/lib/auth/redirect.ts`
-- `src/lib/supabase/middleware.ts`
-- `src/lib/supabase/middleware.test.ts`
+- `src/proxy.ts`
+- `src/proxy.test.ts`
 - `src/components/layout/header.tsx`
 
 ### Change Log
