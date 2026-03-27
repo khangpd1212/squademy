@@ -17,8 +17,8 @@ export type GroupDetail = {
     role: string;
     joinedAt: string;
     user: {
-      displayName: string | null;
-      avatarUrl: string | null;
+      displayName: string;
+      avatarUrl?: string;
     };
   }>;
   lessons?: Array<{ id: string }>;

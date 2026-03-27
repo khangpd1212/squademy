@@ -27,11 +27,12 @@ describe("ProfileForm", () => {
       <ProfileForm
         initialProfile={{
           displayName: "Tina",
-          avatarUrl: null,
-          fullName: null,
-          school: null,
-          location: null,
+          avatarUrl: undefined,
+          fullName: undefined,
+          school: undefined,
+          location: undefined,
           age: null,
+          email: "",
         }}
       />
     );
@@ -49,17 +50,18 @@ describe("ProfileForm", () => {
       <ProfileForm
         initialProfile={{
           displayName: "Tina",
-          avatarUrl: null,
-          fullName: null,
-          school: null,
-          location: null,
+          avatarUrl: undefined,
+          fullName: undefined,
+          school: undefined,
+          location: undefined,
           age: null,
+          email: "",
         }}
       />
     );
 
     expect(
-      screen.getByText("Avatar upload will be available after file storage is configured.")
+      screen.getByText("Paste avatar URL to update preview and submit value.")
     ).toBeInTheDocument();
   });
 
@@ -72,11 +74,12 @@ describe("ProfileForm", () => {
       <ProfileForm
         initialProfile={{
           displayName: "Tina",
-          avatarUrl: null,
-          fullName: null,
-          school: null,
-          location: null,
+            avatarUrl: undefined,
+          fullName: undefined,
+          school: undefined,
+          location: undefined,
           age: null,
+          email: "",
         }}
       />
     );
@@ -94,11 +97,12 @@ describe("ProfileForm", () => {
         ok: true,
         profile: {
           displayName: "Tina Updated",
-          avatarUrl: null,
-          fullName: null,
-          school: null,
-          location: null,
+          avatarUrl: undefined,
+          fullName: undefined,
+          school: undefined,
+          location: undefined,
           age: null,
+          email: "",
         },
       }),
     } as Response);
@@ -114,9 +118,9 @@ describe("ProfileForm", () => {
         ok: true,
         profile: {
           displayName: "Tina",
-          avatarUrl: null,
-          fullName: null,
-          school: null,
+          avatarUrl: undefined,
+          fullName: undefined,
+          school: undefined,
           location: null,
           age: null,
         },
@@ -127,11 +131,12 @@ describe("ProfileForm", () => {
       <ProfileForm
         initialProfile={{
           displayName: "Tina",
-          avatarUrl: null,
-          fullName: null,
-          school: null,
-          location: null,
+          avatarUrl: undefined,
+          fullName: undefined,
+          school: undefined,
+          location: undefined,
           age: 20,
+          email: ""
         }}
       />
     );

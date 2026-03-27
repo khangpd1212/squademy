@@ -6,25 +6,26 @@ import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
 import { ProfileFormValues } from "@squademy/shared";
 
+export type ProfileUpdatePayload = Omit<ProfileFormValues, "email">;
+
 export type SearchResult = {
   id: string;
-  display_name: string | null;
-  avatar_url: string | null;
-};
-
-type ProfileApiResponse = {
-  profile?: ProfileFormValues;
+  displayName: string;
+  avatarUrl: string;
+  email: string;
 };
 
 export function useProfile() {
   return useQuery({
     queryKey: queryKeys.users.profile(),
     queryFn: async () => {
-      const result = await apiRequest<ProfileFormValues>(
-        "/users/me",
-      );
+      const result = await apiRequest<ProfileFormValues>("/users/me");
       if (result.message) {
-        return null;
+        throw new ApiError({
+          message: result.message,
+          code: result.code,
+          status: result.status,
+        });
       }
       return result.data;
     },
@@ -54,8 +55,8 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: ProfileFormValues) => {
-      const result = await apiRequest<ProfileApiResponse>("/users/me", {
+    mutationFn: async (payload: ProfileUpdatePayload) => {
+      const result = await apiRequest<ProfileFormValues>("/users/me", {
         method: "PATCH",
         body: JSON.stringify(payload),
       });
@@ -70,7 +71,23 @@ export function useUpdateProfile() {
 
       return result.data;
     },
-    onSuccess: async () => {
+    onMutate: async (newProfile) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.users.profile() });
+      const previous = queryClient.getQueryData<ProfileFormValues>(queryKeys.users.profile());
+      if (previous) {
+        queryClient.setQueryData<ProfileFormValues>(
+          queryKeys.users.profile(),
+          { ...previous, ...newProfile },
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _newProfile, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.users.profile(), context.previous);
+      }
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.users.profile(),
       });

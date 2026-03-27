@@ -23,7 +23,6 @@ export function Header() {
   const { data: profile } = useProfile();
 
   const displayName = profile?.displayName ?? "User";
-  const avatarUrl = profile?.avatarUrl ?? "";
   const initials = displayName.charAt(0).toUpperCase();
 
   async function handleLogout() {
@@ -60,7 +59,7 @@ export function Header() {
           }
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarUrl} alt={displayName} />
+            <AvatarImage src={profile?.avatarUrl} alt={displayName} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>

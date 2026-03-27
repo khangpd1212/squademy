@@ -64,7 +64,11 @@ export class UsersController {
 
   @Get("search")
   async search(@Query("q") query: string) {
-    const users = await this.usersService.search(query || "");
+    const trimmed = (query || "").trim();
+    if (trimmed.length < 2) {
+      return { ok: true, data: [] };
+    }
+    const users = await this.usersService.search(trimmed);
     return { ok: true, data: users };
   }
 }

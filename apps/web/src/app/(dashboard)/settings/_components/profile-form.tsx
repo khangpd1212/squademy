@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RHFInputNumber } from "@/components/form/rhf-input-number";
-import { useUpdateProfile } from "@/hooks/api/use-user-queries";
+import { useUpdateProfile, ProfileUpdatePayload } from "@/hooks/api/use-user-queries";
 import { profileFormSchema, ProfileFormValues, VALIDATION } from "@squademy/shared";
 
 type ProfileFormProps = {
@@ -38,10 +38,8 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     defaultValues: initialProfile,
     mode: "onSubmit",
   });
-  const avatarUrl = useWatch({
-    control: form.control,
-    name: "avatarUrl",
-  });
+  const avatarUrl = useWatch({ control: form.control, name: "avatarUrl" });
+  const watchedDisplayName = useWatch({ control: form.control, name: "displayName" }) || initialProfile.displayName;
 
   const fallbackInitials = useMemo(
     () => formatInitials(initialProfile.displayName || "User"),
@@ -52,8 +50,10 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     setSubmitError(null);
     setSaveSuccess(null);
 
+    const { email: _email, ...updatePayload }: { email: string; } & ProfileUpdatePayload = values;
+
     try {
-      await updateProfileMutation.mutateAsync(values);
+      await updateProfileMutation.mutateAsync(updatePayload);
 
       setSaveSuccess("Profile saved.");
     } catch (error) {
@@ -72,7 +72,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         </Avatar>
         <div className="space-y-1">
           <p className="font-medium" data-testid="profile-preview-name">
-            {initialProfile.displayName}
+            {watchedDisplayName}
           </p>
           <p className="text-xs text-muted-foreground">
             Paste avatar URL to update preview and submit value.
@@ -80,7 +80,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         </div>
       </div>
 
-      <form className="space-y-4" onSubmit={form.handleSubmit(handleSave)} noValidate>
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSave)} onChange={() => setSaveSuccess(null)} noValidate>
         <div className="space-y-2">
           <Label htmlFor="avatarUrl">Avatar URL</Label>
           <Input
@@ -123,10 +123,13 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" autoComplete="email" {...form.register("email")} />
-          {form.formState.errors.email ? (
-            <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
-          ) : null}
+          <Input
+            id="email"
+            autoComplete="email"
+            value={initialProfile.email}
+            readOnly
+            className="bg-muted cursor-default"
+          />
         </div>
 
         <div className="space-y-2">

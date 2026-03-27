@@ -6,12 +6,11 @@ import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-
 export type GroupMember = {
   user_id: string;
   role: string;
   joined_at: string;
-  profiles: { display_name: string | null; avatar_url: string | null } | null;
+  profiles: { display_name: string; avatar_url: string };
 };
 
 export function useGroupMembers(groupId: string) {
@@ -19,12 +18,14 @@ export function useGroupMembers(groupId: string) {
     queryKey: queryKeys.groups.members(groupId),
     enabled: Boolean(groupId),
     queryFn: async () => {
-      const result = await apiRequest<Array<{
-        userId: string;
-        role: string;
-        joinedAt: string;
-        user: { id: string; displayName: string | null; avatarUrl: string | null } | null;
-      }>>(`/groups/${groupId}/members`);
+      const result = await apiRequest<
+        Array<{
+          userId: string;
+          role: string;
+          joinedAt: string;
+          user: { id: string; displayName: string; avatarUrl: string };
+        }>
+      >(`/groups/${groupId}/members`);
       if (result.message || !result.data) {
         throw new ApiError({
           message: result.message ?? "Could not load members.",
@@ -56,13 +57,21 @@ export function useRemoveMember(groupId: string) {
         method: "DELETE",
       });
       if (result.message) {
-        throw new ApiError({ message: result.message, code: result.code, status: result.status });
+        throw new ApiError({
+          message: result.message,
+          code: result.code,
+          status: result.status,
+        });
       }
       return userId;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.members(groupId) });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.groups.detail(groupId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.groups.members(groupId),
+      });
     },
   });
 }
@@ -71,19 +80,36 @@ export function useUpdateMemberRole(groupId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: MemberRole }) => {
-      const result = await apiRequest(`/groups/${groupId}/members/${userId}/role`, {
-        method: "PATCH",
-        body: JSON.stringify({ role }),
-      });
+    mutationFn: async ({
+      userId,
+      role,
+    }: {
+      userId: string;
+      role: MemberRole;
+    }) => {
+      const result = await apiRequest(
+        `/groups/${groupId}/members/${userId}/role`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ role }),
+        },
+      );
       if (result.message) {
-        throw new ApiError({ message: result.message, code: result.code, status: result.status });
+        throw new ApiError({
+          message: result.message,
+          code: result.code,
+          status: result.status,
+        });
       }
       return { userId, role };
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.members(groupId) });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.groups.detail(groupId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.groups.members(groupId),
+      });
     },
   });
 }

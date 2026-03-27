@@ -53,10 +53,10 @@ export function InviteByUsername({ groupId }: InviteByUsernameProps) {
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="invite-search">Invite by username</Label>
+      <Label htmlFor="invite-search">Invite by name or email</Label>
       <Input
         id="invite-search"
-        placeholder="Search by display name..."
+        placeholder="Search by name or email..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
@@ -72,9 +72,14 @@ export function InviteByUsername({ groupId }: InviteByUsernameProps) {
               key={profile.id}
               className="flex items-center justify-between px-3 py-2"
             >
-              <span className="text-sm">
-                {profile.display_name ?? "Unknown"}
-              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {profile.displayName ?? "Unknown"}
+                </p>
+                {profile.email ? (
+                  <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
+                ) : null}
+              </div>
               {sentIds.has(profile.id) ? (
                 <span className="text-xs text-emerald-600 dark:text-emerald-400">
                   Invite sent!

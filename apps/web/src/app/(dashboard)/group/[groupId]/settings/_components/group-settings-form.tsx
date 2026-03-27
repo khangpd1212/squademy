@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ export function GroupSettingsForm({
     defaultValues: initialValues,
   });
 
-  const selectedDay = form.watch("exerciseDeadlineDay");
+  const selectedDay = useWatch({ control: form.control, name: "exerciseDeadlineDay" });
   const showTimeInput = typeof selectedDay === "number";
   const readOnlySchedule = useMemo(() => getScheduleText(initialValues), [initialValues]);
 
