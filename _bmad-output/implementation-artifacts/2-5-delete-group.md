@@ -1,4 +1,4 @@
-# Story 2.5: Delete Group
+# Story 2.6: Delete Group
 
 Status: ready-for-dev
 
@@ -101,7 +101,7 @@ so that inactive groups do not clutter the platform.
 
 - This story adds a "Danger Zone" delete section to the Group Settings page implemented in Story 2-4.
 - The settings page (`/group/[groupId]/settings`) MUST already have `<GroupSettingsForm>` from Story 2-4 before this story is implemented.
-- Story 2-5 depends on Story 2-4's `settings/page.tsx` being functional. Do not implement 2-5 until 2-4 is done.
+- Story 2-6 depends on Story 2-4's `settings/page.tsx` being functional. Do not implement 2-6 until 2-4 is done.
 - The "Delete Group" section is only visible to admins (non-admins see nothing — `<DeleteGroupSection>` returns null when `isAdmin === false`).
 
 ### Previous Story Intelligence (2-4)
@@ -170,7 +170,7 @@ Expected new/modified files:
 
 ### References
 
-- [Source: `_bmad-output/planning-artifacts/epics/epic-2-group-management-membership.md` — Story 2.5]
+- [Source: `_bmad-output/planning-artifacts/epics/epic-2-group-management-membership.md` — Story 2.6]
 - [Source: `_bmad-output/planning-artifacts/architecture.md` — Sections 3.2 (Groups schema), 3.3 (RLS — soft delete + service_role), 4.1]
 - [Source: `_bmad-output/project-context.md`]
 - [Source: `_bmad-output/implementation-artifacts/2-4-group-settings-exercise-scheduling.md`]

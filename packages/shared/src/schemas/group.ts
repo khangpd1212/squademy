@@ -37,14 +37,14 @@ export const groupSettingsSchema = z.object({
     .min(VALIDATION.GROUP_NAME_MIN, "Group name is required.")
     .max(VALIDATION.GROUP_NAME_MAX, `Group name must be ${VALIDATION.GROUP_NAME_MAX} characters or less.`),
   description: optionalTrimmedString(VALIDATION.GROUP_DESCRIPTION_MAX),
-  exercise_deadline_day: z
+  exerciseDeadlineDay: z
     .number()
     .int()
     .min(VALIDATION.DEADLINE_DAY_MIN)
     .max(VALIDATION.DEADLINE_DAY_MAX)
     .nullable()
     .optional(),
-  exercise_deadline_time: z
+    exerciseDeadlineTime: z
     .string()
     .regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format.")
     .nullable()

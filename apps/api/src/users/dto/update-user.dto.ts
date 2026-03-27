@@ -1,6 +1,5 @@
-import { IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min, MinLength } from "class-validator";
+import { IsEmail, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min, MinLength } from "class-validator";
 import { ProfileFormValues, VALIDATION } from "@squademy/shared";
-import { isNull } from "util";
 
 export class UpdateUserDto implements ProfileFormValues {
   @IsOptional()
@@ -8,6 +7,9 @@ export class UpdateUserDto implements ProfileFormValues {
   @MinLength(VALIDATION.DISPLAY_NAME_MIN)
   @MaxLength(VALIDATION.DISPLAY_NAME_MAX)
   displayName: string;
+
+  @IsEmail()
+  email: string;
 
   @IsOptional()
   @IsString()

@@ -1,24 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RHFInputNumber } from "@/components/form/rhf-input-number";
 import { useUpdateProfile } from "@/hooks/api/use-user-queries";
-import { profileFormSchema, ProfileFormValues, toNullableString, VALIDATION } from "@squademy/shared";
+import { profileFormSchema, ProfileFormValues, VALIDATION } from "@squademy/shared";
 
 type ProfileFormProps = {
-  initialProfile: {
-    displayName: string;
-    avatarUrl: string | null;
-    fullName: string | null;
-    school: string | null;
-    location: string | null;
-    age: number | null;
-  };
+  initialProfile: ProfileFormValues;
 };
 
 function formatInitials(name: string) {
@@ -37,62 +31,35 @@ function formatInitials(name: string) {
 export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
-  const [avatarUrl] = useState<string | null>(initialProfile.avatarUrl);
-  const [displayNamePreview, setDisplayNamePreview] = useState(initialProfile.displayName);
   const updateProfileMutation = useUpdateProfile();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      displayName: initialProfile.displayName ?? "",
-      fullName: initialProfile.fullName ?? "",
-      school: initialProfile.school ?? "",
-      location: initialProfile.location ?? "",
-      age: initialProfile.age,
-    },
+    defaultValues: initialProfile,
     mode: "onSubmit",
+  });
+  const avatarUrl = useWatch({
+    control: form.control,
+    name: "avatarUrl",
   });
 
   const fallbackInitials = useMemo(
-    () => formatInitials(displayNamePreview || initialProfile.displayName || "User"),
-    [displayNamePreview, initialProfile.displayName]
+    () => formatInitials(initialProfile.displayName || "User"),
+    [initialProfile.displayName],
   );
 
   async function handleSave(values: ProfileFormValues) {
     setSubmitError(null);
     setSaveSuccess(null);
 
-    const previousDisplayName = displayNamePreview;
-    const optimisticDisplayName = values.displayName.trim();
-    setDisplayNamePreview(optimisticDisplayName);
-
     try {
-      const response = await updateProfileMutation.mutateAsync({
-          displayName: optimisticDisplayName,
-          fullName: toNullableString(values.fullName),
-          school: toNullableString(values.school),
-          location: toNullableString(values.location),
-          age: values.age,
-      });
-      const profile = response?.profile;
-      if (profile?.displayName) {
-        setDisplayNamePreview(profile.displayName);
-      }
+      await updateProfileMutation.mutateAsync(values);
 
       setSaveSuccess("Profile saved.");
     } catch (error) {
-      const typedError = error as Error & {
-        field?: "displayName" | "fullName" | "school" | "location" | "age";
-      };
-      if (typedError.field) {
-        form.setError(typedError.field, {
-          type: "server",
-          message: typedError.message ?? "Could not save this field.",
-        });
-      } else {
-        setSubmitError(typedError.message ?? "Could not save profile. Please try again.");
-      }
-      setDisplayNamePreview(previousDisplayName);
+      const message =
+        error instanceof Error ? error.message : "Could not save profile. Please try again.";
+      setSubmitError(message);
     }
   }
 
@@ -100,20 +67,39 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Avatar size="lg">
-          {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayNamePreview} /> : null}
+          {avatarUrl ? <AvatarImage src={avatarUrl} alt={initialProfile.displayName} /> : null}
           <AvatarFallback>{fallbackInitials}</AvatarFallback>
         </Avatar>
         <div className="space-y-1">
           <p className="font-medium" data-testid="profile-preview-name">
-            {displayNamePreview}
+            {initialProfile.displayName}
           </p>
           <p className="text-xs text-muted-foreground">
-            Avatar upload will be available after file storage is configured.
+            Paste avatar URL to update preview and submit value.
           </p>
         </div>
       </div>
 
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSave)} noValidate>
+        <div className="space-y-2">
+          <Label htmlFor="avatarUrl">Avatar URL</Label>
+          <Input
+            id="avatarUrl"
+            placeholder="https://example.com/avatar.png"
+            autoComplete="url"
+            {...form.register("avatarUrl", {
+              setValueAs: (value: string) => {
+                const trimmed = value?.trim?.() ?? "";
+                return trimmed === "" ? undefined : trimmed;
+              },
+            })}
+            aria-invalid={form.formState.errors.avatarUrl ? "true" : "false"}
+          />
+          {form.formState.errors.avatarUrl ? (
+            <p className="text-xs text-destructive">{form.formState.errors.avatarUrl.message}</p>
+          ) : null}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="displayName">Display name</Label>
           <Input
@@ -136,6 +122,14 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" autoComplete="email" {...form.register("email")} />
+          {form.formState.errors.email ? (
+            <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="school">School</Label>
           <Input id="school" {...form.register("school")} />
           {form.formState.errors.school ? (
@@ -153,16 +147,21 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="age">Age</Label>
-          <Input
+          <RHFInputNumber
             id="age"
-            type="number"
+            control={form.control}
+            name="age"
             min={VALIDATION.AGE_MIN}
             max={VALIDATION.AGE_MAX}
-            {...form.register("age")}
-            aria-invalid={form.formState.errors.age ? "true" : "false"}
+            step={1}
+            precision={0}
+            inputMode="numeric"
+            ariaDescribedBy={form.formState.errors.age ? "age-error-message" : undefined}
           />
           {form.formState.errors.age ? (
-            <p className="text-xs text-destructive">{form.formState.errors.age.message}</p>
+            <p id="age-error-message" className="text-xs text-destructive">
+              {form.formState.errors.age.message}
+            </p>
           ) : null}
         </div>
 

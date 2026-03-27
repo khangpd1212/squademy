@@ -9,16 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRegister } from "@/hooks/api/use-auth-queries";
-import {
-  duplicateEmailMessage,
-  registerSchema,
-  type RegisterInput,
-} from "../register-schema";
+import { ApiError } from "@/lib/api/api-error";
+import { useErrorMessage } from "@/lib/api/error-messages";
+import { RegisterInput, registerSchema } from "@squademy/shared";
+
 
 export function RegisterForm() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const registerMutation = useRegister();
+  const getMessage = useErrorMessage();
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -38,19 +38,13 @@ export function RegisterForm() {
       await registerMutation.mutateAsync(values);
       router.push("/dashboard");
     } catch (error) {
-      const typedError = error as Error & {
-        field?: "email" | "password" | "displayName" | "acceptPrivacy";
-      };
-      if (typedError.field) {
-        form.setError(typedError.field, {
-          type: "server",
-          message:
-            typedError.message ??
-            (typedError.field === "email" ? duplicateEmailMessage : "Request failed."),
-        });
-        return;
-      }
-      setSubmitError(typedError.message ?? "Network error. Please try again.");
+      const apiError = error instanceof ApiError ? error : null;
+      const message = apiError
+        ? getMessage(apiError.code, apiError.message)
+        : error instanceof Error
+          ? error.message
+          : getMessage(undefined, "Network error. Please try again.");
+      setSubmitError(message);
     }
   }
 

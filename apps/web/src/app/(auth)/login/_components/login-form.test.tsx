@@ -13,6 +13,17 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () => searchParamsMock,
 }));
 
+jest.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => {
+    const messages: Record<string, string> = {
+      AUTH_INVALID_CREDENTIALS: "Invalid email or password.",
+      fallback: "Something went wrong. Please try again.",
+      network: "Network error. Please try again.",
+    };
+    return messages[key] ?? key;
+  },
+}));
+
 describe("LoginForm", () => {
   beforeEach(() => {
     pushMock.mockReset();
@@ -25,6 +36,7 @@ describe("LoginForm", () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       json: async () => ({
+        code: "AUTH_INVALID_CREDENTIALS",
         message: "Invalid email or password.",
       }),
     });

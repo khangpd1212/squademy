@@ -22,8 +22,8 @@ function getInitialValues() {
   return {
     name: "IELTS Warriors",
     description: "Practice together",
-    exercise_deadline_day: null,
-    exercise_deadline_time: null,
+    exerciseDeadlineDay: null,
+    exerciseDeadlineTime: null,
   };
 }
 
@@ -168,8 +168,8 @@ describe("GroupSettingsForm", () => {
         initialValues={{
           name: "IELTS Warriors",
           description: "Practice together",
-          exercise_deadline_day: 1,
-          exercise_deadline_time: "14:30",
+          exerciseDeadlineDay: 1,
+          exerciseDeadlineTime: "14:30",
         }}
         isAdmin
       />
@@ -180,8 +180,8 @@ describe("GroupSettingsForm", () => {
     await waitFor(() => {
       const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
       const body = JSON.parse(fetchCall[1].body);
-      expect(body.exercise_deadline_day).toBe(1);
-      expect(body.exercise_deadline_time).toBe("14:30");
+      expect(body.exerciseDeadlineDay).toBe(1);
+      expect(body.exerciseDeadlineTime).toBe("14:30");
     });
   });
 

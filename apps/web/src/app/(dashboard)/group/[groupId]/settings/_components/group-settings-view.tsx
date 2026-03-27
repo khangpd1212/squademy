@@ -43,8 +43,8 @@ export function GroupSettingsView({ groupId }: { groupId: string }) {
             initialValues={{
               name: group.name,
               description: group.description ?? "",
-              exercise_deadline_day: group.exerciseDeadlineDay,
-              exercise_deadline_time: normalizeTime(group.exerciseDeadlineTime),
+              exerciseDeadlineDay: group.exerciseDeadlineDay,
+              exerciseDeadlineTime: normalizeTime(group.exerciseDeadlineTime),
             }}
             isAdmin={isAdmin}
           />

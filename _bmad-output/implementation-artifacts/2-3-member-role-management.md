@@ -23,7 +23,7 @@ so that I can maintain a healthy group with the right people in the right roles.
 
 3. **Given** I try to change my own role as the sole Admin,  
    **When** I attempt to demote myself,  
-   **Then** an inline error appears: "You cannot remove admin role from yourself while you are the only admin.",  
+   **Then** an inline error appears: "Cannot demote the sole admin. Promote another admin first.",  
    **And** the change is not saved.
 
 4. **Given** I click "Remove" next to a member and confirm the dialog,  
@@ -34,7 +34,7 @@ so that I can maintain a healthy group with the right people in the right roles.
 
 5. **Given** I try to remove myself as the sole Admin,  
    **When** I attempt the action,  
-   **Then** an inline error appears: "You cannot remove yourself while you are the only admin. Transfer admin role first."
+   **Then** an inline error appears: "Cannot remove the sole admin. Transfer admin role first."
 
 ## Tasks / Subtasks
 

@@ -38,13 +38,13 @@ const DAY_OPTIONS = [
 
 function getScheduleText(values: GroupSettingsInput) {
   if (
-    typeof values.exercise_deadline_day !== "number" ||
-    !values.exercise_deadline_time
+    typeof values.exerciseDeadlineDay !== "number" ||
+    !values.exerciseDeadlineTime
   ) {
     return "No schedule";
   }
 
-  return `Every ${DAY_OPTIONS[values.exercise_deadline_day]} at ${values.exercise_deadline_time}`;
+  return `Every ${DAY_OPTIONS[values.exerciseDeadlineDay]} at ${values.exerciseDeadlineTime}`;
 }
 
 export function GroupSettingsForm({
@@ -59,7 +59,7 @@ export function GroupSettingsForm({
     defaultValues: initialValues,
   });
 
-  const selectedDay = form.watch("exercise_deadline_day");
+  const selectedDay = form.watch("exerciseDeadlineDay");
   const showTimeInput = typeof selectedDay === "number";
   const readOnlySchedule = useMemo(() => getScheduleText(initialValues), [initialValues]);
 
@@ -69,11 +69,11 @@ export function GroupSettingsForm({
     const payload = {
       name: values.name,
       description: values.description ?? "",
-      exercise_deadline_day:
-        typeof values.exercise_deadline_day === "number" ? values.exercise_deadline_day : null,
-      exercise_deadline_time:
-        typeof values.exercise_deadline_day === "number"
-          ? values.exercise_deadline_time || null
+      exerciseDeadlineDay:
+        typeof values.exerciseDeadlineDay === "number" ? values.exerciseDeadlineDay : null,
+      exerciseDeadlineTime:
+        typeof values.exerciseDeadlineDay === "number"
+          ? values.exerciseDeadlineTime || null
           : null,
     };
 
@@ -82,20 +82,9 @@ export function GroupSettingsForm({
       toast.success("Settings saved.");
       router.refresh();
     } catch (error) {
-      const typedError = error as Error & {
-        field?: "name" | "description" | "exercise_deadline_day" | "exercise_deadline_time";
-      };
-      if (typedError.field === "name") {
-          form.setError("name", {
-            type: "server",
-            message: typedError.message ?? "Could not save group name.",
-          });
-        return;
-      }
-      form.setError("root", {
-        type: "server",
-        message: typedError.message ?? "Network error. Please try again.",
-      });
+      const message =
+        error instanceof Error ? error.message : "Network error. Please try again.";
+      form.setError("root", { type: "server", message });
     }
   }
 
@@ -145,19 +134,19 @@ export function GroupSettingsForm({
       </div>
 
       <div className="space-y-2">
-        <Label id="exercise_deadline_day_label">Weekly exercise deadline day</Label>
+        <Label id="exerciseDeadlineDayLabel">Weekly exercise deadline day</Label>
         <Select
-          value={typeof selectedDay === "number" ? String(selectedDay) : null}
+          value={typeof selectedDay === "number" ? String(selectedDay) : undefined}
           onValueChange={(val) => {
             const day = !val || val === "clear" ? null : Number(val);
-            form.setValue("exercise_deadline_day", day, { shouldValidate: true });
+            form.setValue("exerciseDeadlineDay", day, { shouldValidate: true });
             if (day === null) {
-              form.setValue("exercise_deadline_time", null, { shouldValidate: true });
+              form.setValue("exerciseDeadlineTime", null, { shouldValidate: true });
             }
           }}
         >
           <SelectTrigger
-            aria-labelledby="exercise_deadline_day_label"
+            aria-labelledby="exerciseDeadlineDayLabel"
             className="w-full"
           >
             <SelectValue placeholder="No schedule" />
@@ -175,16 +164,16 @@ export function GroupSettingsForm({
 
       {showTimeInput ? (
         <div className="space-y-2">
-          <Label htmlFor="exercise_deadline_time">Weekly exercise deadline time</Label>
+          <Label htmlFor="exerciseDeadlineTime">Weekly exercise deadline time</Label>
           <Input
-            id="exercise_deadline_time"
+            id="exerciseDeadlineTime"
             type="time"
-            {...form.register("exercise_deadline_time")}
-            aria-invalid={form.formState.errors.exercise_deadline_time ? "true" : "false"}
+            {...form.register("exerciseDeadlineTime")}
+            aria-invalid={form.formState.errors.exerciseDeadlineTime ? "true" : "false"}
           />
-          {form.formState.errors.exercise_deadline_time ? (
+          {form.formState.errors.exerciseDeadlineTime ? (
             <p className="text-xs text-destructive">
-              {form.formState.errors.exercise_deadline_time.message}
+              {form.formState.errors.exerciseDeadlineTime.message}
             </p>
           ) : null}
         </div>

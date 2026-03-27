@@ -1,9 +1,8 @@
-import { GROUP_ROLES } from "@squademy/shared";
-import type { MemberRoleInput } from "@squademy/shared";
+import { GROUP_ROLES, type MemberRole } from "@squademy/shared";
 import { IsIn, IsString } from "class-validator";
 
-export class ChangeRoleDto implements MemberRoleInput {
+export class ChangeRoleDto  {
   @IsString()
   @IsIn([GROUP_ROLES.ADMIN, GROUP_ROLES.EDITOR, GROUP_ROLES.MEMBER])
-  role: MemberRoleInput["role"];
+  role: MemberRole;
 }

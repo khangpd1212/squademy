@@ -8,18 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLogin } from "@/hooks/api/use-auth-queries";
+import { ErrorCode, LoginInput, loginSchema } from "@squademy/shared";
+import { ApiError } from "@/lib/api/api-error";
+import { useErrorMessage } from "@/lib/api/error-messages";
 import { getLoginRedirectTarget } from "@/lib/auth/redirect";
-import {
-  invalidCredentialsMessage,
-  loginSchema,
-  type LoginInput,
-} from "../login-schema";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const loginMutation = useLogin();
+  const getMessage = useErrorMessage();
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -37,10 +36,14 @@ export function LoginForm() {
       await loginMutation.mutateAsync(values);
       router.push(getLoginRedirectTarget(searchParams.get("redirect")));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Network error. Please try again.";
+      const apiError = error instanceof ApiError ? error : null;
+      const message = apiError
+        ? getMessage(apiError.code, apiError.message)
+        : error instanceof Error
+          ? error.message
+          : getMessage(undefined, "Network error. Please try again.");
       setSubmitError(message);
-      if (message === invalidCredentialsMessage) {
+      if (apiError?.code === ErrorCode.AUTH_INVALID_CREDENTIALS) {
         form.resetField("password");
       }
     }

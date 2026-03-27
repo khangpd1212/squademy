@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -5,17 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getCurrentUser } from "@/lib/api/client";
-import { redirect } from "next/navigation";
+import { useProfile } from "@/hooks/api/use-user-queries";
 import { ProfileForm } from "./_components/profile-form";
 
-export default async function SettingsPage() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
+export default function SettingsPage() {
+  const { data: profile, isLoading } = useProfile();
+  const { displayName, email = "", age = null, ...restProfile } = profile ?? {};
+  const displayNameValue = displayName ?? email?.split("@")[0] ?? "";
+  
   return (
     <div className="max-w-3xl space-y-4">
       <Card>
@@ -26,16 +25,18 @@ export default async function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfileForm
-            initialProfile={{
-              displayName: user.email?.split("@")[0] ?? "User",
-              avatarUrl: null,
-              fullName: null,
-              school: null,
-              location: null,
-              age: null,
-            }}
-          />
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading profile...</p>
+          ) : profile ? (
+            <ProfileForm
+              initialProfile={{
+                displayName: displayNameValue,
+                email,
+                age,
+                ...restProfile,
+              }}
+            />
+          ) : null}
         </CardContent>
       </Card>
     </div>

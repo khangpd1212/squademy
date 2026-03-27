@@ -1,6 +1,6 @@
 # Epic 2: Group Management & Membership
 
-Group Admins can create groups, manage membership, assign roles, and control access via invitation links. Establishes the group container that all content and activity lives within.
+Group Admins can create groups, manage membership, assign roles, and control access via invitation links. Users can view and navigate to all groups they belong to from the dashboard. Establishes the group container that all content and activity lives within.
 
 ### Story 2.1: Create & Configure a Group
 
@@ -97,7 +97,7 @@ So that I can maintain a healthy group with the right people in the right roles.
 
 **Given** I try to change my own role as the sole Admin
 **When** I attempt to demote myself
-**Then** NestJS returns a 400 error and an inline error appears: "You cannot remove admin role from yourself while you are the only admin."
+**Then** NestJS returns a 400 error and an inline error appears: "Cannot demote the sole admin. Promote another admin first."
 **And** the change is not saved
 
 **Given** I click "Remove" next to a member and confirm the dialog
@@ -108,7 +108,7 @@ So that I can maintain a healthy group with the right people in the right roles.
 
 **Given** I try to remove myself as the sole Admin
 **When** I attempt the action
-**Then** NestJS returns a 400 error and an inline error appears: "You cannot remove yourself while you are the only admin. Transfer admin role first."
+**Then** NestJS returns a 400 error and an inline error appears: "Cannot remove the sole admin. Transfer admin role first."
 
 ---
 
@@ -141,7 +141,40 @@ So that members know what the group is about and when exercises are due.
 
 ---
 
-### Story 2.5: Delete Group
+### Story 2.5: Dashboard — My Groups List
+
+As a logged-in user,
+I want to see a list of all groups I belong to on the dashboard,
+So that I can quickly navigate to any group and understand my role and activity at a glance.
+
+**Acceptance Criteria:**
+
+**Given** I am authenticated and navigate to `/dashboard`
+**When** the page loads
+**Then** `GET /api/groups/me` proxies to NestJS `GET /groups/me` (protected by JwtAuthGuard) which queries all `group_members` rows for my `user_id` via Prisma, joining `groups` table
+**And** the dashboard displays a card grid of my groups, each showing: group name, my role badge (Admin/Editor/Contributor/Member), member count, and last activity date
+**And** groups are sorted by last activity (most recent first)
+
+**Given** I click on a group card
+**When** the navigation fires
+**Then** I am navigated to the group home page at `/group/[groupId]`
+
+**Given** I am authenticated and have no group memberships
+**When** the dashboard loads
+**Then** an empty state illustration is shown with the message: "You're not part of any group yet."
+**And** two CTAs are visible: "Create a Group" (primary) linking to the Create Group screen, and "Join with Invite Link" (secondary) with a text input field to paste an invite link
+
+**Given** I am authenticated and navigate to `/dashboard`
+**When** I have pending group invitations
+**Then** a "Pending Invitations" section appears above the group list showing each invitation with group name, inviter name, and "Accept" / "Decline" buttons (delegates to Story 2.2 invitation acceptance flow)
+
+**Given** I am on the dashboard and a group's name or my role changes
+**When** another tab or session triggers the mutation
+**Then** the group card reflects the updated data on the next React Query refetch (staleTime-based)
+
+---
+
+### Story 2.6: Delete Group
 
 As a Group Admin,
 I want to delete a group I no longer need,

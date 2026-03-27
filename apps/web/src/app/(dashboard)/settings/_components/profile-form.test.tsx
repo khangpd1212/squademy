@@ -105,4 +105,46 @@ describe("ProfileForm", () => {
 
     await waitFor(() => expect(screen.getByText("Profile saved.")).toBeInTheDocument());
   });
+
+  it("wires age as null into profile update payload when input is empty", async () => {
+    const user = userEvent.setup();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        profile: {
+          displayName: "Tina",
+          avatarUrl: null,
+          fullName: null,
+          school: null,
+          location: null,
+          age: null,
+        },
+      }),
+    } as Response);
+
+    renderWithQueryClient(
+      <ProfileForm
+        initialProfile={{
+          displayName: "Tina",
+          avatarUrl: null,
+          fullName: null,
+          school: null,
+          location: null,
+          age: 20,
+        }}
+      />
+    );
+
+    const ageInput = screen.getByLabelText("Age");
+    await user.clear(ageInput);
+    await user.click(screen.getByRole("button", { name: "Save profile" }));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    const requestInit = (global.fetch as jest.Mock).mock.calls[0][1];
+    const payload = JSON.parse(requestInit.body as string) as { age: number | null };
+
+    expect(payload.age).toBeNull();
+  });
+
 });

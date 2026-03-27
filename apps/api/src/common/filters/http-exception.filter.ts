@@ -6,6 +6,7 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { Response } from "express";
+import { ErrorCode, getErrorMessage } from "@squademy/shared";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -15,28 +16,34 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = "Internal server error";
+    let code: keyof typeof ErrorCode | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      message =
-        typeof exceptionResponse === "string"
-          ? exceptionResponse
-          : (exceptionResponse as { message?: string | string[] }).message
-            ? Array.isArray(
-                (exceptionResponse as { message: string | string[] }).message,
-              )
-              ? (
-                  exceptionResponse as { message: string[] }
-                ).message.join(", ")
-              : ((exceptionResponse as { message: string }).message)
-            : exception.message;
+
+      if (typeof exceptionResponse === "string") {
+        message = exceptionResponse;
+      } else if (typeof exceptionResponse === "object" && exceptionResponse !== null) {
+        const obj = exceptionResponse as Record<string, unknown>;
+        code = typeof obj.code === "string" ? (obj.code as keyof typeof ErrorCode) : undefined;
+
+        if (code) {
+          message = getErrorMessage(code);
+        } else if (typeof obj.message === "string") {
+          message = obj.message;
+        } else if (Array.isArray(obj.message)) {
+          message = (obj.message as string[]).join(", ");
+        } else {
+          message = exception.message;
+        }
+      }
     }
 
     response.status(status).json({
       ok: false,
       message,
-      error: message,
+      code,
     });
   }
 }

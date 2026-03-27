@@ -7,6 +7,7 @@ FR2: Users can manage their profile information (name, email, age, school, locat
 FR3: Users can request a complete export of their personal data.
 FR4: Users can request account deletion (which anonymizes but retains their contributed content).
 FR5: Group Admins can create and configure new learning groups.
+FR5a: Users can view a dashboard listing all groups they belong to — displaying group name, their role, member count, and last activity — and navigate into any group.
 FR6: Group Admins can generate and revoke private invitation links.
 FR7: Group Admins can invite users directly by typing their username.
 FR8: Users can view, accept, or decline direct group invitations.
@@ -126,6 +127,7 @@ NFR14 (Input Agnosticism): All critical flows (including the Tinder-style flashc
 | FR3 | Epic 1 | Personal data export (GDPR Art. 20) |
 | FR4 | Epic 1 | Account deletion / tombstoning (GDPR Art. 17) |
 | FR5 | Epic 2 | Group creation & configuration |
+| FR5a | Epic 2 | Dashboard: view & navigate to joined groups |
 | FR6 | Epic 2 | Invite link generation & revocation |
 | FR7 | Epic 2 | Direct invite by username |
 | FR8 | Epic 2 | Accept / decline group invitations |

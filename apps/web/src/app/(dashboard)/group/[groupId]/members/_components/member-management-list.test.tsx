@@ -130,7 +130,7 @@ describe("MemberManagementList", () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       json: async () => ({
-        message: "You cannot remove admin role from yourself while you are the only admin.",
+        message: "Cannot demote the sole admin. Promote another admin first.",
       }),
     });
 
@@ -148,7 +148,7 @@ describe("MemberManagementList", () => {
     await waitFor(() =>
       expect(
         screen.getByText(
-          "You cannot remove admin role from yourself while you are the only admin."
+          "Cannot demote the sole admin. Promote another admin first."
         )
       ).toBeInTheDocument()
     );
@@ -161,7 +161,7 @@ describe("MemberManagementList", () => {
       ok: false,
       json: async () => ({
         message:
-          "You cannot remove yourself while you are the only admin. Transfer admin role first.",
+          "Cannot remove the sole admin. Transfer admin role first.",
       }),
     });
 
@@ -180,7 +180,7 @@ describe("MemberManagementList", () => {
     await waitFor(() =>
       expect(
         screen.getByText(
-          "You cannot remove yourself while you are the only admin. Transfer admin role first."
+          "Cannot remove the sole admin. Transfer admin role first."
         )
       ).toBeInTheDocument()
     );

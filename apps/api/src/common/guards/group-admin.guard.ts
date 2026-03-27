@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from "@nestjs/common";
-import { GROUP_ROLES } from "@squademy/shared";
+import { ErrorCode, GROUP_ROLES } from "@squademy/shared";
 import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
@@ -18,7 +18,9 @@ export class GroupAdminGuard implements CanActivate {
       request.params.groupId || request.params.id;
 
     if (!userId || !groupId) {
-      throw new ForbiddenException("Missing user or group context");
+      throw new ForbiddenException({
+        code: ErrorCode.FORBIDDEN_MISSING_CONTEXT,
+      });
     }
 
     const membership = await this.prisma.groupMember.findUnique({
@@ -26,7 +28,9 @@ export class GroupAdminGuard implements CanActivate {
     });
 
     if (!membership || membership.role !== GROUP_ROLES.ADMIN) {
-      throw new ForbiddenException("Admin access required");
+      throw new ForbiddenException({
+        code: ErrorCode.FORBIDDEN_NOT_ADMIN,
+      });
     }
 
     request.membership = membership;

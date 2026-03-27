@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { GROUP_ROLES } from "@squademy/shared";
+import { ErrorCode, GROUP_ROLES } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -34,7 +34,9 @@ export class MembersService {
     });
 
     if (!target) {
-      throw new NotFoundException("Member not found");
+      throw new NotFoundException({
+        code: ErrorCode.MEMBER_NOT_FOUND,
+      });
     }
 
     const isSelfRemoval = memberId === requesterId;
@@ -45,7 +47,9 @@ export class MembersService {
       });
 
       if (!requester || requester.role !== GROUP_ROLES.ADMIN) {
-        throw new ForbiddenException("Admin access required to remove others");
+        throw new ForbiddenException({
+          code: ErrorCode.MEMBER_ADMIN_REQUIRED,
+        });
       }
     }
 
@@ -55,9 +59,9 @@ export class MembersService {
       });
 
       if (adminCount <= 1) {
-        throw new BadRequestException(
-          "Cannot remove the sole admin. Transfer admin role first.",
-        );
+        throw new BadRequestException({
+          code: ErrorCode.MEMBER_SOLE_ADMIN_REMOVE,
+        });
       }
     }
 
@@ -74,7 +78,9 @@ export class MembersService {
     });
 
     if (!target) {
-      throw new NotFoundException("Member not found");
+      throw new NotFoundException({
+        code: ErrorCode.MEMBER_NOT_FOUND,
+      });
     }
 
     if (target.role === GROUP_ROLES.ADMIN && role !== GROUP_ROLES.ADMIN) {
@@ -83,9 +89,9 @@ export class MembersService {
       });
 
       if (adminCount <= 1) {
-        throw new BadRequestException(
-          "Cannot demote the sole admin. Promote another admin first.",
-        );
+        throw new BadRequestException({
+          code: ErrorCode.MEMBER_SOLE_ADMIN_DEMOTE,
+        });
       }
     }
 

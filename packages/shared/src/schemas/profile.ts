@@ -8,10 +8,12 @@ export const profileFormSchema = z.object({
     .trim()
     .min(VALIDATION.DISPLAY_NAME_MIN, "Display name is required.")
     .max(VALIDATION.DISPLAY_NAME_MAX, "Display name is too long."),
+  email: z.email("Please enter a valid email address."),
   fullName: optionalTrimmedString(VALIDATION.PROFILE_FIELD_MAX, "Full name"),
+  avatarUrl: z.url("Please enter a valid avatar URL.").optional(),
   school: optionalTrimmedString(VALIDATION.PROFILE_FIELD_MAX, "School"),
   location: optionalTrimmedString(VALIDATION.PROFILE_FIELD_MAX, "Location"),
-  age: z.number().int("Age must be a whole number.").min(VALIDATION.AGE_MIN).max(VALIDATION.AGE_MAX).nullable(),
+  age: z.number().min(VALIDATION.AGE_MIN).max(VALIDATION.AGE_MAX).nullable(),
 });
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;

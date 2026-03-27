@@ -6,7 +6,7 @@ Users can register, log in, manage their profile, export their data, and request
 
 ### Epic 2: Group Management & Membership
 Group Admins can create groups, generate invitation links, invite users directly, manage member access, assign roles, schedule exercises, and delete groups. Establishes the group container that all content and activity lives within.
-**FRs covered:** FR5, FR6, FR7, FR8, FR9, FR10, FR11, FR12
+**FRs covered:** FR5, FR5a, FR6, FR7, FR8, FR9, FR10, FR11, FR12
 
 ### Epic 3: Content Studio — Lesson & Flashcard Creation
 Contributors can create lessons with a WYSIWYG Markdown editor, import Markdown files, export lessons to Markdown/DOCX/PDF, submit drafts to the editorial queue, and track submission status.

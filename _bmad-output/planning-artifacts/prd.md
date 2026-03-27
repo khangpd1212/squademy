@@ -414,6 +414,7 @@ Despite the asynchronous-first design, select features require real-time updates
 ### Group Administration & Access
 
 - **FR5:** Group Admins can create and configure new learning groups.
+- **FR5a:** Users can view a dashboard listing all groups they belong to — displaying group name, their role, member count, and last activity — and navigate into any group.
 - **FR6:** Group Admins can generate and revoke private invitation links.
 - **FR7:** Group Admins can invite users directly by typing their username.
 - **FR8:** Users can view, accept, or decline direct group invitations.

@@ -36,8 +36,7 @@ export function GroupOverview({ groupId }: { groupId: string }) {
   if (!group) return null;
 
   const memberCount = group.members?.length ?? 0;
-  const lessonCount = group.lessons?.length ?? 0;
-  const showEmptyState = lessonCount === 0;
+  const showEmptyState = memberCount <= 1;
 
   return (
     <div className="space-y-4">

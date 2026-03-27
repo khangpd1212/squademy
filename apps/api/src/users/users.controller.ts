@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Patch,
   Query,
   UseGuards,
 } from "@nestjs/common";
 import { CurrentUser, JwtPayload } from "../common/decorators/current-user.decorator";
+import { ErrorCode } from "@squademy/shared";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { UsersService } from "./users.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -20,7 +22,9 @@ export class UsersController {
   async getProfile(@CurrentUser() user: JwtPayload) {
     const profile = await this.usersService.findById(user.userId);
     if (!profile) {
-      return { ok: false, error: "User not found" };
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+      });
     }
     return {
       ok: true,

@@ -133,7 +133,7 @@ so that members know what the group is about and when exercises are due.
     - [x] If caller is not a group member → redirect to `/group/[groupId]`
     - [x] Render heading "Group Settings" + `<GroupSettingsForm>` with pre-populated values
     - [x] Pass `isAdmin: callerRole === "admin"` prop
-    - [x] Story 2-5 (Delete Group) will add a separate section below — leave a `{/* Delete Group section — Story 2.5 */}` placeholder comment
+    - [x] Story 2-6 (Delete Group) will add a separate section below — leave a `{/* Delete Group section — Story 2.6 */}` placeholder comment
 
 - [x] **Task 6: Display schedule on group home page** (AC: 3)
   - [x] Update `src/app/(dashboard)/group/[groupId]/page.tsx`:
@@ -152,7 +152,7 @@ so that members know what the group is about and when exercises are due.
 
 - The settings page (`/group/[groupId]/settings`) is a **stub** — returns `<div>Group settings will appear here.</div>`. This story replaces it with a full implementation.
 - Two new columns need to be added to `groups` via migration: `exercise_deadline_day` (smallint, nullable) and `exercise_deadline_time` (time, nullable). The current `database.ts` does NOT include these — **migration + type regen is the critical first step**.
-- Story 2-5 (Delete Group) will add a "Danger Zone" delete section to this same settings page. Design the page layout so that section can be appended below `<GroupSettingsForm>`.
+- Story 2-6 (Delete Group) will add a "Danger Zone" delete section to this same settings page. Design the page layout so that section can be appended below `<GroupSettingsForm>`.
 - Non-admin members can view settings but cannot edit (read-only form with no save button).
 
 ### Previous Story Intelligence (2-3)

@@ -2,15 +2,16 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { INVITATION_STATUS } from "@squademy/shared";
+import { ApiError } from "@/lib/api/api-error";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
 
 export type InvitationType = {
   id: string;
-  group_id: string;
-  group_name: string;
-  invited_by_name: string;
-  created_at: string;
+  groupId: string;
+  groupName: string;
+  invitedByName: string;
+  createdAt: string;
 };
 
 type InvitationData = {
@@ -26,15 +27,15 @@ export function useInvitations() {
     queryKey: queryKeys.invitations.list(),
     queryFn: async () => {
       const result = await apiRequest<InvitationData[]>("/invitations");
-      if (result.error) {
-        throw new Error(result.error);
+      if (result.message) {
+        throw new ApiError({ message: result.message, code: result.code, status: result.status });
       }
       return (result.data ?? []).map((inv) => ({
         id: inv.id,
-        group_id: inv.groupId ?? inv.group?.id ?? "",
-        group_name: inv.group?.name ?? "Unknown group",
-        invited_by_name: inv.inviter?.displayName ?? "Someone",
-        created_at: inv.createdAt,
+        groupId: inv.groupId ?? inv.group?.id ?? "",
+        groupName: inv.group?.name ?? "Unknown group",
+        invitedByName: inv.inviter?.displayName ?? "Someone",
+        createdAt: inv.createdAt,
       }));
     },
   });
@@ -49,8 +50,8 @@ export function useCreateInvitation() {
         method: "POST",
         body: JSON.stringify({ groupId, inviteeId }),
       });
-      if (result.error) {
-        throw new Error(result.error);
+      if (result.message) {
+        throw new ApiError({ message: result.message, code: result.code, status: result.status });
       }
       return result.data;
     },
@@ -82,8 +83,8 @@ export function useRespondInvitation() {
           body: JSON.stringify({ status: statusMap[action] }),
         },
       );
-      if (result.error) {
-        throw new Error(result.error);
+      if (result.message) {
+        throw new ApiError({ message: result.message, code: result.code, status: result.status });
       }
       const groupId = result.data?.groupId ?? result.data?.group?.id;
       return { id, action, groupId };

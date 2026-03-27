@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/lib/api/api-error";
 import {
   apiRequest,
   clearAuthTokens,
@@ -31,7 +32,6 @@ type RegisterInput = {
 };
 
 type RegisterResponse = {
-  field?: "email" | "password" | "displayName" | "acceptPrivacy";
   accessToken?: string;
   refreshToken?: string;
 };
@@ -41,7 +41,7 @@ export function useCurrentUser() {
     queryKey: queryKeys.auth.me(),
     queryFn: async () => {
       const result = await apiRequest<AuthUser>("/auth/me");
-      if (result.error) {
+      if (result.message) {
         return null;
       }
       return result.data ?? null;
@@ -59,9 +59,12 @@ export function useLogin() {
         method: "POST",
         body: JSON.stringify(values),
       });
-
-      if (result.error || !result.data?.accessToken || !result.data.refreshToken) {
-        throw new Error(result.error ?? "Invalid credentials.");
+      if (result.message || !result.data?.accessToken || !result.data.refreshToken) {
+        throw new ApiError({
+          message: result.message ?? "Login failed.",
+          code: result.code,
+          status: result.status,
+        });
       }
 
       setAuthTokens(result.data.accessToken, result.data.refreshToken);
@@ -83,11 +86,12 @@ export function useRegister() {
         body: JSON.stringify(values),
       });
 
-      if (result.error || !result.data) {
-        const raw = (result.raw ?? {}) as RegisterResponse;
-        const err = new Error(result.error ?? "Could not create account.");
-        (err as Error & { field?: RegisterResponse["field"] }).field = raw.field;
-        throw err;
+      if (result.message || !result.data) {
+        throw new ApiError({
+          message: result.message ?? "Could not create account.",
+          code: result.code,
+          status: result.status,
+        });
       }
 
       if (result.data.accessToken && result.data.refreshToken) {

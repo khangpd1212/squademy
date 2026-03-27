@@ -8,6 +8,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
+import { ErrorCode } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UsersService } from "../users/users.service";
 import { RegisterDto } from "./dto/register.dto";
@@ -24,12 +25,16 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     if (!dto.acceptPrivacy) {
-      throw new BadRequestException("You must accept the privacy policy");
+      throw new BadRequestException({
+        code: ErrorCode.AUTH_PRIVACY_NOT_ACCEPTED,
+      });
     }
 
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) {
-      throw new ConflictException("An account with this email already exists.");
+      throw new ConflictException({
+        code: ErrorCode.AUTH_EMAIL_CONFLICT,
+      });
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -53,12 +58,16 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException("Invalid credentials");
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_CREDENTIALS,
+      });
     }
 
     const passwordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordValid) {
-      throw new UnauthorizedException("Invalid credentials");
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_INVALID_CREDENTIALS,
+      });
     }
 
     const tokens = await this.generateTokens(user.id, user.email);
@@ -73,12 +82,16 @@ export class AuthService {
   async refreshTokens(userId: string, refreshToken: string) {
     const user = await this.usersService.findById(userId);
     if (!user || !user.refreshToken) {
-      throw new ForbiddenException("Access denied");
+      throw new ForbiddenException({
+        code: ErrorCode.AUTH_ACCESS_DENIED,
+      });
     }
 
     const tokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
     if (!tokenValid) {
-      throw new ForbiddenException("Access denied");
+      throw new ForbiddenException({
+        code: ErrorCode.AUTH_ACCESS_DENIED,
+      });
     }
 
     const tokens = await this.generateTokens(user.id, user.email);
@@ -97,7 +110,9 @@ export class AuthService {
       });
       return this.refreshTokens(payload.sub, refreshToken);
     } catch {
-      throw new ForbiddenException("Access denied");
+      throw new ForbiddenException({
+        code: ErrorCode.AUTH_ACCESS_DENIED,
+      });
     }
   }
 

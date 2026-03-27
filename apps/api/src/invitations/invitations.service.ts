@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { GROUP_ROLES, INVITATION_STATUS } from "@squademy/shared";
+import { ErrorCode, GROUP_ROLES, INVITATION_STATUS } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -17,7 +17,9 @@ export class InvitationsService {
     });
 
     if (!membership || membership.role !== GROUP_ROLES.ADMIN) {
-      throw new ForbiddenException("Only admins can send invitations");
+      throw new ForbiddenException({
+        code: ErrorCode.INVITATION_ADMIN_ONLY,
+      });
     }
 
     const existingMember = await this.prisma.groupMember.findUnique({
@@ -25,7 +27,9 @@ export class InvitationsService {
     });
 
     if (existingMember) {
-      throw new BadRequestException("User is already a member of this group");
+      throw new BadRequestException({
+        code: ErrorCode.INVITATION_ALREADY_MEMBER,
+      });
     }
 
     const existingInvite = await this.prisma.groupInvitation.findFirst({
@@ -33,7 +37,9 @@ export class InvitationsService {
     });
 
     if (existingInvite) {
-      throw new BadRequestException("Invitation already pending for this user");
+      throw new BadRequestException({
+        code: ErrorCode.INVITATION_ALREADY_PENDING,
+      });
     }
 
     return this.prisma.groupInvitation.create({
@@ -56,36 +62,50 @@ export class InvitationsService {
     });
 
     if (!invitation) {
-      throw new NotFoundException("Invitation not found");
+      throw new NotFoundException({
+        code: ErrorCode.INVITATION_NOT_FOUND,
+      });
     }
 
     if (invitation.inviteeId !== userId) {
-      throw new ForbiddenException("You can only respond to your own invitations");
+      throw new ForbiddenException({
+        code: ErrorCode.INVITATION_NOT_OWNER,
+      });
     }
 
     if (invitation.status !== INVITATION_STATUS.PENDING) {
-      throw new BadRequestException("Invitation has already been responded to");
+      throw new BadRequestException({
+        code: ErrorCode.INVITATION_ALREADY_RESPONDED,
+      });
     }
 
-    const updated = await this.prisma.groupInvitation.update({
+    if (status === INVITATION_STATUS.ACCEPTED) {
+      const [updated] = await this.prisma.$transaction([
+        this.prisma.groupInvitation.update({
+          where: { id },
+          data: { status },
+          include: {
+            group: { select: { id: true, name: true } },
+          },
+        }),
+        this.prisma.groupMember.create({
+          data: {
+            groupId: invitation.groupId,
+            userId,
+            role: GROUP_ROLES.MEMBER,
+          },
+        }),
+      ]);
+      return updated;
+    }
+
+    return this.prisma.groupInvitation.update({
       where: { id },
       data: { status },
       include: {
         group: { select: { id: true, name: true } },
       },
     });
-
-    if (status === INVITATION_STATUS.ACCEPTED) {
-      await this.prisma.groupMember.create({
-        data: {
-          groupId: invitation.groupId,
-          userId,
-          role: GROUP_ROLES.MEMBER,
-        },
-      });
-    }
-
-    return updated;
   }
 
   async listForUser(userId: string) {

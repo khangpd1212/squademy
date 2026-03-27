@@ -19,7 +19,7 @@ type FetchOptions = {
 export async function apiClient<T = unknown>(
   path: string,
   options: FetchOptions = {},
-): Promise<{ data: T | null; error: string | null; status: number }> {
+): Promise<{ data: T | null; message: string | null; status: number }> {
   const headers: Record<string, string> = {
     ...options.headers,
   };
@@ -39,13 +39,13 @@ export async function apiClient<T = unknown>(
     const body = await res.json().catch(() => ({ error: "Request failed" }));
     return {
       data: null,
-      error: body.message || body.error || "Request failed",
+      message: body.message || "Request failed",
       status: res.status,
     };
   }
 
   const body = await res.json().catch(() => ({}));
-  return { data: body.data ?? body, error: null, status: res.status };
+  return { data: body.data ?? body, message: null, status: res.status };
 }
 
 /**

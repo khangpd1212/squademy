@@ -33,6 +33,7 @@
     "rxjs": "^7"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^11",
     "@nestjs/schematics": "^11",
     "@nestjs/testing": "^11",
@@ -42,8 +43,10 @@
     "@types/jest": "^30",
     "@types/node": "^20",
     "@types/passport-jwt": "^4",
+    "eslint": "^10.1.0",
     "jest": "^30",
     "ts-jest": "^29",
-    "typescript": "^5"
+    "typescript": "^5",
+    "typescript-eslint": "^8.57.2"
   }
 }

@@ -3,7 +3,6 @@ import { VALIDATION } from "@squademy/shared";
 import type { GroupSettingsInput } from "@squademy/shared";
 
 export class UpdateGroupDto implements GroupSettingsInput {
-  @IsOptional()
   @IsString()
   @MinLength(VALIDATION.GROUP_NAME_MIN)
   @MaxLength(VALIDATION.GROUP_NAME_MAX)

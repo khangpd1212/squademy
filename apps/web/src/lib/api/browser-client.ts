@@ -96,16 +96,18 @@ function withAuthHeader(headers: Headers, token: string | null) {
   return headers;
 }
 
-function parseError(body: unknown): string {
+function parseError(body: unknown): { message: string; code?: string } {
   if (typeof body === "string") {
-    return body;
+    return { message: body };
   }
   if (body && typeof body === "object") {
     const obj = body as Record<string, unknown>;
-    if (typeof obj.message === "string") return obj.message;
-    if (typeof obj.error === "string") return obj.error;
+    const message =
+      typeof obj.message === "string" ? obj.message : "Request failed";
+    const code = typeof obj.code === "string" ? obj.code : undefined;
+    return { message, code };
   }
-  return "Request failed";
+  return { message: "Request failed" };
 }
 
 async function tryRefreshTokens() {
@@ -177,21 +179,16 @@ async function authFetch(path: string, init: RequestInit = {}, allowRefresh = tr
 export async function apiRequest<T = unknown>(
   path: string,
   init: RequestInit = {},
-): Promise<{ data: T | null; error: string | null; status: number; raw: unknown }> {
+): Promise<{ data: T | null; message: string | null; code?: string; status: number }> {
   const response = await authFetch(path, init);
   const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-  const data = (body.data ?? body) as T;
 
   if (!response.ok) {
-    return {
-      data: null,
-      error: parseError(body),
-      status: response.status,
-      raw: body,
-    };
+    const parsed = parseError(body);
+    return { data: null, message: parsed.message, code: parsed.code, status: response.status };
   }
 
-  return { data, error: null, status: response.status, raw: body };
+  return { data: (body.data ?? body) as T, message: null, status: response.status };
 }
 
 export async function apiFetchRaw(path: string, init: RequestInit = {}) {

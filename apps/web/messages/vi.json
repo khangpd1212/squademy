@@ -1,0 +1,32 @@
+{
+  "common": {
+    "backToHome": "Về trang chủ",
+    "tryAgain": "Vui lòng thử lại sau."
+  },
+  "errors": {
+    "AUTH_INVALID_CREDENTIALS": "Email hoặc mật khẩu không đúng.",
+    "AUTH_PRIVACY_NOT_ACCEPTED": "Bạn phải đồng ý chính sách bảo mật.",
+    "AUTH_EMAIL_CONFLICT": "Email này đã được sử dụng.",
+    "AUTH_ACCESS_DENIED": "Truy cập bị từ chối.",
+    "AUTH_REFRESH_TOKEN_REQUIRED": "Phiên đã hết hạn. Vui lòng đăng nhập lại.",
+    "GROUP_NOT_FOUND": "Không tìm thấy nhóm.",
+    "GROUP_INVALID_INVITE_CODE": "Mã mời không hợp lệ.",
+    "GROUP_ALREADY_MEMBER": "Bạn đã là thành viên của nhóm này.",
+    "MEMBER_NOT_FOUND": "Không tìm thấy thành viên.",
+    "MEMBER_ADMIN_REQUIRED": "Cần quyền quản trị viên.",
+    "MEMBER_SOLE_ADMIN_REMOVE": "Không thể xóa quản trị viên duy nhất. Hãy chuyển quyền trước.",
+    "MEMBER_SOLE_ADMIN_DEMOTE": "Không thể hạ cấp quản trị viên duy nhất. Hãy thăng cấp người khác trước.",
+    "INVITATION_ADMIN_ONLY": "Chỉ quản trị viên mới có thể gửi lời mời.",
+    "INVITATION_ALREADY_MEMBER": "Người dùng đã là thành viên của nhóm này.",
+    "INVITATION_ALREADY_PENDING": "Đã có lời mời đang chờ cho người dùng này.",
+    "INVITATION_NOT_FOUND": "Không tìm thấy lời mời.",
+    "INVITATION_NOT_OWNER": "Bạn chỉ có thể phản hồi lời mời của chính mình.",
+    "INVITATION_ALREADY_RESPONDED": "Lời mời đã được phản hồi.",
+    "FORBIDDEN_NOT_MEMBER": "Bạn không phải thành viên của nhóm này.",
+    "FORBIDDEN_NOT_ADMIN": "Cần quyền quản trị viên.",
+    "FORBIDDEN_MISSING_CONTEXT": "Thiếu ngữ cảnh.",
+    "USER_NOT_FOUND": "Không tìm thấy người dùng.",
+    "fallback": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "network": "Lỗi mạng. Vui lòng thử lại."
+  }
+}

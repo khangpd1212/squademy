@@ -11,6 +11,18 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
+jest.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => {
+    const messages: Record<string, string> = {
+      AUTH_INVALID_CREDENTIALS: "Invalid email or password.",
+      AUTH_EMAIL_CONFLICT: "An account with this email already exists.",
+      fallback: "Something went wrong. Please try again.",
+      network: "Network error. Please try again.",
+    };
+    return messages[key] ?? key;
+  },
+}));
+
 describe("RegisterForm", () => {
   beforeEach(() => {
     pushMock.mockReset();

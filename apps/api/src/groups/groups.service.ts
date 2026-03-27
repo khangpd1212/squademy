@@ -3,43 +3,60 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { GROUP_ROLES, VALIDATION } from "@squademy/shared";
+import { ErrorCode, GROUP_ROLES, VALIDATION } from "@squademy/shared";
 import { customAlphabet } from "nanoid";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateGroupDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
+
+const MAX_INVITE_CODE_RETRIES = 3;
 
 const generateInviteCode = customAlphabet(
   VALIDATION.INVITE_CODE_CHARSET,
   VALIDATION.INVITE_CODE_LENGTH,
 );
 
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: string }).code === "P2002"
+  );
+}
+
 @Injectable()
 export class GroupsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateGroupDto) {
-    const inviteCode = generateInviteCode();
-
-    const group = await this.prisma.group.create({
-      data: {
-        name: dto.name,
-        description: dto.description,
-        inviteCode,
-        createdBy: userId,
-        members: {
-          create: {
-            userId,
-            role: GROUP_ROLES.ADMIN,
+    for (let attempt = 0; attempt < MAX_INVITE_CODE_RETRIES; attempt++) {
+      try {
+        return await this.prisma.group.create({
+          data: {
+            name: dto.name,
+            description: dto.description,
+            inviteCode: generateInviteCode(),
+            createdBy: userId,
+            members: {
+              create: {
+                userId,
+                role: GROUP_ROLES.ADMIN,
+              },
+            },
           },
-        },
-      },
-      include: {
-        members: { include: { user: { select: { id: true, displayName: true, email: true } } } },
-      },
-    });
+          include: {
+            members: { include: { user: { select: { id: true, displayName: true, email: true } } } },
+          },
+        });
+      } catch (error) {
+        if (!isUniqueConstraintError(error) || attempt === MAX_INVITE_CODE_RETRIES - 1) {
+          throw error;
+        }
+      }
+    }
 
-    return group;
+    throw new BadRequestException("Could not generate unique invite code.");
   }
 
   async findById(id: string) {
@@ -62,7 +79,9 @@ export class GroupsService {
     });
 
     if (!group) {
-      throw new NotFoundException("Group not found");
+      throw new NotFoundException({
+        code: ErrorCode.GROUP_NOT_FOUND,
+      });
     }
 
     return group;
@@ -81,7 +100,9 @@ export class GroupsService {
     });
 
     if (!group) {
-      throw new BadRequestException("Invalid invite code");
+      throw new BadRequestException({
+        code: ErrorCode.GROUP_INVALID_INVITE_CODE,
+      });
     }
 
     const existingMember = await this.prisma.groupMember.findUnique({
@@ -89,7 +110,9 @@ export class GroupsService {
     });
 
     if (existingMember) {
-      throw new BadRequestException("Already a member of this group");
+      throw new BadRequestException({
+        code: ErrorCode.GROUP_ALREADY_MEMBER,
+      });
     }
 
     await this.prisma.groupMember.create({
@@ -104,13 +127,19 @@ export class GroupsService {
   }
 
   async regenerateInviteCode(groupId: string) {
-    const inviteCode = generateInviteCode();
+    for (let attempt = 0; attempt < MAX_INVITE_CODE_RETRIES; attempt++) {
+      try {
+        return await this.prisma.group.update({
+          where: { id: groupId },
+          data: { inviteCode: generateInviteCode() },
+        });
+      } catch (error) {
+        if (!isUniqueConstraintError(error) || attempt === MAX_INVITE_CODE_RETRIES - 1) {
+          throw error;
+        }
+      }
+    }
 
-    const group = await this.prisma.group.update({
-      where: { id: groupId },
-      data: { inviteCode },
-    });
-
-    return group;
+    throw new BadRequestException("Could not generate unique invite code.");
   }
 }

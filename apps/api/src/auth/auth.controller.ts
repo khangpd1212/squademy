@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { CurrentUser, JwtPayload } from "../common/decorators/current-user.decorator";
+import { ErrorCode } from "@squademy/shared";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
@@ -57,7 +58,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() body: { refreshToken?: string }) {
     if (!body.refreshToken) {
-      throw new UnauthorizedException("Refresh token is required");
+      throw new UnauthorizedException({
+        code: ErrorCode.AUTH_REFRESH_TOKEN_REQUIRED,
+      });
     }
 
     const tokens = await this.authService.refreshTokensFromRaw(body.refreshToken);

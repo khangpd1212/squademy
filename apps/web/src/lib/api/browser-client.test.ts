@@ -60,7 +60,7 @@ describe("browser-client auth flow", () => {
 
     const result = await apiRequest<{ id: string }>("/groups/g-1");
 
-    expect(result.error).toBeNull();
+    expect(result.message).toBeNull();
     expect(result.data?.id).toBe("g-1");
     expect(getAccessToken()).toBe("new-access");
     expect(getRefreshToken()).toBe("new-refresh");

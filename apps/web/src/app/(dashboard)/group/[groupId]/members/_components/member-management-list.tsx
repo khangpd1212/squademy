@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { GROUP_ROLES } from "@squademy/shared";
+import { useEffect, useMemo, useState } from "react";
+import { GROUP_ROLES, type MemberRole } from "@squademy/shared";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  type MemberRole,
   useRemoveMember,
   useUpdateMemberRole,
 } from "@/hooks/api/use-member-queries";
@@ -41,6 +40,8 @@ export function MemberManagementList({
   const [members, setMembers] = useState(initialMembers);
   const [errorsByUser, setErrorsByUser] = useState<Record<string, string>>({});
   const [updatingRoleFor, setUpdatingRoleFor] = useState<string | null>(null);
+
+ 
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [removeDialogUserId, setRemoveDialogUserId] = useState<string | null>(null);
   const updateMemberRoleMutation = useUpdateMemberRole(groupId);
@@ -52,6 +53,12 @@ export function MemberManagementList({
   );
 
   const roleOptions: MemberRole[] = Object.values(GROUP_ROLES) as MemberRole[];
+
+  useEffect(() => {
+    if (!updatingRoleFor && !removingUserId) {
+      setMembers(initialMembers);
+    }
+  }, [initialMembers, removingUserId, updatingRoleFor]);
 
   async function handleRoleChange(userId: string, role: MemberRole) {
     setErrorsByUser((prev) => ({ ...prev, [userId]: "" }));

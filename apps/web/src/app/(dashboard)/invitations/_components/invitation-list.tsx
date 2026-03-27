@@ -58,10 +58,10 @@ export function InvitationList({ invitations: initial }: InvitationListProps) {
       {invitations.map((inv) => (
         <li key={inv.id} className="flex items-center justify-between py-3">
           <div>
-            <p className="text-sm font-medium">{inv.group_name}</p>
+            <p className="text-sm font-medium">{inv.groupName}</p>
             <p className="text-xs text-muted-foreground">
-              Invited by {inv.invited_by_name} &middot;{" "}
-              {new Date(inv.created_at).toLocaleDateString()}
+              Invited by {inv.invitedByName} &middot;{" "}
+              {new Date(inv.createdAt).toLocaleDateString()}
             </p>
             {errors[inv.id] ? (
               <p className="text-xs text-destructive">{errors[inv.id]}</p>
