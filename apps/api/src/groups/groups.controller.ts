@@ -30,6 +30,12 @@ export class GroupsController {
     return { ok: true, data: group };
   }
 
+  @Get("me")
+  async findMine(@CurrentUser() user: JwtPayload) {
+    const groups = await this.groupsService.findMyGroups(user.userId);
+    return { ok: true, data: groups };
+  }
+
   @Get(":id")
   @UseGuards(GroupMemberGuard)
   async findOne(@Param("id") id: string) {

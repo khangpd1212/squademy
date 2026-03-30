@@ -59,7 +59,10 @@ export function Header() {
           }
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={profile?.avatarUrl} alt={displayName} />
+            <AvatarImage
+              src={profile?.avatarUrl ?? undefined}
+              alt={displayName}
+            />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>

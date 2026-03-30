@@ -32,7 +32,7 @@ describe("ProfileForm", () => {
           school: undefined,
           location: undefined,
           age: null,
-          email: "",
+          email: "tina@example.com",
         }}
       />
     );
@@ -55,7 +55,7 @@ describe("ProfileForm", () => {
           school: undefined,
           location: undefined,
           age: null,
-          email: "",
+          email: "tina@example.com",
         }}
       />
     );
@@ -79,7 +79,7 @@ describe("ProfileForm", () => {
           school: undefined,
           location: undefined,
           age: null,
-          email: "",
+          email: "tina@example.com",
         }}
       />
     );
@@ -102,7 +102,7 @@ describe("ProfileForm", () => {
           school: undefined,
           location: undefined,
           age: null,
-          email: "",
+          email: "tina@example.com",
         },
       }),
     } as Response);
@@ -123,6 +123,7 @@ describe("ProfileForm", () => {
           school: undefined,
           location: null,
           age: null,
+          email: "tina@example.com",
         },
       }),
     } as Response);
@@ -136,7 +137,7 @@ describe("ProfileForm", () => {
           school: undefined,
           location: undefined,
           age: 20,
-          email: ""
+          email: "tina@example.com",
         }}
       />
     );

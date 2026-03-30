@@ -10,7 +10,7 @@ export type GroupMember = {
   user_id: string;
   role: string;
   joined_at: string;
-  profiles: { display_name: string; avatar_url: string };
+  profiles: { display_name: string; avatar_url: string | null } | null;
 };
 
 export function useGroupMembers(groupId: string) {
@@ -23,7 +23,7 @@ export function useGroupMembers(groupId: string) {
           userId: string;
           role: string;
           joinedAt: string;
-          user: { id: string; displayName: string; avatarUrl: string };
+          user: { id: string; displayName: string; avatarUrl: string | null };
         }>
       >(`/groups/${groupId}/members`);
       if (result.message || !result.data) {
@@ -33,7 +33,7 @@ export function useGroupMembers(groupId: string) {
           status: result.status,
         });
       }
-      return (result.data ?? []).map((member) => ({
+      return (result.data ?? []).map((member): GroupMember => ({
         user_id: member.userId,
         role: member.role,
         joined_at: member.joinedAt,

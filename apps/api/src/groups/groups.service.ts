@@ -29,6 +29,37 @@ function isUniqueConstraintError(error: unknown): boolean {
 export class GroupsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findMyGroups(userId: string) {
+    const memberships = await this.prisma.groupMember.findMany({
+      where: { userId },
+      include: {
+        group: {
+          include: {
+            _count: {
+              select: {
+                members: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        group: {
+          createdAt: "desc",
+        },
+      },
+    });
+
+    return memberships.map((membership) => ({
+      id: membership.group.id,
+      name: membership.group.name,
+      description: membership.group.description,
+      role: membership.role,
+      memberCount: membership.group._count.members,
+      createdAt: membership.group.createdAt.toISOString(),
+    }));
+  }
+
   async create(userId: string, dto: CreateGroupDto) {
     for (let attempt = 0; attempt < MAX_INVITE_CODE_RETRIES; attempt++) {
       try {

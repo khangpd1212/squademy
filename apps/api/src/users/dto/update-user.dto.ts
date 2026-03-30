@@ -1,4 +1,14 @@
-import { IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min, MinLength, ValidateIf } from "class-validator";
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateIf,
+} from "class-validator";
 import { VALIDATION } from "@squademy/shared";
 
 export class UpdateUserDto {
@@ -14,7 +24,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsUrl()
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 
   @IsOptional()
   @IsString()

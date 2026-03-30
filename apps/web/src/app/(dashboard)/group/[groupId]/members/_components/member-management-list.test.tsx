@@ -96,6 +96,7 @@ describe("MemberManagementList", () => {
     );
 
     await user.selectOptions(screen.getByLabelText("Role for Member User"), "editor");
+    await user.click(screen.getByRole("button", { name: "Confirm change" }));
 
     expect(screen.getByLabelText("Role for Member User")).toHaveValue("editor");
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
@@ -144,6 +145,7 @@ describe("MemberManagementList", () => {
     );
 
     await user.selectOptions(screen.getByLabelText("Role for Admin User"), "editor");
+    await user.click(screen.getByRole("button", { name: "Confirm change" }));
 
     await waitFor(() =>
       expect(

@@ -38,7 +38,7 @@ type RegisterResponse = {
 
 export function useCurrentUser() {
   return useQuery({
-    queryKey: queryKeys.auth.me(),
+    queryKey: queryKeys.auth.me,
     queryFn: async () => {
       const result = await apiRequest<AuthUser>("/auth/me");
       if (result.message) {
@@ -71,7 +71,7 @@ export function useLogin() {
       return result.data;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
     },
   });
 }
@@ -101,7 +101,7 @@ export function useRegister() {
       return result.data;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
     },
   });
 }
@@ -115,7 +115,7 @@ export function useLogout() {
       clearAuthTokens();
     },
     onSuccess: async () => {
-      await queryClient.removeQueries({ queryKey: queryKeys.auth.me() });
+      await queryClient.removeQueries({ queryKey: queryKeys.auth.me });
     },
   });
 }

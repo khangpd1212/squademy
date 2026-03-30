@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { title: "Dashboard", href: "/", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Lesson Studio", href: "/studio/lessons", icon: PenTool },
   { title: "Exercise Studio", href: "/studio/exercises", icon: Dumbbell },
   { title: "Create Group", href: "/groups/create", icon: Plus },

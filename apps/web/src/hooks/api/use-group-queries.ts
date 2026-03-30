@@ -18,10 +18,19 @@ export type GroupDetail = {
     joinedAt: string;
     user: {
       displayName: string;
-      avatarUrl?: string;
+      avatarUrl: string | null;
     };
   }>;
   lessons?: Array<{ id: string }>;
+};
+
+export type MyGroupItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  role: string;
+  memberCount: number;
+  createdAt: string;
 };
 
 type CreateGroupInput = {
@@ -55,6 +64,8 @@ export function useGroup(groupId: string) {
 }
 
 export function useCreateGroup() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (values: CreateGroupInput) => {
       const result = await apiRequest<{ id: string; name: string; inviteCode: string }>(
@@ -72,6 +83,9 @@ export function useCreateGroup() {
         });
       }
       return result.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
     },
   });
 }
@@ -101,6 +115,8 @@ export function useUpdateGroup(groupId: string) {
 }
 
 export function useJoinGroup() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (inviteCode: string) => {
       const result = await apiRequest<{ id?: string; group?: { id: string } }>("/groups/join", {
@@ -115,6 +131,26 @@ export function useJoinGroup() {
         throw new Error("Could not join group.");
       }
       return groupId;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
+    },
+  });
+}
+
+export function useMyGroups() {
+  return useQuery({
+    queryKey: queryKeys.groups.myGroups,
+    queryFn: async () => {
+      const result = await apiRequest<MyGroupItem[]>("/groups/me");
+      if (result.message || !result.data) {
+        throw new ApiError({
+          message: result.message ?? "Could not load groups.",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
     },
   });
 }

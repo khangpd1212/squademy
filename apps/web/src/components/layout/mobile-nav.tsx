@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const mobileNavItems = [
-  { title: "Home", href: "/", icon: LayoutDashboard },
+  { title: "Home", href: "/dashboard", icon: LayoutDashboard },
   { title: "Lessons", href: "/studio/lessons", icon: BookOpen },
   { title: "Exercises", href: "/studio/exercises", icon: Dumbbell },
   { title: "Group", href: "/groups/create", icon: Plus },

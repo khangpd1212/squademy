@@ -2,7 +2,7 @@ import { z } from "zod";
 import { VALIDATION } from "../constants/validation";
 import { optionalTrimmedString } from "./group";
 
-export const profileFormSchema = z.object({
+export const profileSchema = z.object({
   displayName: z
     .string()
     .trim()
@@ -10,10 +10,19 @@ export const profileFormSchema = z.object({
     .max(VALIDATION.DISPLAY_NAME_MAX, "Display name is too long."),
   email: z.email("Please enter a valid email address."),
   fullName: optionalTrimmedString(VALIDATION.PROFILE_FIELD_MAX, "Full name"),
-  avatarUrl: z.url("Please enter a valid avatar URL.").optional(),
+  avatarUrl: z
+    .union([
+      z.url("Please enter a valid avatar URL."),
+      z.null(),
+    ])
+    .optional(),
   school: optionalTrimmedString(VALIDATION.PROFILE_FIELD_MAX, "School"),
   location: optionalTrimmedString(VALIDATION.PROFILE_FIELD_MAX, "Location"),
   age: z.number().min(VALIDATION.AGE_MIN).max(VALIDATION.AGE_MAX).nullable(),
 });
 
-export type ProfileFormValues = z.infer<typeof profileFormSchema>;
+export type ProfileFormValues = z.infer<typeof profileSchema>;
+
+export const profileEditSchema = profileSchema.omit({ email: true });
+
+export type ProfileEditValues = z.infer<typeof profileEditSchema>;

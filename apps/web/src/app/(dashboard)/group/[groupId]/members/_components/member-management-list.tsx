@@ -21,7 +21,7 @@ type Member = {
   user_id: string;
   role: string;
   joined_at: string;
-  profiles: { display_name: string | null; avatar_url: string | null } | null;
+  profiles: { display_name: string; avatar_url: string | null } | null;
 };
 
 type MemberManagementListProps = {
@@ -40,8 +40,15 @@ export function MemberManagementList({
   const [members, setMembers] = useState(initialMembers);
   const [errorsByUser, setErrorsByUser] = useState<Record<string, string>>({});
   const [updatingRoleFor, setUpdatingRoleFor] = useState<string | null>(null);
+  const [roleChangeDialog, setRoleChangeDialog] = useState<{
+    userId: string;
+    displayName: string;
+    newRole: MemberRole;
+  } | null>(null);
+  const [pendingRoleSelect, setPendingRoleSelect] = useState<
+    Record<string, MemberRole>
+  >({});
 
- 
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [removeDialogUserId, setRemoveDialogUserId] = useState<string | null>(null);
   const updateMemberRoleMutation = useUpdateMemberRole(groupId);
@@ -49,18 +56,28 @@ export function MemberManagementList({
 
   const removeTarget = useMemo(
     () => members.find((member) => member.user_id === removeDialogUserId) ?? null,
-    [members, removeDialogUserId]
+    [members, removeDialogUserId],
+  );
+
+  const roleChangeTarget = useMemo(
+    () =>
+      members.find((member) => member.user_id === roleChangeDialog?.userId) ??
+      null,
+    [members, roleChangeDialog?.userId],
   );
 
   const roleOptions: MemberRole[] = Object.values(GROUP_ROLES) as MemberRole[];
 
   useEffect(() => {
-    if (!updatingRoleFor && !removingUserId) {
-      setMembers(initialMembers);
-    }
-  }, [initialMembers, removingUserId, updatingRoleFor]);
+    setMembers(initialMembers);
+  }, [initialMembers]);
 
   async function handleRoleChange(userId: string, role: MemberRole) {
+    setPendingRoleSelect((prev) => {
+      const next = { ...prev };
+      delete next[userId];
+      return next;
+    });
     setErrorsByUser((prev) => ({ ...prev, [userId]: "" }));
 
     const previousMembers = members;
@@ -80,6 +97,13 @@ export function MemberManagementList({
     } finally {
       setUpdatingRoleFor(null);
     }
+  }
+
+  async function handleConfirmRoleChange() {
+    if (!roleChangeDialog) return;
+    const { userId, newRole } = roleChangeDialog;
+    setRoleChangeDialog(null);
+    await handleRoleChange(userId, newRole);
   }
 
   async function handleConfirmRemove() {
@@ -113,7 +137,9 @@ export function MemberManagementList({
           const profile = member.profiles;
           const displayName = profile?.display_name ?? "Unknown";
           const initials = displayName.slice(0, 2).toUpperCase();
-          const memberRole = (member.role as MemberRole) ?? GROUP_ROLES.MEMBER;
+          const memberRole =
+            pendingRoleSelect[member.user_id] ??
+            ((member.role as MemberRole) ?? GROUP_ROLES.MEMBER);
           const isCurrentUser = member.user_id === currentUserId;
           const isPending =
             updatingRoleFor === member.user_id || removingUserId === member.user_id;
@@ -149,12 +175,18 @@ export function MemberManagementList({
                       className="rounded-md border bg-background px-2 py-1 text-sm capitalize"
                       value={memberRole}
                       disabled={isPending}
-                      onChange={(event) =>
-                        handleRoleChange(
-                          member.user_id,
-                          event.target.value as MemberRole
-                        )
-                      }
+                      onChange={(event) => {
+                        const nextRole = event.target.value as MemberRole;
+                        setPendingRoleSelect((prev) => ({
+                          ...prev,
+                          [member.user_id]: nextRole,
+                        }));
+                        setRoleChangeDialog({
+                          userId: member.user_id,
+                          displayName,
+                          newRole: nextRole,
+                        });
+                      }}
                     >
                       {roleOptions.map((role) => (
                         <option key={role} value={role}>
@@ -187,6 +219,63 @@ export function MemberManagementList({
           );
         })}
       </ul>
+
+      <Dialog
+        open={Boolean(roleChangeDialog)}
+        onOpenChange={(open) => {
+          if (!open && roleChangeDialog) {
+            setPendingRoleSelect((prev) => {
+              const next = { ...prev };
+              delete next[roleChangeDialog.userId];
+              return next;
+            });
+            setRoleChangeDialog(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change role?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {roleChangeDialog && roleChangeTarget
+              ? `Set ${roleChangeTarget.profiles?.display_name ?? roleChangeDialog.displayName} to ${roleChangeDialog.newRole}.`
+              : "Apply this role change?"}
+          </p>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={Boolean(
+                roleChangeDialog &&
+                  updatingRoleFor === roleChangeDialog.userId,
+              )}
+              onClick={() => {
+                if (roleChangeDialog) {
+                  setPendingRoleSelect((prev) => {
+                    const next = { ...prev };
+                    delete next[roleChangeDialog.userId];
+                    return next;
+                  });
+                }
+                setRoleChangeDialog(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={Boolean(
+                roleChangeDialog &&
+                  updatingRoleFor === roleChangeDialog.userId,
+              )}
+              onClick={() => void handleConfirmRoleChange()}
+            >
+              Confirm change
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={Boolean(removeDialogUserId)}

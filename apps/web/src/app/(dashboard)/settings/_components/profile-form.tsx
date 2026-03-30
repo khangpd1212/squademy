@@ -9,7 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RHFInputNumber } from "@/components/form/rhf-input-number";
 import { useUpdateProfile, ProfileUpdatePayload } from "@/hooks/api/use-user-queries";
-import { profileFormSchema, ProfileFormValues, VALIDATION } from "@squademy/shared";
+import {
+  profileEditSchema,
+  type ProfileEditValues,
+  type ProfileFormValues,
+  VALIDATION,
+} from "@squademy/shared";
 
 type ProfileFormProps = {
   initialProfile: ProfileFormValues;
@@ -33,8 +38,8 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const updateProfileMutation = useUpdateProfile();
 
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
+  const form = useForm<ProfileEditValues>({
+    resolver: zodResolver(profileEditSchema),
     defaultValues: initialProfile,
     mode: "onSubmit",
   });
@@ -46,11 +51,11 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     [initialProfile.displayName],
   );
 
-  async function handleSave(values: ProfileFormValues) {
+  async function handleSave(values: ProfileEditValues) {
     setSubmitError(null);
     setSaveSuccess(null);
 
-    const { email: _email, ...updatePayload }: { email: string; } & ProfileUpdatePayload = values;
+    const updatePayload: ProfileUpdatePayload = values;
 
     try {
       await updateProfileMutation.mutateAsync(updatePayload);

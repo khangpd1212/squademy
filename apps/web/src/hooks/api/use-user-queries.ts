@@ -11,7 +11,7 @@ export type ProfileUpdatePayload = Omit<ProfileFormValues, "email">;
 export type SearchResult = {
   id: string;
   displayName: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
   email: string;
 };
 

@@ -57,6 +57,7 @@ export function useCreateInvitation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list() });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
     },
   });
 }
@@ -91,6 +92,7 @@ export function useRespondInvitation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list() });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
     },
   });
 }
