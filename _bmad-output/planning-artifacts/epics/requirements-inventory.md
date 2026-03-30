@@ -81,7 +81,7 @@ NFR14 (Input Agnosticism): All critical flows (including the Tinder-style flashc
 
 **From Architecture:**
 
-- **Framework:** Next.js (App Router) with TypeScript — all routing, SSR/RSC, Server Components, Route Handlers
+- **Framework:** Next.js (App Router) with TypeScript — all routing, SSR/RSC, Server Components; **Route Handlers** (`app/api/*`) reserved for Vercel cron, webhooks, and planned uploads — not a BFF proxy for Nest CRUD
 - **Starter Template:** Greenfield project — no starter template specified; initialize with `create-next-app` + TypeScript + Tailwind CSS v4 + shadcn/ui setup (Epic 1, Story 1)
 - **Monorepo:** Yarn Workspaces + Turborepo — `apps/web` (Next.js), `apps/api` (NestJS), `packages/database` (Prisma), `packages/shared` (Zod + types)
 - **Database Migrations:** Prisma workflow (`prisma migrate dev`, `prisma migrate deploy`, `prisma generate`) from `packages/database`
@@ -90,7 +90,7 @@ NFR14 (Input Agnosticism): All critical flows (including the Tinder-style flashc
 - **Authorization (NestJS Guards):** All API routes protected by Guards (`JwtAuthGuard`, `GroupMemberGuard`, `GroupAdminGuard`, `GroupEditorGuard`, `ResourceOwnerGuard`); no RLS — authorization enforced at API layer
 - **Derangement Shuffle Algorithm:** `lib/shuffle/derangement.ts` — Fisher-Yates derangement; edge cases for n=1 (skip) and n=2 (swap)
 - **SM-2 SRS Algorithm:** `lib/srs/sm2.ts` — client-side scheduling; stores results via NestJS API → Prisma → `srs_progress` table
-- **File Upload:** Two strategies — proxied upload via `/api/files/upload` for sensitive files; signed URL for large files (audio)
+- **File Upload:** Two strategies — planned Next.js Route Handler `POST /api/files/upload` (R2) for sensitive files; signed URL for large files (audio) — **planned** (not yet implemented in `apps/web`)
 - **Offline-first Flashcard Pattern:** Dexie.js IndexedDB — first open downloads and caches; subsequent opens serve locally; grade queue synced to NestJS API on reconnect
 - **GDPR Deletion Flow:** Tombstoning process via NestJS AuthService (24h SLA) — deletes users + profiles, tombstones content references, clears personal data
 - **Email Rate Limiting:** Max 1 reminder/user/24h; large groups (>20) get batch digest; fallback to in-app notification if quota exceeded

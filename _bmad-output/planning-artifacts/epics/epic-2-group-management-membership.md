@@ -2,6 +2,11 @@
 
 Group Admins can create groups, manage membership, assign roles, and control access via invitation links. Users can view and navigate to all groups they belong to from the dashboard. Establishes the group container that all content and activity lives within.
 
+> **API Convention:** All client API calls use `browser-client.ts` calling NestJS directly
+> via `NEXT_PUBLIC_API_URL`. Paths below are NestJS endpoints (e.g. `POST /groups` means
+> `${NEXT_PUBLIC_API_URL}/groups`). Cron routes (`/api/cron/`*) are Vercel cron handlers
+> on Next.js.
+
 ### Story 2.1: Create & Configure a Group
 
 As a logged-in user,
@@ -12,7 +17,7 @@ So that I can invite my classmates and organize our study activities in one plac
 
 **Given** I am logged in and navigate to the "Create Group" screen
 **When** I submit a valid group name (required) and optional description
-**Then** `POST /api/groups` proxies to NestJS `POST /groups` (protected by JwtAuthGuard)
+**Then** `POST /groups` (JwtAuthGuard)
 **And** NestJS GroupsService creates a new `groups` row via Prisma with a unique `invite_code` slug auto-generated
 **And** a `group_members` row is created with my `user_id` and `role = 'admin'`
 **And** I am redirected to the new group's home page at `/group/[groupId]`
@@ -43,17 +48,17 @@ So that I can grow my group with the people I want to study with.
 
 **Given** I am a Group Admin and click "Revoke Invite Link"
 **When** I confirm the action
-**Then** `PATCH /api/groups/:groupId/invite-code` proxies to NestJS (protected by GroupAdminGuard) which regenerates a new unique slug
+**Then** `PATCH /groups/:groupId/invite-code` (GroupAdminGuard) regenerates a new unique slug
 **And** the old invite link no longer works — navigating to it shows "This invite link is invalid or has expired."
 
 **Given** I am a Group Admin and type a username in the "Invite by username" field
 **When** I select a user from the suggestions and click Send Invite
-**Then** `POST /api/groups/:groupId/invitations` proxies to NestJS (protected by GroupAdminGuard) which creates a `group_invitations` row with `status = 'pending'`
+**Then** `POST /groups/:groupId/invitations` (GroupAdminGuard) creates a `group_invitations` row with `status = 'pending'`
 **And** the invited user sees the invitation in their notifications/invitations list
 
 **Given** I receive a direct group invitation
 **When** I navigate to my invitations and click "Accept"
-**Then** `PATCH /api/invitations/:id/respond` proxies to NestJS which creates a `group_members` row with `role = 'member'`
+**Then** `PATCH /invitations/:id/respond` creates a `group_members` row with `role = 'member'`
 **And** the `group_invitations` status is updated to `'accepted'`
 **And** I am redirected to the group's home page
 
@@ -69,7 +74,7 @@ So that I can grow my group with the people I want to study with.
 
 **Given** an authenticated user navigates to `/join/[invite_code]`
 **When** the invite code is valid and the user is not already a member
-**Then** `POST /api/groups/join` proxies to NestJS which validates the invite code and creates a `group_members` row with `role = 'member'` via Prisma
+**Then** `POST /groups/join` validates the invite code and creates a `group_members` row with `role = 'member'` via Prisma
 **And** the user is redirected to the group home page
 
 **Given** a user navigates to `/join/[invite_code]`
@@ -88,11 +93,11 @@ So that I can maintain a healthy group with the right people in the right roles.
 
 **Given** I am a Group Admin and navigate to the Members page
 **When** the page loads
-**Then** `GET /api/groups/:groupId/members` (protected by GroupMemberGuard) returns all members with display name, avatar, role badge, and join date
+**Then** `GET /groups/:groupId/members` (GroupMemberGuard) returns all members with display name, avatar, role badge, and join date
 
 **Given** I click the role dropdown next to a member and select "Editor"
 **When** I confirm the change
-**Then** `PATCH /api/groups/:groupId/members/:userId` (protected by GroupAdminGuard) updates `group_members.role` to `'editor'` via Prisma
+**Then** `PATCH /groups/:groupId/members/:userId` (GroupAdminGuard) updates `group_members.role` to `'editor'` via Prisma
 **And** the role badge updates immediately via React Query optimistic update
 
 **Given** I try to change my own role as the sole Admin
@@ -101,7 +106,7 @@ So that I can maintain a healthy group with the right people in the right roles.
 **And** the change is not saved
 
 **Given** I click "Remove" next to a member and confirm the dialog
-**When** `DELETE /api/groups/:groupId/members/:userId` (protected by GroupAdminGuard) executes
+**When** `DELETE /groups/:groupId/members/:userId` (GroupAdminGuard) executes
 **Then** the `group_members` row is deleted via Prisma
 **And** the member disappears from the members list immediately
 **And** the removed member loses access to all group content (enforced by NestJS GroupMemberGuard on all group endpoints)
@@ -122,10 +127,10 @@ So that members know what the group is about and when exercises are due.
 
 **Given** I navigate to the Group Settings page (`/group/[groupId]/settings`)
 **When** the page loads
-**Then** `GET /api/groups/:groupId` (protected by GroupAdminGuard) returns the current group name, description, and exercise schedule settings pre-populated
+**Then** `GET /groups/:groupId` (GroupAdminGuard) returns the current group name, description, and exercise schedule settings pre-populated
 
 **Given** I update the group name or description and click Save
-**When** `PATCH /api/groups/:groupId` (protected by GroupAdminGuard) proxies to NestJS
+**When** `PATCH /groups/:groupId` (GroupAdminGuard) executes
 **Then** the `groups` table is updated via Prisma
 **And** a success indicator appears inline
 **And** the updated name is reflected immediately in the group layout header via React Query cache invalidation
@@ -151,7 +156,7 @@ So that I can quickly navigate to any group and understand my role and activity 
 
 **Given** I am authenticated and navigate to `/dashboard`
 **When** the page loads
-**Then** `GET /api/groups/me` proxies to NestJS `GET /groups/me` (protected by JwtAuthGuard) which queries all `group_members` rows for my `user_id` via Prisma, joining `groups` table
+**Then** `GET /groups/me` (JwtAuthGuard) queries all `group_members` rows for my `user_id` via Prisma, joining `groups` table
 **And** the dashboard displays a card grid of my groups, each showing: group name, my role badge (Admin/Editor/Contributor/Member), member count, and last activity date
 **And** groups are sorted by last activity (most recent first)
 
@@ -188,7 +193,7 @@ So that inactive groups do not clutter the platform.
 **And** the dialog requires me to type the group name to confirm
 
 **Given** I confirm the deletion by typing the group name correctly
-**When** `DELETE /api/groups/:groupId` (protected by GroupAdminGuard) proxies to NestJS
+**When** `DELETE /groups/:groupId` (GroupAdminGuard) executes
 **Then** NestJS GroupsService executes the deletion within a Prisma transaction:
 **And** all `lessons`, `exercises`, `flashcard_decks` with `group_id` matching this group have `is_deleted` set to `true` (soft-delete)
 **And** all `group_members` rows for this group are deleted

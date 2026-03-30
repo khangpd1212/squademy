@@ -2,6 +2,11 @@
 
 The platform sends email and in-app notifications for all trigger events across the application. In-app notifications use React Query polling (refetchInterval: 60s) — no WebSocket or Realtime dependency. Includes rate limiting, free-tier quota management, and in-app fallback when email quotas are exceeded.
 
+> **API Convention:** All client API calls use `browser-client.ts` calling NestJS directly
+> via `NEXT_PUBLIC_API_URL`. Paths below are NestJS endpoints (e.g. `POST /groups` means
+> `${NEXT_PUBLIC_API_URL}/groups`). Cron routes (`/api/cron/`*) are Vercel cron handlers
+> on Next.js.
+
 ### Story 7.1: In-App Notification Infrastructure
 
 As a user,
@@ -12,16 +17,16 @@ So that I stay informed about my learning activities without relying solely on e
 
 **Given** I am logged in and a notification-triggering event occurs (exercise assigned, lesson approved, dispute opened, etc.)
 **When** the NestJS NotificationsService inserts a row into the `notifications` table via Prisma for my `recipient_id`
-**Then** on my next React Query polling cycle (refetchInterval: 60s), `GET /api/notifications/unread-count` (proxied to NestJS, protected by JwtAuthGuard) returns the updated count
+**Then** on my next React Query polling cycle (refetchInterval: 60s), `GET /notifications/unread-count` (JwtAuthGuard) returns the updated count
 **And** the notification bell badge count in my top navigation updates
 
 **Given** I click the notification bell
 **When** the notifications panel opens
-**Then** `GET /api/notifications` (proxied to NestJS, protected by JwtAuthGuard) returns all my unread notifications with type icon, body text, and relative timestamp ("2 minutes ago")
+**Then** `GET /notifications` (JwtAuthGuard) returns all my unread notifications with type icon, body text, and relative timestamp ("2 minutes ago")
 **And** notifications are sorted newest-first
 
 **Given** I click a notification
-**When** `PATCH /api/notifications/:id/read` (proxied to NestJS) executes
+**When** `PATCH /notifications/:id/read` executes
 **Then** `notifications.is_read` is set to `true` via Prisma
 **And** I am navigated to the relevant context (e.g. clicking "exercise assigned" goes to the exercise)
 

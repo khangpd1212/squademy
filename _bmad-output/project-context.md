@@ -339,3 +339,4 @@ Backend (`apps/api/src/`):
 | Shared Zod schemas for backend validation | class-validator DTOs on backend | NestJS convention; Zod schemas used on frontend only |
 | Separate users + profiles tables | Single `User` model with all fields | Simplified for MVP; can split later if needed |
 | Password min 8 chars | Password min 6 chars | User decision for better UX during early testing |
+| Epic/architecture: Next.js `/api/*` proxies CRUD to NestJS | Browser calls Nest directly via `browser-client.ts` + `NEXT_PUBLIC_API_URL` | Cross-origin (Vercel + Oracle VM); epics reference Nest paths only (e.g. `POST /groups`) — no Next proxy layer for domain REST |

@@ -2,6 +2,11 @@
 
 Contributors can create exercises using templates and macros. The system performs a weekly derangement shuffle to assign exercises. Members complete assigned exercises, creators grade with line-level feedback, threaded debates resolve disagreements, and disputes are escalated and resolved by Editors.
 
+> **API Convention:** All client API calls use `browser-client.ts` calling NestJS directly
+> via `NEXT_PUBLIC_API_URL`. Paths below are NestJS endpoints (e.g. `POST /groups` means
+> `${NEXT_PUBLIC_API_URL}/groups`). Cron routes (`/api/cron/`*) are Vercel cron handlers
+> on Next.js.
+
 ### Story 6.1: Exercise Studio — Create Exercise with Templates
 
 As a Contributor,
@@ -12,12 +17,12 @@ So that I can quickly produce well-formatted group challenges or personal practi
 
 **Given** I navigate to `/studio/exercises`
 **When** the page loads
-**Then** `GET /api/exercises?author=me` (proxied to NestJS, protected by JwtAuthGuard) returns my existing exercises with title, type badge (Group Challenge / Personal Practice), week cycle, and status
+**Then** `GET /exercises?author=me` (JwtAuthGuard) returns my existing exercises with title, type badge (Group Challenge / Personal Practice), week cycle, and status
 **And** a "New Exercise" button is visible
 
 **Given** I click "New Exercise" and choose "Group Challenge" or "Personal Practice"
 **When** the exercise is created
-**Then** `POST /api/exercises` (proxied to NestJS) creates an `exercises` row via Prisma with the appropriate `type` and current `week_cycle`
+**Then** `POST /exercises` creates an `exercises` row via Prisma with the appropriate `type` and current `week_cycle`
 **And** I am redirected to the exercise editor at `/studio/exercises/[exerciseId]`
 
 **Given** I am in the exercise editor and click a template button in the toolbar
@@ -32,7 +37,7 @@ So that I can quickly produce well-formatted group challenges or personal practi
 
 **Given** I finish editing and click "Save"
 **When** the auto-save or manual save runs
-**Then** `PATCH /api/exercises/:exerciseId` (proxied to NestJS, protected by ResourceOwnerGuard) persists `exercises.content` (Tiptap JSON) via Prisma
+**Then** `PATCH /exercises/:exerciseId` (ResourceOwnerGuard) persists `exercises.content` (Tiptap JSON) via Prisma
 **And** the exercise is listed with "Draft" status in my exercise list
 
 ---
@@ -47,7 +52,7 @@ So that I can create exercises quickly without manually retyping flashcard conte
 
 **Given** I am in the exercise editor and click "Flashcard Macro"
 **When** the macro picker opens
-**Then** `GET /api/groups/:groupId/flashcard-decks?status=published` (proxied to NestJS, protected by GroupMemberGuard) returns available decks I can select from or filter by unit/tags
+**Then** `GET /groups/:groupId/flashcard-decks?status=published` (GroupMemberGuard) returns available decks I can select from or filter by unit/tags
 
 **Given** I select a deck and choose a question type: Word to Definition, Sound to Word, IPA to Word, or Word to Free-text Sentence
 **When** I click "Generate"
@@ -76,7 +81,7 @@ So that our group's mandatory reciprocal practice loop can run each week.
 
 **Given** I have a drafted Group Challenge exercise
 **When** I click "Submit Exercise"
-**Then** `PATCH /api/exercises/:exerciseId/submit` (proxied to NestJS, protected by ResourceOwnerGuard) confirms the exercise `type` is `group_challenge` and links it to the current `week_cycle`
+**Then** `PATCH /exercises/:exerciseId/submit` (ResourceOwnerGuard) confirms the exercise `type` is `group_challenge` and links it to the current `week_cycle`
 **And** the exercise is marked as submitted and locked for editing
 **And** my submission appears in the group's exercise list as "Submitted"
 
@@ -106,7 +111,7 @@ So that I fulfil my weekly accountability obligation and contribute to my peer's
 
 **Given** I have been assigned an exercise via the derangement shuffle
 **When** I navigate to my group's exercises page
-**Then** `GET /api/exercises/assigned` (proxied to NestJS, protected by JwtAuthGuard) returns my assigned exercise prominently with creator name, title, and deadline
+**Then** `GET /exercises/assigned` (JwtAuthGuard) returns my assigned exercise prominently with creator name, title, and deadline
 **And** a "Start Exercise" button is visible
 
 **Given** I click "Start Exercise"
@@ -115,7 +120,7 @@ So that I fulfil my weekly accountability obligation and contribute to my peer's
 **And** if it is a Group Challenge, Focus Mode activates (tab-switch logging as per Story 5.4)
 
 **Given** I complete all questions and click "Submit Answers"
-**When** `POST /api/exercises/:exerciseId/submissions` (proxied to NestJS, protected by JwtAuthGuard) executes
+**When** `POST /exercises/:exerciseId/submissions` (JwtAuthGuard) executes
 **Then** an `exercise_submissions` row is created via Prisma with my `submitter_id`, `exercise_id`, and `answers` JSONB
 **And** the creator receives a notification (Epic 7): "Your exercise has been submitted by [name]!"
 **And** the exercise is marked as "Submitted" in my assignment list
@@ -137,17 +142,17 @@ So that my peer receives meaningful, specific guidance on their performance.
 
 **Given** a peer has submitted answers to my exercise
 **When** I navigate to the review queue at `/review/exercise/[submissionId]`
-**Then** `GET /api/exercise-submissions/:submissionId` (proxied to NestJS, protected by ResourceOwnerGuard for creator) returns each question with the peer's answer alongside the correct answer
+**Then** `GET /exercise-submissions/:submissionId` (ResourceOwnerGuard for creator) returns each question with the peer's answer alongside the correct answer
 **And** MCQ questions show an "Auto-graded" tag with the result already computed
 **And** Fill-in-the-blank and Free-text questions show Correct and Incorrect buttons for manual grading
 
 **Given** I click Correct or Incorrect on a manual-grade question
-**When** `POST /api/peer-reviews/:reviewId/comments` (proxied to NestJS, protected by ResourceOwnerGuard) executes
+**When** `POST /peer-reviews/:reviewId/comments` (ResourceOwnerGuard) executes
 **Then** a `peer_review_comments` row is created via Prisma with `question_ref`, `decision` (correct/incorrect), and optional `body` text
 **And** the question is marked with a green or red indicator
 
 **Given** I have graded all questions and click "Submit Grade"
-**When** `PATCH /api/peer-reviews/:reviewId/submit` (proxied to NestJS, protected by ResourceOwnerGuard) executes
+**When** `PATCH /peer-reviews/:reviewId/submit` (ResourceOwnerGuard) executes
 **Then** the `peer_reviews` row is updated via Prisma with `status = 'graded'` and `overall_score`
 **And** the submitter receives a notification (Epic 7): "Your exercise has been graded!"
 
@@ -171,7 +176,7 @@ So that incorrect exercise questions can be fairly adjudicated.
 **Then** each graded question shows a "Dispute this question" flag button (FR40a)
 
 **Given** I click "Dispute this question" and enter a reason
-**When** `POST /api/exercise-disputes` (proxied to NestJS, protected by JwtAuthGuard) executes
+**When** `POST /exercise-disputes` (JwtAuthGuard) executes
 **Then** an `exercise_disputes` row is created via Prisma with `status = 'open'`, `reporter_id`, `question_ref`, and `reason`
 **And** the creator receives a notification: "A dispute has been filed on your exercise."
 
@@ -186,7 +191,7 @@ So that incorrect exercise questions can be fairly adjudicated.
 **And** weekly error counts are updated accordingly (FR40c/FR40d)
 
 **Given** the debate remains unresolved and I click "Escalate to Editor"
-**When** `PATCH /api/exercise-disputes/:disputeId/escalate` (proxied to NestJS) executes
+**When** `PATCH /exercise-disputes/:disputeId/escalate` executes
 **Then** `exercise_disputes` is flagged for editor review
 **And** an Editor in the group receives a notification: "A dispute requires your arbitration."
 
@@ -207,10 +212,10 @@ So that dispute outcomes are finalized fairly and weekly error counts are applie
 
 **Given** an `exercise_disputes` record is marked for editor review
 **When** I navigate to `/review/exercise/[submissionId]`
-**Then** `GET /api/exercise-disputes/:disputeId` (proxied to NestJS, protected by GroupEditorGuard) returns the disputed question, the reporter reason, and the full debate thread
+**Then** `GET /exercise-disputes/:disputeId` (GroupEditorGuard) returns the disputed question, the reporter reason, and the full debate thread
 
 **Given** I select "Rule: Creator is wrong"
-**When** `PATCH /api/exercise-disputes/:disputeId/arbitrate` (proxied to NestJS, protected by GroupEditorGuard) executes
+**When** `PATCH /exercise-disputes/:disputeId/arbitrate` (GroupEditorGuard) executes
 **Then** `exercise_disputes.status` is updated to `'resolved'` via Prisma
 **And** `exercise_disputes.arbitration_decision` is set to `'creator_wrong'`
 **And** NestJS service increments creator weekly error count via Prisma (FR40c)

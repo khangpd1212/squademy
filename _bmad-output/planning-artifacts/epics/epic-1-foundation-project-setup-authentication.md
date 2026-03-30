@@ -2,6 +2,11 @@
 
 Users can register, log in, manage their profile, export personal data, request account deletion, and navigate the platform. Establishes the technical foundation (Next.js + NestJS + Prisma + shadcn/ui monorepo + design system) and GDPR-compliant JWT auth system that all other epics depend on.
 
+> **API Convention:** All client API calls use `browser-client.ts` calling NestJS directly
+> via `NEXT_PUBLIC_API_URL`. Paths below are NestJS endpoints (e.g. `POST /groups` means
+> `${NEXT_PUBLIC_API_URL}/groups`). Cron routes (`/api/cron/`*) are Vercel cron handlers
+> on Next.js.
+
 ### Story 1.1: Monorepo & Project Foundation Setup
 
 As a developer,
@@ -149,7 +154,7 @@ So that my group members can identify me and my profile reflects my current deta
 
 **Given** I upload a new avatar image (JPG/PNG, max 2MB)
 **When** the upload completes
-**Then** the image is uploaded via `/api/files/upload` (or NestJS endpoint)
+**Then** the image is uploaded via a planned Next.js Route Handler `POST /api/files/upload` (R2) or a NestJS upload endpoint when implemented
 **And** `users.avatar_url` is updated with the new URL
 **And** the new avatar is displayed immediately in the profile form
 

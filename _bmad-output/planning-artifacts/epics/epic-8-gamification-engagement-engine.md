@@ -2,6 +2,11 @@
 
 The system tracks daily learning streaks, calculates and displays a live leaderboard updated via React Query polling (refetchInterval: 30s), awards contributor badges for milestone achievements, and renders a GitHub-style Activity Heatmap on user profiles to visualize learning consistency.
 
+> **API Convention:** All client API calls use `browser-client.ts` calling NestJS directly
+> via `NEXT_PUBLIC_API_URL`. Paths below are NestJS endpoints (e.g. `POST /groups` means
+> `${NEXT_PUBLIC_API_URL}/groups`). Cron routes (`/api/cron/`*) are Vercel cron handlers
+> on Next.js.
+
 ### Story 8.1: Daily Learning Streaks
 
 As a Learner,
@@ -46,12 +51,12 @@ So that friendly competition motivates me to stay engaged.
 
 **Given** I navigate to `/group/[groupId]/leaderboard`
 **When** the page loads
-**Then** `GET /api/groups/:groupId/leaderboard` (proxied to NestJS, protected by GroupMemberGuard) returns all group members ranked by `leaderboard.total_score` descending
+**Then** `GET /groups/:groupId/leaderboard` (GroupMemberGuard) returns all group members ranked by `leaderboard.total_score` descending
 **And** each row shows: rank position, avatar, display name, total score, weekly score, and streak badge
 
 **Given** a group member completes an activity that earns points (exercise submission, peer review, lesson approved, streak day)
 **When** NestJS LeaderboardService updates the `leaderboard` table via Prisma
-**Then** on the next React Query polling cycle (refetchInterval: 30s), `GET /api/groups/:groupId/leaderboard` returns updated scores
+**Then** on the next React Query polling cycle (refetchInterval: 30s), `GET /groups/:groupId/leaderboard` returns updated scores
 **And** the leaderboard re-renders with the new scores (NFR3: within 30s polling interval)
 
 **Given** the end-of-week cron runs (`/api/cron/weekly-close`)
@@ -103,7 +108,7 @@ So that I can visualize my consistency and stay motivated to fill in gaps.
 
 **Given** I navigate to my profile or settings page
 **When** the page loads
-**Then** `GET /api/users/activity-heatmap` (proxied to NestJS, protected by JwtAuthGuard) returns my daily activity data for the past 52 weeks
+**Then** `GET /users/activity-heatmap` (JwtAuthGuard) returns my daily activity data for the past 52 weeks
 **And** a heatmap grid showing the past 52 weeks (12 months) is displayed
 **And** each cell represents one day and is colored by activity intensity:
   - 0 actions: `zinc-200` (light) / `zinc-800` (dark)
