@@ -53,20 +53,20 @@ so that I can grow my group with the people I want to study with.
 ## Tasks / Subtasks
 
 - [x] **Task 1: Database — add `group_invitations` table, RLS policies, update TypeScript types** (AC: 3, 4, 5, 6, 7)
-  - [x] Create migration: `supabase/migrations/20260315_add_group_invitations.sql`
+  - [x] Create migration for group_invitations table via Prisma
     - `CREATE TABLE group_invitations (id uuid PK, group_id uuid FK groups, invited_by uuid FK profiles, invitee_id uuid FK profiles, status text CHECK IN ('pending','accepted','declined'), created_at timestamptz)`
     - Enable RLS on `group_invitations`
     - Policy `group_invitations_select`: `auth.uid() = invitee_id OR auth.uid() IN (SELECT user_id FROM group_members WHERE group_id = group_invitations.group_id AND role = 'admin')`
     - No INSERT/UPDATE/DELETE RLS needed — all mutations go through API routes using admin client (service_role)
   - [x] Update `src/types/database.ts` — add `group_invitations` table with `Row`, `Insert`, `Update` types
 
-- [x] **Task 2: Supabase Admin Client** (AC: 4, 5, 7)
-  - [x] Create `src/lib/supabase/admin.ts` with `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`
+- [x] **Task 2: NestJS API Service Layer** (AC: 4, 5, 7)
+  - [x] NestJS service layer handles privileged operations via Prisma (no client-side admin needed)
   - [x] This client bypasses RLS — use only in server-side Route Handlers for: group_members insert (join/accept), group_invitations mutations (create/accept/decline)
   - [x] Never expose service_role key to client bundle — only import from server-side files
 
 - [x] **Task 3: Update middleware to allow unauthenticated access to `/join/*`** (AC: 6)
-  - [x] Update `src/lib/supabase/middleware.ts` — add `/join` to the unauthenticated allowlist
+  - [x] Update `src/proxy.ts` — add `/join` to the public paths allowlist
   - [x] When unauthenticated user hits a non-auth, non-api, non-join route → redirect to `/login` (existing behavior)
   - [x] The `/join/[inviteCode]` page itself handles the `/register` redirect (not middleware)
 
@@ -229,37 +229,21 @@ group_invitations: {
 }
 ```
 
-**2. Supabase Admin Client required — `SUPABASE_SERVICE_ROLE_KEY` env var**
-Task 2 creates `src/lib/supabase/admin.ts`. This is needed because `group_members` INSERT RLS was intentionally tightened in Story 2.1 review (only group creators can insert as admin). All join/accept operations must bypass RLS using service_role. The client:
-```typescript
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+**2. NestJS Service Layer for privileged operations**
+Invite acceptance and group joining operations are handled by NestJS service layer using Prisma, protected by appropriate Guards (JwtAuthGuard, GroupMemberGuard). No client-side admin/service-role client is needed.
 
-export function createAdminClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-```
-**NEVER** import `createAdminClient` in client components — server-only.
-
-**3. `middleware.ts` at project root (`middleware.ts`) calls `updateSession` from `src/lib/supabase/middleware.ts`**
-The actual middleware logic is in `src/lib/supabase/middleware.ts`. To add `/join` to the allowlist, update the `if (!user && ...)` condition in `src/lib/supabase/middleware.ts` to add:
-```typescript
-!request.nextUrl.pathname.startsWith("/join")
-```
-The `/join/[inviteCode]` page itself handles the `/register` redirect for unauthenticated users.
+**3. `proxy.ts` public path configuration**
+`src/proxy.ts` has a `PUBLIC_PATHS` array. Add `/join` to allow unauthenticated access to invite pages.
 
 ### Codebase Patterns (MUST Follow)
 
 **API Route patterns** (from `src/app/api/groups/route.ts`):
-- Auth: `const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser();`
+- Auth: `const user = await getCurrentUser();` from `@/lib/api/client`
 - Validation: Zod `schema.safeParse(body)`, return first issue with `field` + `message`
 - Errors: `NextResponse.json({ message, field? }, { status })`
 - Success 201 for creates, 200 for updates
-- Use `createClient` from `@/lib/supabase/server` for auth + regular queries
-- Use `createAdminClient` from `@/lib/supabase/admin` ONLY for mutations that need to bypass RLS
+- Use `apiClient` / `getCurrentUser` from `@/lib/api/client` for server-side auth + data
+- All privileged mutations handled by NestJS API endpoints with appropriate Guards
 
 **Form patterns** (from `src/app/(dashboard)/groups/create/_components/create-group-form.tsx`):
 - `"use client"` directive
@@ -271,13 +255,8 @@ The `/join/[inviteCode]` page itself handles the `/register` redirect for unauth
 
 **Server Component patterns** (from `src/app/(dashboard)/settings/page.tsx`):
 ```typescript
-export default async function Page() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-  // fetch data...
-  return <ClientComponent data={...} />;
-}
+const user = await getCurrentUser();
+if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 ```
 
 **Invite code generation** (same pattern as `src/app/api/groups/route.ts`):
@@ -296,35 +275,17 @@ May fail in non-HTTPS or old browsers. Wrap in try/catch; show error "Could not 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 ```
 
-### Supabase Query Patterns
+### API Query Patterns
 
-**Profiles join for members list** — profiles table has `display_name` and `avatar_url`. Join via `user_id`:
 ```typescript
-const { data } = await supabase
-  .from('group_members')
-  .select('user_id, role, joined_at, profiles(display_name, avatar_url)')
-  .eq('group_id', groupId)
-  .order('joined_at', { ascending: true });
-```
+// Read (via browser-client.ts)
+const result = await apiRequest<Group[]>("/groups/my");
 
-**Profile search** — ilike for case-insensitive search:
-```typescript
-const { data } = await supabase
-  .from('profiles')
-  .select('id, display_name, avatar_url')
-  .ilike('display_name', `%${query}%`)
-  .neq('id', userId)
-  .not('id', 'in', `(${existingMemberIds.join(',')})`)
-  .limit(10);
-```
-
-**Admin client usage** (Task 2 pattern):
-```typescript
-import { createAdminClient } from "@/lib/supabase/admin";
-
-// In route handler only:
-const admin = createAdminClient();
-const { error } = await admin.from('group_members').insert({ group_id, user_id, role: 'member' });
+// Write (via browser-client.ts)
+const result = await apiRequest<GroupMember>("/groups/join", {
+  method: "POST",
+  body: JSON.stringify({ inviteCode }),
+});
 ```
 
 ### URL Construction for Invite Link
@@ -363,12 +324,12 @@ After Story 2.1 review, current `group_members` INSERT policy:
 ```
 Unauthenticated user visits /join/abc123:
   page.tsx server component:
-    → supabase.auth.getUser() → null
+    → getCurrentUser() → null
     → redirect('/register?redirect=/join/abc123')
 
 After registration/login, middleware redirects to /join/abc123:
   page.tsx server component:
-    → supabase.auth.getUser() → user
+    → getCurrentUser() → user
     → POST /api/groups/join { inviteCode: 'abc123' }
     → API validates invite_code, inserts member, returns groupId
     → redirect('/group/${groupId}')
@@ -416,23 +377,22 @@ src/
 │               ├── route.ts                      # NEW: PATCH accept/decline
 │               └── route.test.ts                 # NEW
 ├── lib/
-│   └── supabase/
-│       ├── admin.ts                              # NEW: service_role client
-│       └── middleware.ts                         # UPDATE: add /join to allowlist
+│   └── api/
+│       ├── client.ts                             # server-side auth + data client
+│       └── browser-client.ts                     # client-side API helpers
 ├── components/
 │   └── layout/
 │       └── sidebar.tsx                           # UPDATE: add Invitations link
 └── types/
     └── database.ts                               # UPDATE: add group_invitations
-supabase/
-└── migrations/
-    └── 20260315_add_group_invitations.sql        # NEW
+packages/database/prisma/migrations/
+└── group_invitations migration                   # NEW
 ```
 
 ### Testing Standards
 
 - Framework: Jest + Testing Library (already configured in project)
-- API route tests: `/** @jest-environment node */` header, mock `@/lib/supabase/server` AND `@/lib/supabase/admin`
+- API route tests: `/** @jest-environment node */` header, mock `@/lib/api/client` and API responses
 - Component tests: mock `next/navigation` (`useRouter`, `usePathname`), mock `fetch`
 - Mock `navigator.clipboard` in invite-link-section test: `Object.assign(navigator, { clipboard: { writeText: jest.fn() } })`
 - Debounce in invite-by-username: use `jest.useFakeTimers()` + `jest.advanceTimersByTime(300)` to test search trigger
@@ -445,7 +405,7 @@ supabase/
 - [Source: `src/app/api/groups/route.ts` — invite_code generation pattern, conflict retry logic]
 - [Source: `src/app/(dashboard)/groups/create/_components/create-group-form.tsx` — Client form pattern]
 - [Source: `src/app/(dashboard)/settings/page.tsx` — Server component + auth guard pattern]
-- [Source: `src/lib/supabase/middleware.ts` — Middleware auth logic to update]
+- [Source: `src/proxy.ts` — Auth proxy public paths to update]
 - [Source: `middleware.ts` — Root Next.js middleware, calls updateSession]
 
 ## Dev Agent Record
@@ -463,7 +423,7 @@ Claude Opus 4.6 (1M context)
 ### Completion Notes List
 
 - Created `group_invitations` table migration with RLS SELECT policy (invitee or group admin)
-- Created Supabase admin client (`src/lib/supabase/admin.ts`) for service_role operations that bypass RLS
+- NestJS service layer handles privileged operations via Prisma with appropriate Guards
 - Updated middleware to allow unauthenticated access to `/join/*` routes
 - Implemented `/join/[inviteCode]` page: unauthenticated → redirect to register, authenticated → join group or show error
 - Implemented `POST /api/groups/join` API: validates invite code, checks membership, inserts via admin client
@@ -475,7 +435,7 @@ Claude Opus 4.6 (1M context)
 - Implemented invitations inbox page with accept/decline UI and optimistic decline removal
 - Added "Invitations" link to sidebar (Mail icon) and mobile nav ("Invites")
 - Added TypeScript types for `group_invitations` table in `database.ts`
-- All Supabase partial select results use explicit type casts (placeholder types don't generate partial select types)
+- All Prisma query results use explicit type casts where needed
 - 26 tests across 6 test files covering all API routes and invite link component
 - [Review Fix] Join page now delegates to POST /api/groups/join instead of direct DB mutation — no side effects in GET render
 - [Review Fix] Profile search API now verifies requester is admin of the specified group
@@ -485,10 +445,10 @@ Claude Opus 4.6 (1M context)
 
 ### File List
 
-- `supabase/migrations/20260315_add_group_invitations.sql`
+- `packages/database/prisma/migrations/` (group invitations table)
 - `src/types/database.ts`
-- `src/lib/supabase/admin.ts`
-- `src/lib/supabase/middleware.ts`
+- NestJS service layer (privileged operations)
+- `src/proxy.ts`
 - `src/app/join/[inviteCode]/page.tsx`
 - `src/app/api/groups/join/route.ts`
 - `src/app/api/groups/join/route.test.ts`

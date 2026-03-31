@@ -44,11 +44,11 @@ so that I can exercise my GDPR data portability rights (FR3).
 
 - `/api/export/user-data` does not exist yet.
 - `/settings` exists in placeholder state and can be extended with privacy section.
-- Current DB type file is placeholder-like; export fields should be validated against actual Supabase schema before final implementation.
+- Current DB type file is placeholder-like; export fields should be validated against actual Prisma schema before final implementation.
 
 ### Technical Requirements
 
-- Route must use server-side Supabase client bound to current session.
+- Route must use server-side NestJS endpoint protected by JwtAuthGuard.
 - Keep export payload strictly per authenticated user.
 - Prefer streaming ZIP if payload size grows; MVP can start with in-memory zip if bounded.
 

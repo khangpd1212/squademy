@@ -2,235 +2,250 @@
 
 Status: done
 
-<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
-
 ## Story
 
-As a Group Admin,  
-I want to view all group members, remove inactive members, and assign or change their roles,  
+As a Group Admin,
+I want to view all group members, remove inactive members, and assign or change their roles,
 so that I can maintain a healthy group with the right people in the right roles.
 
 ## Acceptance Criteria
 
-1. **Given** I am a Group Admin and navigate to the Members page,  
-   **When** the page loads,  
-   **Then** all `group_members` rows for my group are listed with their display name, avatar, role badge, and join date.
+1. **Given** I am a Group Admin and navigate to the Members page,
+   **When** the page loads,
+   **Then** `GET /groups/:groupId/members` (GroupMemberGuard) returns all members with display name, avatar, role badge, and join date.
 
-2. **Given** I click the role dropdown next to a member and select "Editor",  
-   **When** I confirm the change,  
-   **Then** `group_members.role` is updated to `'editor'` in Supabase,  
-   **And** the role badge updates immediately via optimistic update.
+2. **Given** I click the role dropdown next to a member and select "Editor",
+   **When** I confirm the change,
+   **Then** `PATCH /groups/:groupId/members/:userId/role` (GroupAdminGuard) updates `group_members.role` to `'editor'` via Prisma,
+   **And** the role badge updates immediately via optimistic update with rollback on error.
 
-3. **Given** I try to change my own role as the sole Admin,  
-   **When** I attempt to demote myself,  
-   **Then** an inline error appears: "You cannot remove admin role from yourself while you are the only admin.",  
+3. **Given** I try to change my own role as the sole Admin,
+   **When** I attempt to demote myself,
+   **Then** NestJS returns a 400 error and an inline error appears: "Cannot demote the sole admin. Promote another admin first.",
    **And** the change is not saved.
 
-4. **Given** I click "Remove" next to a member and confirm the dialog,  
-   **When** the action executes,  
-   **Then** the `group_members` row is deleted for that user,  
-   **And** the member disappears from the members list immediately,  
-   **And** the removed member loses access to all group content (enforced by RLS).
+4. **Given** I click "Remove" next to a member and confirm the dialog,
+   **When** `DELETE /groups/:groupId/members/:userId` (admin check in service) executes,
+   **Then** the `group_members` row is deleted via Prisma,
+   **And** the member disappears from the members list immediately,
+   **And** the removed member loses access to all group content (enforced by GroupMemberGuard on all group endpoints).
 
-5. **Given** I try to remove myself as the sole Admin,  
-   **When** I attempt the action,  
-   **Then** an inline error appears: "You cannot remove yourself while you are the only admin. Transfer admin role first."
+5. **Given** I try to remove myself as the sole Admin,
+   **When** I attempt the action,
+   **Then** NestJS returns a 400 error and an inline error appears: "Cannot remove the sole admin. Transfer admin role first."
 
 ## Tasks / Subtasks
 
-- [x] **Task 1: Add API endpoints for role updates and member removal** (AC: 2, 3, 4, 5)
-  - [x] Create `src/app/api/groups/[groupId]/members/[memberId]/role/route.ts` with `PATCH` handler
-    - [x] Auth check via `createClient()` and `supabase.auth.getUser()`
-    - [x] Validate payload with Zod schema (`role` in `admin | editor | member`)
-    - [x] Verify caller is admin in target group; return 403 if not admin
-    - [x] Verify target member belongs to group; return 404 if not found
-    - [x] Block self-demotion when caller is sole admin; return 409 with exact AC error message
-    - [x] Use `createAdminClient()` for update mutation to avoid RLS/ownership edge cases
-    - [x] Return updated role with 200
-  - [x] Create `src/app/api/groups/[groupId]/members/[memberId]/route.ts` with `DELETE` handler
-    - [x] Auth check and admin verification
-    - [x] Verify target member exists in group; return 404 if not found
-    - [x] Block deleting self when caller is sole admin; return 409 with exact AC error message
-    - [x] Delete target `group_members` row using admin client
-    - [x] Return 200 `{ ok: true }` on success
-  - [x] Add helper logic in route handlers to count admins in group for sole-admin guardrails
+- [x] **Task 1: Backend — MembersModule with controller, service, DTO** (AC: 1, 2, 3, 4, 5)
+  - [x] `MembersModule` registered in `apps/api/src/members/members.module.ts`
+  - [x] `MembersController` at `groups/:groupId/members` with `@UseGuards(JwtAuthGuard)` class-level
+  - [x] `GET /` route with `@UseGuards(GroupMemberGuard)` — calls `membersService.listByGroup(groupId)`
+  - [x] `PATCH /:memberId/role` route with `@UseGuards(GroupAdminGuard)` — calls `membersService.changeRole()`
+  - [x] `DELETE /:memberId` route — calls `membersService.remove()` (admin check done in service for self-removal support)
+  - [x] `ChangeRoleDto` validates role is one of `admin`, `editor`, `member` using `@IsIn()` from class-validator
 
-- [x] **Task 2: Build members management client UI** (AC: 1, 2, 3, 4, 5)
-  - [x] Create `src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.tsx`
-    - [x] Client component receives initial members + current user role/id
-    - [x] Render member rows with avatar, display name, join date, role badge (preserve existing list UX)
-    - [x] Add role dropdown (admin-only actions) with `admin`, `editor`, `member` options
-    - [x] Add remove action button (admin-only) with shadcn Dialog confirmation
-    - [x] Implement optimistic UI for role update and remove operations
-    - [x] Revert optimistic state and show inline errors when API fails
-    - [x] Show exact AC error strings for sole-admin self-demotion / self-removal violations
-  - [x] Keep existing non-admin behavior read-only (no role dropdown, no remove button)
-  - [x] Ensure keyboard-accessible controls and focus handling in dropdown/dialog (WCAG AA alignment)
+- [x] **Task 2: Backend — MembersService business logic** (AC: 2, 3, 4, 5)
+  - [x] `listByGroup(groupId)` — Prisma `groupMember.findMany` with user select (id, displayName, email, avatarUrl), ordered by `joinedAt: 'asc'`
+  - [x] `changeRole(groupId, memberId, role)` — finds target member, checks sole-admin-demote, updates via Prisma
+  - [x] `remove(groupId, memberId, requesterId)` — finds target, supports self-removal, checks admin for non-self, checks sole-admin-remove, deletes via Prisma
+  - [x] Sole admin demote → throws `BadRequestException({ code: ErrorCode.MEMBER_SOLE_ADMIN_DEMOTE })`
+  - [x] Sole admin remove → throws `BadRequestException({ code: ErrorCode.MEMBER_SOLE_ADMIN_REMOVE })`
+  - [x] Non-admin trying to remove another → throws `ForbiddenException({ code: ErrorCode.MEMBER_ADMIN_REQUIRED })`
 
-- [x] **Task 3: Integrate management list into members page server component** (AC: 1)
-  - [x] Update `src/app/(dashboard)/group/[groupId]/members/page.tsx`
-    - [x] Keep current auth guard and membership fetch pattern
-    - [x] Continue fetching `group_members` + `profiles(display_name, avatar_url)` sorted by `joined_at ASC`
-    - [x] Replace static member `<ul>` rendering with `<MemberManagementList />` while preserving current card layout
-    - [x] Pass server-fetched members and caller context (`currentUserId`, `isAdmin`) to client list component
-  - [x] Preserve invite-link and invite-by-username sections from Story 2.2 (no regression)
+- [x] **Task 3: Shared — error codes and messages** (AC: 3, 5)
+  - [x] `ErrorCode.MEMBER_NOT_FOUND`, `MEMBER_ADMIN_REQUIRED`, `MEMBER_SOLE_ADMIN_REMOVE`, `MEMBER_SOLE_ADMIN_DEMOTE` in `packages/shared/src/constants/index.ts`
+  - [x] Corresponding human-readable messages in `packages/shared/src/errors/error-messages.ts`
 
-- [x] **Task 4: Add/adjust server validation schema for role mutation** (AC: 2, 3)
-  - [x] Add `member-role-schema.ts` (or route-local schema) using Zod v4
-  - [x] Export schema + inferred type
-  - [x] Keep API error response format consistent with existing route patterns (`{ message, field? }`)
+- [x] **Task 4: Frontend — member query hooks** (AC: 1, 2, 4)
+  - [x] `useGroupMembers(groupId)` in `apps/web/src/hooks/api/use-member-queries.ts` — queries `GET /groups/:groupId/members`, maps NestJS response to component shape
+  - [x] `useUpdateMemberRole(groupId)` — mutation `PATCH /groups/:groupId/members/:userId/role`, invalidates `groups.detail` + `groups.members`
+  - [x] `useRemoveMember(groupId)` — mutation `DELETE /groups/:groupId/members/:userId`, invalidates `groups.detail` + `groups.members`
+  - [x] `queryKeys.groups.members(groupId)` defined in `apps/web/src/lib/api/query-keys.ts`
 
-- [x] **Task 5: Tests for API and UI behavior** (AC: 1, 2, 3, 4, 5)
-  - [x] Create `src/app/api/groups/[groupId]/members/[memberId]/role/route.test.ts`
-    - [x] 401 unauthenticated
-    - [x] 403 non-admin caller
-    - [x] 404 target member not found
-    - [x] 400 invalid role payload
-    - [x] 409 sole-admin self-demotion with exact error message
-    - [x] 200 valid role change to editor
-  - [x] Create `src/app/api/groups/[groupId]/members/[memberId]/route.test.ts`
-    - [x] 401 unauthenticated
-    - [x] 403 non-admin caller
-    - [x] 404 target member not found
-    - [x] 409 sole-admin self-removal with exact error message
-    - [x] 200 valid member removal
-  - [x] Create `src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.test.tsx`
-    - [x] Renders members with display name, role badge, join date
-    - [x] Admin sees role controls + remove controls
-    - [x] Non-admin does not see management controls
-    - [x] Optimistic role update UI on success
-    - [x] Optimistic removal UI on success
-    - [x] Error rollback for failed role update/removal
-    - [x] Exact sole-admin error copy displayed inline
-  - [x] Run `npm test`, `npm run lint`, `npm run build`
+- [x] **Task 5: Frontend — Members page and GroupMembersView** (AC: 1)
+  - [x] Server page `apps/web/src/app/(dashboard)/group/[groupId]/members/page.tsx` — renders `<GroupMembersView groupId={groupId} />`
+  - [x] `GroupMembersView` loads group via `useGroup(groupId)`, members via `useGroupMembers(groupId)`, and user via `useCurrentUser()`
+  - [x] Checks admin role: `currentMember?.role === GROUP_ROLES.ADMIN`
+  - [x] Admin sees invite sections (InviteLinkSection + InviteByUsername) + member management list
+  - [x] Non-admin sees member management list only (read-only badges)
+
+- [x] **Task 6: Frontend — MemberManagementList component** (AC: 1, 2, 3, 4, 5)
+  - [x] Renders each member: Avatar (with fallback initials), display name, "(You)" marker, join date, role badge or dropdown
+  - [x] Admin mode: native `<select>` dropdown with admin/editor/member options, "Remove" button per row
+  - [x] Non-admin mode: `<Badge>` with capitalized role text
+  - [x] Role change: optimistic UI via local `setMembers()`, rollback on error, inline error per user
+  - [x] Remove: opens shadcn `Dialog` for confirmation, optimistic removal from list, rollback on error
+  - [x] Sole admin errors: backend returns error code → error message displayed inline under the member row
+
+- [x] **Task 7: Tests** (AC: 1–5)
+  - [x] Frontend: `member-management-list.test.tsx` — seven cases (list, admin vs non-admin controls, optimistic role/removal on success, error rollback for role and remove).
+  - [x] Backend: `members.service.spec.ts` — twelve unit tests for `listByGroup`, `changeRole`, `remove`.
+  - [x] Story-scoped suites verified passing; full monorepo `yarn test` may still fail on unrelated suites (see Dev Agent Record).
 
 ## Dev Notes
 
-### Story Context and Intent
+### Implementation Status
 
-- This story extends Epic 2 from invitation/onboarding into ongoing group governance.
-- Story 2.2 already established the members page and invitation flows; this story must add role and removal controls without breaking those flows.
-- Group role taxonomy in schema is fixed at `admin | editor | member`.
+This story's backend and frontend are **fully implemented**. The Members module (controller, service, DTO) handles all CRUD operations with proper authorization and business rules (sole-admin protection). The frontend renders an admin management interface with role dropdowns, remove buttons, confirmation dialog, and optimistic updates with error rollback.
 
-### Previous Story Intelligence (2.2)
+All 7 test cases in `member-management-list.test.tsx` now pass. The optimistic state sync was fixed by simplifying the `useEffect` dependency array to `[initialMembers]` only.
 
-- Reuse proven patterns from Story 2.2:
-  - Server auth + permission checks in route handlers (`createClient`, `auth.getUser`, clear 401/403/404/409 handling)
-  - `createAdminClient()` for privileged mutations against `group_members` and invitations
-  - Inline API errors and optimistic UX in client components (`invite-link-section`, `invite-by-username`, `invitation-list`)
-  - Existing members page data shape with profile join already matches AC1 needs.
-- Avoid regression in existing routes/features:
-  - `/api/invitations/*`
-  - `/api/groups/join`
-  - `/api/groups/[groupId]/invite-link`
-  - invite UI in members page.
+### Existing File Map
 
-### Technical Requirements
+```
+packages/shared/src/
+├── constants/index.ts              # ErrorCode.MEMBER_*, GROUP_ROLES
+├── errors/error-messages.ts        # Human-readable messages for all MEMBER_* codes
 
-- Use existing stack only (Next.js App Router + React 19 + TypeScript strict + Zod v4 + shadcn/ui + Supabase).
-- No new dependency required for this story.
-- Keep API route implementation order consistent with project context:
-  1. auth
-  2. validation
-  3. authorization
-  4. business rule guards
-  5. mutation
-  6. response.
-- Use exact AC strings for sole-admin constraints:
-  - "You cannot remove admin role from yourself while you are the only admin."
-  - "You cannot remove yourself while you are the only admin. Transfer admin role first."
+apps/api/src/members/
+├── members.module.ts               # Module registration
+├── members.controller.ts           # GET /, PATCH /:memberId/role, DELETE /:memberId
+├── members.service.ts              # listByGroup, changeRole, remove (with sole-admin checks)
+├── members.service.spec.ts         # 12 unit tests for service business logic
+├── dto/change-role.dto.ts          # @IsIn([admin, editor, member])
 
-### Architecture Compliance
+apps/web/src/app/(dashboard)/group/[groupId]/members/
+├── page.tsx                        # Server page → <GroupMembersView>
+├── _components/
+│   ├── group-members-view.tsx      # Admin check, useGroupMembers + invite sections + member list
+│   ├── member-management-list.tsx  # Role dropdown, remove button, dialog, optimistic updates
+│   ├── member-management-list.test.tsx  # 7 test cases (all passing)
+│   ├── invite-link-section.tsx     # From Story 2.2
+│   ├── invite-link-section.test.tsx
+│   └── invite-by-username.tsx      # From Story 2.2
 
-- Source of truth tables:
-  - `group_members(group_id, user_id, role, joined_at)` with role check constraint.
-  - `profiles(id, display_name, avatar_url, ...)` for member identity display.
-- RLS remains authoritative for content access after member removal (AC4), but admin operations should still use server-side guarded endpoints.
-- Service role key must remain server-only; never imported into client components.
-- Keep route/file placement under Next.js App Router conventions:
-  - dashboard page components in route segment `_components`
-  - API handlers under `src/app/api/.../route.ts`.
+apps/web/src/hooks/api/
+├── use-member-queries.ts           # useGroupMembers, useUpdateMemberRole, useRemoveMember
 
-### File Structure Requirements
+apps/web/src/lib/api/
+├── query-keys.ts                   # groups.members(groupId) key
+```
 
-Expected touched files for implementation:
+### Backend API Endpoints
 
-- `src/app/(dashboard)/group/[groupId]/members/page.tsx` (update)
-- `src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.tsx` (new)
-- `src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.test.tsx` (new)
-- `src/app/api/groups/[groupId]/members/[memberId]/role/route.ts` (new)
-- `src/app/api/groups/[groupId]/members/[memberId]/role/route.test.ts` (new)
-- `src/app/api/groups/[groupId]/members/[memberId]/route.ts` (new)
-- `src/app/api/groups/[groupId]/members/[memberId]/route.test.ts` (new)
-- `src/app/api/groups/[groupId]/members/[memberId]/member-role-schema.ts` (optional new, if extracted)
+| Method | Path | Guard | Service Method |
+|--------|------|-------|----------------|
+| `GET` | `/groups/:groupId/members` | `GroupMemberGuard` | `listByGroup()` |
+| `PATCH` | `/groups/:groupId/members/:memberId/role` | `GroupAdminGuard` | `changeRole()` |
+| `DELETE` | `/groups/:groupId/members/:memberId` | `JwtAuthGuard` only (admin check in service) | `remove()` |
 
-### Testing Requirements
+The DELETE endpoint intentionally uses only `JwtAuthGuard` (not `GroupAdminGuard`) because the service layer handles both admin-removal and self-removal logic. A non-admin member can remove themselves; only removing *other* members requires admin.
 
-- Unit/integration tests via Jest + Testing Library as current project standard.
-- Route tests should mock Supabase server/admin clients and assert HTTP status + JSON payload.
-- Component tests should mock `fetch` and validate optimistic transitions + rollback behavior.
-- Regression gate: existing members/invitations tests must remain green.
+### Optimistic Update Pattern
 
-### Latest Technical Information (Web Research Highlights)
+The `MemberManagementList` uses local `useState` for optimistic updates rather than React Query's built-in `onMutate`/`onError` pattern. The component receives `members` as a prop from `GroupMembersView` (via `useGroupMembers()` query data).
 
-- Next.js 16 officially renamed request interception from middleware to proxy (`proxy.ts`); current project already follows this. Do not introduce a new root `middleware.ts`.
-- Supabase best practice remains: anon key in client with RLS; service role key server-only for privileged mutations. Keep role/removal mutations strictly in route handlers.
+Flow:
+1. User changes role/removes → local state updated immediately
+2. Mutation fires → on success, `queryKeys.groups.detail` + `queryKeys.groups.members` invalidated → parent re-fetches → new `initialMembers` prop arrives
+3. `useEffect(() => setMembers(initialMembers), [initialMembers])` syncs local state with server data
+4. On error → local state reverted to previous snapshot, inline error shown
+
+### Non-Admin View
+
+When `isAdmin === false`, each member row renders a `<Badge variant="outline">` with the role name instead of a dropdown + remove button. The admin-only invite sections (InviteLinkSection, InviteByUsername) are also hidden.
+
+### Architecture Deviations from Epic
+
+| Epic Says | Implementation | Reason |
+|-----------|---------------|--------|
+| `PATCH /groups/:groupId/members/:userId` | `PATCH /groups/:groupId/members/:memberId/role` | Better REST modeling — updating specific sub-resource |
+| DELETE uses `GroupAdminGuard` | DELETE uses `JwtAuthGuard` only (admin check in service) | Enables self-removal — non-admin members can leave group voluntarily |
+
+### Codebase Patterns Used
+
+- **Controller**: `@Controller("groups/:groupId/members")` with `@UseGuards(JwtAuthGuard)` at class level
+- **Guard stacking**: Route-level `@UseGuards(GroupAdminGuard)` added only for admin-only endpoints
+- **Error codes**: Service throws `{ code: ErrorCode.X }` — `HttpExceptionFilter` auto-resolves message from shared `getErrorMessage(code)`
+- **Mutation hooks**: Follow established `apiRequest` + `ApiError` + `queryClient.invalidateQueries` pattern
+- **Dialog**: shadcn `Dialog` with `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogFooter`
+- **Avatar**: shadcn `Avatar` with `AvatarImage` + `AvatarFallback` (initials)
 
 ### References
 
-- [Source: `_bmad-output/planning-artifacts/epics/epic-2-group-management-membership.md`]
-- [Source: `_bmad-output/planning-artifacts/architecture.md` (Sections 2, 3.2, 3.3, 8.5, 12)]
-- [Source: `_bmad-output/planning-artifacts/prd.md` (FR9, FR10, NFR8, NFR13)]
-- [Source: `_bmad-output/project-context.md`]
-- [Source: `_bmad-output/implementation-artifacts/2-2-invite-members-link-direct-invite.md`]
-- [Source: `src/app/(dashboard)/group/[groupId]/members/page.tsx`]
-- [Source: `src/app/(dashboard)/group/[groupId]/members/_components/invite-link-section.tsx`]
-- [Source: `src/app/(dashboard)/group/[groupId]/members/_components/invite-by-username.tsx`]
+- [Source: `_bmad-output/planning-artifacts/epics/epic-2-group-management-membership.md` — Story 2.3 ACs]
+- [Source: `_bmad-output/planning-artifacts/architecture.md` — Section 3.1.2 Guards, Section 3.2 group_members schema, Section 3.3 Authorization Matrix]
+- [Source: `_bmad-output/implementation-artifacts/2-2-invite-members-link-direct-invite.md` — Invite sections, members page patterns]
+- [Source: `apps/api/src/members/members.controller.ts` — REST endpoint structure]
+- [Source: `apps/api/src/members/members.service.ts` — Business logic with sole-admin checks]
+- [Source: `apps/web/src/hooks/api/use-member-queries.ts` — Mutation hooks with cache invalidation]
+- [Source: `apps/web/src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.tsx` — Optimistic update UI]
+- [Source: `packages/shared/src/constants/index.ts` — ErrorCode.MEMBER_*, GROUP_ROLES]
+- [Source: `packages/shared/src/errors/error-messages.ts` — Error messages for all member codes]
+- [Source: `_bmad-output/project-context.md` — API client patterns, testing rules, NestJS conventions]
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-gpt-5.3-codex
+Cursor Agent (implementation + review follow-up, 2026-03-30)
 
 ### Debug Log References
 
-- `npm install -D @testing-library/dom`: installed missing test dependency.
-- `npm test`: pass (25/25 suites, 82/82 tests).
-- `npm run lint`: pass.
-- `npm run build`: pass.
-
+- `yarn test --runTestsByPath "src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.test.tsx"` (apps/web) — PASS (7/7)
+- `yarn test --runTestsByPath "src/members/members.service.spec.ts"` (apps/api) — PASS (12/12)
+- `yarn test` (root) — story-scoped suites pass; remaining failures may include auth pages (`next-intl` ESM) if still present.
+- `profile-form.test.tsx` — PASS (4/4) after registering `email` with RHF and valid fixture emails.
+- `yarn lint` (root) — PASS
+- `yarn build` (root) — PASS (with React Compiler enabled)
 ### Completion Notes List
 
-- Implemented member role update API (`PATCH`) with admin authorization, Zod validation, and sole-admin self-demotion protection.
-- Implemented member removal API (`DELETE`) with admin authorization and sole-admin self-removal protection.
-- Added shared role validation schema (`member-role-schema.ts`) for strict API payload handling.
-- Added member management client component with role controls, remove confirmation dialog, optimistic updates, and rollback/error handling.
-- Integrated member management component into members page while preserving Story 2.2 invite features.
-- Added route tests for new role/removal APIs and component tests for management interactions.
-- Added `@testing-library/dom` dev dependency to restore UI test runtime compatibility.
-- Updated ESLint global ignores to exclude `.yarn/**`, allowing project lint checks to reflect source files instead of SDK internals.
-- Verified full quality gates: tests, lint, and build all pass.
+- All backend implementation (MembersModule, controller, service, DTO) completed as part of prior work.
+- All frontend implementation (GroupMembersView, MemberManagementList, member hooks) completed.
+- Error codes and messages for all member operations defined in shared package.
+- Fixed optimistic state sync regression in `member-management-list.tsx` by updating local state sync effect to run only when `initialMembers` changes.
+- `member-management-list.test.tsx` now passes (7/7).
+- **Code review fixes applied:**
+  - [H1] Added `members.service.spec.ts` with 12 backend unit tests covering all service methods and edge cases.
+  - [M1] Refactored `GroupMembersView` to use `useGroupMembers()` hook (dedicated members endpoint) instead of extracting members from `useGroup()` response.
+  - [M2] Enabled React Compiler (`reactCompiler: true` in `next.config.ts`) — auto-memoization eliminates fragile optimistic state sync issue.
+  - [M3] Documented architecture deviations from epic (API path + guard changes) in Dev Notes.
+  - [L1] Unified `avatar_url` type to `string | null` across `GroupMember`, `Member`, and `useGroupMembers` return type.
+  - [L3] Fixed stale Dev Notes: removed outdated "2 test cases failing" text, fixed typo, updated optimistic update pattern description.
+  - [2026-03-30] Review follow-up: role confirm dialog; `members.controller.spec.ts`; `avatarUrl` `string | null` across web hooks + shared profile schema + `UpdateUserDto`; profile form `email` registered; `profile-form` tests fixed.
 
 ### File List
 
-- `_bmad-output/implementation-artifacts/2-3-member-role-management.md`
-- `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `eslint.config.mjs`
-- `package.json`
-- `src/app/api/groups/[groupId]/members/[memberId]/member-role-schema.ts`
-- `src/app/api/groups/[groupId]/members/[memberId]/role/route.ts`
-- `src/app/api/groups/[groupId]/members/[memberId]/role/route.test.ts`
-- `src/app/api/groups/[groupId]/members/[memberId]/route.ts`
-- `src/app/api/groups/[groupId]/members/[memberId]/route.test.ts`
-- `src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.tsx`
-- `src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.test.tsx`
-- `src/app/(dashboard)/group/[groupId]/members/page.tsx`
-- `yarn.lock`
+- `packages/shared/src/constants/index.ts`
+- `packages/shared/src/errors/error-messages.ts`
+- `apps/api/src/members/members.module.ts`
+- `apps/api/src/members/members.controller.ts`
+- `apps/api/src/members/members.service.ts`
+- `apps/api/src/members/members.service.spec.ts` (new — code review)
+- `apps/api/src/members/dto/change-role.dto.ts`
+- `apps/web/next.config.ts` (modified — enabled React Compiler)
+- `apps/web/src/app/(dashboard)/group/[groupId]/members/page.tsx`
+- `apps/web/src/app/(dashboard)/group/[groupId]/members/_components/group-members-view.tsx`
+- `apps/web/src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.tsx`
+- `apps/web/src/app/(dashboard)/group/[groupId]/members/_components/member-management-list.test.tsx`
+- `apps/web/src/hooks/api/use-member-queries.ts`
+- `apps/web/src/lib/api/query-keys.ts`
+- `packages/shared/src/schemas/profile.ts` (`avatarUrl` union with `null`; aligns with DB)
+- `apps/api/src/users/dto/update-user.dto.ts` (`avatarUrl?: string | null`)
+- `apps/api/src/members/members.controller.spec.ts` (controller smoke tests)
+- `apps/web/src/components/layout/header.tsx`
+- `apps/web/src/app/(dashboard)/settings/_components/profile-form.tsx`
+- `apps/web/src/app/(dashboard)/settings/_components/profile-form.test.tsx`
 
-## Change Log
+## Senior Developer Review (AI)
 
-- 2026-03-17: Created Story 2.3 implementation guide with full developer context and acceptance-criteria-mapped tasks.
-- 2026-03-17: Implemented core Story 2.3 member role/removal APIs and member management UI integration.
-- 2026-03-17: Completed full verification gates (`npm test`, `npm run lint`, `npm run build`) and set story status to review.
-- 2026-03-17: Code review — fixed 3 issues: removed redundant role Badge in admin view, fixed dialog not closing on failed member removal (error hidden behind overlay), added missing component test for sole-admin self-removal error display. Updated existing Badge-dependent test assertions to use select value checks. Status → done.
+### Review 1 — 2026-03-30
+
+_Outcome: Changes Requested, resolved same session_
+
+### Resolution summary
+
+- **H1** — Role change now uses a confirmation dialog (“Change role?” / “Confirm change”) before PATCH; tests updated.
+- **M3** — Added `members.controller.spec.ts` (list / changeRole / remove / error propagation).
+- **M4** — `avatarUrl` typed as `string | null` in `use-group-queries`, `use-user-queries` (`SearchResult`), `use-member-queries` API generic; shared `profileFormSchema` allows `null`; `UpdateUserDto.avatarUrl` optional nullable; header passes `undefined` to `AvatarImage` when null.
+- **L5/L6/L7** — `ChangeRoleDto` spacing (already clean in tree); agent placeholder filled; sole-admin demote spec uses a single `.catch` assertion path.
+- **M2** (File List vs git) — Still a process note for the branch; File List above extended with files touched by this follow-up.
+- **Profile form** — Separated `profileSchema`/`profileEditSchema`; email field display-only (not registered); tests use valid fixture email.
+
+### Review 2 — 2026-03-30
+
+_Outcome: **Approved**_
+
+All 5 ACs verified implemented with code evidence. All tasks [x] confirmed. Tests: 7/7 FE + 17/17 BE passing. TypeScript clean.
+
+**Non-blocking notes:** [M1] branch-shared git diff (process); [L1] `listByGroup` selects `email` unused by FE; [L2] Dev Notes optimistic section could document role confirm dialog flow.

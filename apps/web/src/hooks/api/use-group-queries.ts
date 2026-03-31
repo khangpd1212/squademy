@@ -1,0 +1,202 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/lib/api/api-error";
+import { apiRequest } from "@/lib/api/browser-client";
+import { queryKeys } from "@/lib/api/query-keys";
+
+export type GroupDetail = {
+  id: string;
+  name: string;
+  description: string | null;
+  exerciseDeadlineDay: number | null;
+  exerciseDeadlineTime: string | null;
+  inviteCode?: string;
+  members: Array<{
+    userId: string;
+    role: string;
+    joinedAt: string;
+    user: {
+      displayName: string;
+      avatarUrl: string | null;
+    };
+  }>;
+  lessons?: Array<{ id: string }>;
+};
+
+export type MyGroupItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  role: string;
+  memberCount: number;
+  createdAt: string;
+};
+
+type CreateGroupInput = {
+  name: string;
+  description: string | null;
+};
+
+type UpdateGroupPayload = {
+  name: string;
+  description: string | null;
+  exerciseDeadlineDay: number | null;
+  exerciseDeadlineTime: string | null;
+};
+
+export function useGroup(groupId: string) {
+  return useQuery({
+    queryKey: queryKeys.groups.detail(groupId),
+    enabled: Boolean(groupId),
+    queryFn: async () => {
+      const result = await apiRequest<GroupDetail>(`/groups/${groupId}`);
+      if (result.message || !result.data) {
+        throw new ApiError({
+          message: result.message ?? "Could not load group.",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+  });
+}
+
+export function useCreateGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (values: CreateGroupInput) => {
+      const result = await apiRequest<{ id: string; name: string; inviteCode: string }>(
+        "/groups",
+        {
+          method: "POST",
+          body: JSON.stringify(values),
+        },
+      );
+      if (result.message || !result.data) {
+        throw new ApiError({
+          message: result.message ?? "Could not create group.",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
+    },
+  });
+}
+
+export function useUpdateGroup(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (values: UpdateGroupPayload) => {
+      const result = await apiRequest(`/groups/${groupId}`, {
+        method: "PATCH",
+        body: JSON.stringify(values),
+      });
+      if (result.message) {
+        throw new ApiError({
+          message: result.message ?? "Could not save settings.",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
+    },
+  });
+}
+
+export function useJoinGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (inviteCode: string) => {
+      const result = await apiRequest<{ id?: string; group?: { id: string } }>("/groups/join", {
+        method: "POST",
+        body: JSON.stringify({ inviteCode }),
+      });
+      if (result.message) {
+        throw new ApiError({ message: result.message, code: result.code, status: result.status });
+      }
+      const groupId = result.data?.id ?? result.data?.group?.id;
+      if (!groupId) {
+        throw new Error("Could not join group.");
+      }
+      return groupId;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
+    },
+  });
+}
+
+export function useMyGroups() {
+  return useQuery({
+    queryKey: queryKeys.groups.myGroups,
+    queryFn: async () => {
+      const result = await apiRequest<MyGroupItem[]>("/groups/me");
+      if (result.message || !result.data) {
+        throw new ApiError({
+          message: result.message ?? "Could not load groups.",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+  });
+}
+
+export function useDeleteGroup(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await apiRequest(`/groups/${groupId}`, {
+        method: "DELETE",
+      });
+      if (result.message) {
+        throw new ApiError({
+          message: result.message ?? "Could not delete group.",
+          code: result.code,
+          status: result.status,
+        });
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
+    },
+  });
+}
+
+export function useGenerateInviteLink(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await apiRequest<{ inviteCode?: string }>(`/groups/${groupId}/invite-link`, {
+        method: "POST",
+      });
+      if (result.message) {
+        throw new ApiError({ message: result.message, code: result.code, status: result.status });
+      }
+      if (!result.data?.inviteCode) {
+        throw new Error("Could not regenerate invite link.");
+      }
+      return result.data.inviteCode;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.inviteLink(groupId) });
+    },
+  });
+}

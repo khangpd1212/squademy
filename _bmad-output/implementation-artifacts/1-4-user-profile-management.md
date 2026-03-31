@@ -1,6 +1,6 @@
 # Story 1.4: User Profile Management
 
-Status: done
+Status: in-progress
 
 ## Story
 
@@ -10,9 +10,9 @@ so that my group members can identify me and my profile reflects my current deta
 
 ## Acceptance Criteria
 
-1. Given I navigate to `/settings`, profile fields are pre-populated (display name, avatar, full name, school, location, age).
-2. Given I update display name and save, `profiles.display_name` is updated, inline success indicator appears, and UI reflects optimistic update.
-3. Given I upload avatar JPG/PNG <= 2MB, file is uploaded via `/api/files/upload`, `profiles.avatar_url` is updated, and UI updates immediately.
+1. Given I navigate to `/settings`, profile fields are pre-populated from NestJS `GET /users/me` via `browser-client.ts` (display name, avatar, full name, school, location, age).
+2. Given I update display name and save, `users.display_name` is updated via NestJS `PATCH /users/me`, inline success indicator appears, and UI reflects optimistic update.
+3. Given I upload avatar JPG/PNG <= 2MB, file is uploaded via `/api/files/upload`, `users.avatar_url` is updated, and UI updates immediately.
 4. Given avatar > 2MB, inline validation error appears and upload is blocked.
 5. Given empty display name, inline validation error appears and save is blocked.
 
@@ -24,14 +24,14 @@ so that my group members can identify me and my profile reflects my current deta
   - [x] Add inline success state near save action (no toast in MVP).
 
 - [x] Implement profile read/write (AC: 1, 2)
-  - [x] Add profile query by authenticated user id.
-  - [x] Add mutation for profile update with optimistic UI handling.
-  - [x] Ensure updates respect RLS and authenticated ownership.
+  - [x] Fetch profile via NestJS `GET /users/me` using `browser-client.ts`.
+  - [x] Update profile via NestJS `PATCH /users/me` with optimistic UI handling.
+  - [x] Ensure updates respect JwtAuthGuard and authenticated ownership.
 
-- [x] Implement avatar upload pipeline (AC: 3, 4)
-  - [x] Add client-side file validation (type + <= 2MB).
-  - [x] Implement `/api/files/upload` route handler contract for avatar upload.
-  - [x] Persist returned URL to `profiles.avatar_url`.
+- [] Implement avatar upload pipeline (AC: 3, 4)
+  - [] Add client-side file validation (type + <= 2MB).
+  - [] Implement `/api/files/upload` route handler contract for avatar upload.
+  - [] Persist returned URL to `profiles.avatar_url`.
 
 - [x] Keep auth safety boundaries (AC: 1-5)
   - [x] Ensure unauthenticated users cannot access profile update endpoints.
@@ -60,7 +60,6 @@ so that my group members can identify me and my profile reflects my current deta
 
 - `src/app/(dashboard)/settings/page.tsx`
 - `src/app/(dashboard)/settings/_components/profile-form.tsx`
-- `src/app/(dashboard)/settings/profile-schema.ts`
 - `src/app/api/files/upload/route.ts`
 - Optional helpers:
   - `src/lib/r2/client.ts` (if upload integration is introduced now)
@@ -106,30 +105,54 @@ GPT-5.3 Codex
 ### File List
 
 - `_bmad-output/implementation-artifacts/1-4-user-profile-management.md`
-- `src/app/(dashboard)/settings/page.tsx`
-- `src/app/(dashboard)/settings/profile-schema.ts`
-- `src/app/(dashboard)/settings/_components/profile-form.tsx`
-- `src/app/(dashboard)/settings/_components/profile-form.test.tsx`
-- `src/app/api/profile/route.ts`
-- `src/app/api/profile/route.test.ts`
-- `src/app/api/files/upload/route.ts`
-- `src/app/api/files/upload/route.test.ts`
-- `src/types/database.ts`
-- `supabase/migrations/20260315_add_profiles_extended_fields.sql`
+- `apps/web/src/app/(dashboard)/settings/page.tsx`
+- `apps/web/src/app/(dashboard)/settings/_components/profile-form.tsx`
+- `packages/shared/src/schemas/profile.ts`
+- `apps/web/src/app/(dashboard)/settings/_components/profile-form.test.tsx`
+- `apps/web/src/hooks/api/use-user-queries.ts`
+- `apps/api/src/users/users.controller.ts`
+- `apps/api/src/users/users.service.ts`
+- `apps/api/src/users/dto/update-user.dto.ts`
+- `packages/database/prisma/schema.prisma` (extended profile fields on users table)
 
 ## Change Log
 
 - 2026-03-15: Implemented Story 1.4 profile management end-to-end (UI, API, validation, tests, migration).
 - 2026-03-15: Code-review pass completed with fixes applied for profile-row upsert fallback, avatar URL safety guard, and empty-file upload validation.
+- 2026-03-26: Epic 1 adversarial review — removed broken upload pipeline (route handler, upload hook, file input UI). Avatar upload deferred until Cloudflare R2 is configured. Removed dead server-side prefetch from settings page. Updated File List to match actual files.
+- 2026-03-27: Code review #2 — fixed email field readonly, search endpoint validation, optimistic update, type safety, success message UX, File List accuracy.
 
 ## Senior Developer Review (AI)
 
+### Reviewer
+
+Claude claude-4.6-opus-high-thinking
+
+### Date
+
+2026-03-27
+
 ### Outcome
 
-Approve
+Changes Requested — 6 issues fixed, 2 skipped by user, 1 deferred
 
 ### Findings and Resolution
 
-- [x] [MEDIUM] `PATCH /api/profile` previously failed when a profile row was missing. Updated to upsert and then re-select by user id.
-- [x] [MEDIUM] `PATCH /api/profile` accepted arbitrary avatar URL strings. Added URL safety guard (`data:image/`, `https://`, `http://`).
-- [x] [LOW] `POST /api/files/upload` did not reject zero-byte files. Added explicit empty-file validation.
+#### Review #1 (2026-03-26)
+
+- [x] [CRITICAL] Avatar upload pipeline entirely broken: upload hook called NestJS (no endpoint), Next.js route checked wrong cookie, base64 storage unscalable. **Resolved: removed upload code, deferred to Cloudflare R2 setup.**
+- [x] [HIGH] Settings page server-side prefetch always failed (server-side client cannot send Bearer tokens). **Resolved: removed dead prefetch.**
+- [x] [HIGH] File List contained 4 ghost files that never existed. **Resolved: corrected File List.**
+- [ ] [DEFERRED] AC 3 (avatar upload JPG/PNG <= 2MB) not implemented — blocked on Cloudflare R2 setup.
+
+#### Review #2 (2026-03-27)
+
+- [SKIPPED] [CRITICAL] Avatar upload tasks marked [x] but code removed. **User: skip — already corrected before review.**
+- [SKIPPED] [HIGH] Test text mismatch for avatar placeholder message. **User: skip.**
+- [x] [HIGH] File List missing `packages/shared/src/schemas/profile.ts`. **Resolved: added to File List.**
+- [x] [HIGH] Email field editable but backend ignores it silently. **Resolved: email input set to readOnly.**
+- [SKIPPED] [MEDIUM] No error state when profile fetch fails. **User: skip.**
+- [x] [MEDIUM] Search endpoint accepts empty query returning all users. **Resolved: server-side min 2 chars validation.**
+- [x] [MEDIUM] `ProfileApiResponse` type wrong (nested `profile` vs flat data). **Resolved: removed dead type, typed as `ProfileFormValues`.**
+- [x] [LOW] Not true optimistic update per AC2. **Resolved: added `onMutate`/`onError` rollback pattern.**
+- [x] [LOW] Success message persists during re-editing. **Resolved: form `onChange` clears success state.**

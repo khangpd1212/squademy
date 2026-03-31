@@ -1,4 +1,4 @@
-# generated: 2026-03-12
+# generated: 2026-03-26
 # project: squademy
 # project_key: NOKEY
 # tracking_system: file-system
@@ -11,42 +11,57 @@
 #   - in-progress: Epic actively being worked on
 #   - done: All stories in epic completed
 #
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
 # Story Status:
 #   - backlog: Story only exists in epic file
-#   - ready-for-dev: Story file created in implementation artifacts
+#   - ready-for-dev: Story file created in stories folder
 #   - in-progress: Developer actively working on implementation
-#   - review: Ready for code review
+#   - review: Ready for code review (via Dev's code-review workflow)
 #   - done: Story completed
 #
 # Retrospective Status:
 #   - optional: Can be completed but not required
 #   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-03-12
+generated: 2026-03-26
 project: squademy
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 
 development_status:
+  # ── Epic 1: Foundation — Project Setup & Authentication ──
   epic-1: in-progress
   1-1-project-foundation-design-system-setup: done
   1-2-user-registration: done
   1-3-user-login-session-management: done
   1-4-user-profile-management: done
-  1-5-personal-data-export-request: backlog
-  1-6-account-deletion-tombstoning: backlog
+  1-5-personal-data-export-request: ready-for-dev
+  1-6-account-deletion-tombstoning: ready-for-dev
   epic-1-retrospective: optional
 
+  # ── Epic 2: Group Management & Membership ──
   epic-2: in-progress
   2-1-create-configure-a-group: done
   2-2-invite-members-link-direct-invite: done
   2-3-member-role-management: done
-  2-4-group-settings-exercise-scheduling: backlog
-  2-5-delete-group: backlog
+  2-4-group-settings-exercise-scheduling: done
+  2-5-dashboard-my-groups-list: done
+  2-6-delete-group: done
   epic-2-retrospective: optional
 
-  epic-3: backlog
+  # ── Epic 3: Content Studio — Lesson & Flashcard Creation ──
+  epic-3: in-progress
   3-1-lesson-list-content-studio-navigation: backlog
   3-2-wysiwyg-lesson-editor: backlog
   3-3-markdown-file-import: backlog
@@ -54,21 +69,26 @@ development_status:
   3-5-submit-for-review-track-status: backlog
   epic-3-retrospective: optional
 
+  # ── Epic 4: Editorial Review & Learning Path ──
   epic-4: backlog
   4-1-editor-review-queue-lesson-approval-rejection: backlog
   4-2-line-level-comments-on-lessons: backlog
   4-3-published-lesson-view-learning-path: backlog
   4-4-content-moderation-soft-delete: backlog
+  4-5-learning-path-roadmap-editor: backlog
   epic-4-retrospective: optional
 
+  # ── Epic 5: Practice Engine — Flashcard SRS & Quizzes ──
   epic-5: backlog
   5-1-flashcard-deck-management-anki-import: backlog
   5-2-flashcard-practice-session-swipe-ui-offline-first: backlog
   5-3-spaced-repetition-scheduling-sm-2: backlog
   5-4-quiz-completion: backlog
   5-5-inline-flashcard-editing-during-study: backlog
+  5-6-audio-micro-feedback-haptic: backlog
   epic-5-retrospective: optional
 
+  # ── Epic 6: Exercise Studio & Peer-Review Loop ──
   epic-6: backlog
   6-1-exercise-studio-create-exercise-with-templates: backlog
   6-2-flashcard-macro-exercise-generator: backlog
@@ -79,17 +99,21 @@ development_status:
   6-7-editor-arbitration-decision-error-settlement: backlog
   epic-6-retrospective: optional
 
+  # ── Epic 7: Notifications System ──
   epic-7: backlog
   7-1-in-app-notification-infrastructure: backlog
   7-2-email-notification-service-triggers: backlog
   epic-7-retrospective: optional
 
+  # ── Epic 8: Gamification & Engagement Engine ──
   epic-8: backlog
   8-1-daily-learning-streaks: backlog
   8-2-live-leaderboard: backlog
   8-3-contributor-badges: backlog
+  8-4-activity-heatmap: backlog
   epic-8-retrospective: optional
 
+  # ── Epic 9: Admin Dashboard & Platform Operations ──
   epic-9: backlog
   9-1-admin-dashboard-system-health-user-management: backlog
   9-2-content-moderation-growth-analytics: backlog

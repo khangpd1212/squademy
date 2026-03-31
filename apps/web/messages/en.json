@@ -1,0 +1,32 @@
+{
+  "common": {
+    "backToHome": "Back to home",
+    "tryAgain": "Please try again later."
+  },
+  "errors": {
+    "AUTH_INVALID_CREDENTIALS": "Invalid email or password.",
+    "AUTH_PRIVACY_NOT_ACCEPTED": "You must accept the privacy policy.",
+    "AUTH_EMAIL_CONFLICT": "An account with this email already exists.",
+    "AUTH_ACCESS_DENIED": "Access denied.",
+    "AUTH_REFRESH_TOKEN_REQUIRED": "Session expired. Please log in again.",
+    "GROUP_NOT_FOUND": "Group not found.",
+    "GROUP_INVALID_INVITE_CODE": "Invalid invite code.",
+    "GROUP_ALREADY_MEMBER": "You are already a member of this group.",
+    "MEMBER_NOT_FOUND": "Member not found.",
+    "MEMBER_ADMIN_REQUIRED": "Admin access required.",
+    "MEMBER_SOLE_ADMIN_REMOVE": "Cannot remove the sole admin. Transfer admin role first.",
+    "MEMBER_SOLE_ADMIN_DEMOTE": "Cannot demote the sole admin. Promote another admin first.",
+    "INVITATION_ADMIN_ONLY": "Only admins can send invitations.",
+    "INVITATION_ALREADY_MEMBER": "User is already a member of this group.",
+    "INVITATION_ALREADY_PENDING": "Invitation already pending for this user.",
+    "INVITATION_NOT_FOUND": "Invitation not found.",
+    "INVITATION_NOT_OWNER": "You can only respond to your own invitations.",
+    "INVITATION_ALREADY_RESPONDED": "Invitation has already been responded to.",
+    "FORBIDDEN_NOT_MEMBER": "You are not a member of this group.",
+    "FORBIDDEN_NOT_ADMIN": "Admin access required.",
+    "FORBIDDEN_MISSING_CONTEXT": "Missing context.",
+    "USER_NOT_FOUND": "User not found.",
+    "fallback": "Something went wrong. Please try again.",
+    "network": "Network error. Please try again."
+  }
+}

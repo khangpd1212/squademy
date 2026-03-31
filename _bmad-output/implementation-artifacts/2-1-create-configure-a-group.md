@@ -28,7 +28,7 @@ so that I can invite my classmates and organize our study activities in one plac
 ## Tasks / Subtasks
 
 - [x] **Task 1: Database schema migration — add `description` column to `groups` table** (AC: 1)
-  - [x] Create Supabase migration: `ALTER TABLE groups ADD COLUMN description text;`
+  - [x] Create Prisma migration: add description column to groups table
   - [x] Update `src/types/database.ts` — add `description` to `groups.Row`, `groups.Insert`, `groups.Update`
   - [x] Add RLS policies for `groups` table: authenticated users can INSERT; group admin can UPDATE; group members can SELECT
 
@@ -36,7 +36,7 @@ so that I can invite my classmates and organize our study activities in one plac
   - [x] Create `src/app/api/groups/route.ts` with `POST` handler
   - [x] Create shared Zod schema `src/app/api/groups/group-schema.ts` (`name` required, 1–100 chars; `description` optional, max 500 chars)
   - [x] In POST handler: validate body → generate `invite_code` via `nanoid(customAlphabet)` → insert `groups` row → insert `group_members` row (role: admin) → return `{ id, name, invite_code }`
-  - [x] Use server Supabase client (`createClient` from `@/lib/supabase/server`) with user session for auth context
+  - [x] Use NestJS API via `browser-client.ts` with Bearer token auth
   - [x] Handle uniqueness conflict on `invite_code` — retry with new code on constraint violation (max 3 retries)
   - [x] Return proper error responses: `400` for validation, `401` for unauthenticated, `500` for server error
 
@@ -60,13 +60,13 @@ so that I can invite my classmates and organize our study activities in one plac
   - [x] Use `Plus` icon from `lucide-react`
 
 - [x] **Task 6: Group home page — empty state** (AC: 3)
-  - [x] Update `src/app/(dashboard)/group/[groupId]/page.tsx` to fetch group data and member count from Supabase
+  - [x] Update `src/app/(dashboard)/group/[groupId]/page.tsx` to fetch group data and member count from NestJS API
   - [x] If group has no content and few members, show empty state card: "Your group is ready! Invite members to get started." with a prominent "Invite Members" CTA (`sq-btn-green`)
   - [x] "Invite Members" CTA links to `/group/[groupId]/members` (Story 2.2 will implement the invite flow; CTA is a placeholder link for now)
   - [x] Show group name as `<h1>` and description (if present) as `text-muted-foreground` paragraph
 
 - [x] **Task 7: Update group layout to show group name** (AC: 3)
-  - [x] In `src/app/(dashboard)/group/[groupId]/layout.tsx`, fetch group name from Supabase and display it above the tab nav
+  - [x] In `src/app/(dashboard)/group/[groupId]/layout.tsx`, fetch group name from NestJS API and display it above the tab nav
   - [x] Add loading skeleton while fetching
 
 - [x] **Task 8: Tests** (AC: 1, 2, 3)
@@ -95,18 +95,18 @@ so that I can invite my classmates and organize our study activities in one plac
 - API calls via `fetch("/api/...", { method: "POST", body: JSON.stringify(...) })`
 
 **Server component patterns:**
-- Settings page (`src/app/(dashboard)/settings/page.tsx`) shows the pattern: create server Supabase client → get user → redirect if no user → fetch data → pass to client form component
+- Settings page (`src/app/(dashboard)/settings/page.tsx`) shows the pattern: check auth via `getCurrentUser()` → redirect if no user → prefetch data via `apiClient` → pass to client form component
 - Group pages use `params: Promise<{ groupId: string }>` and `await params` (Next.js 16 async params)
 
 **API route patterns:**
 - Parse and validate with `schema.safeParse(await request.json())`
 - Return `NextResponse.json({ message, field }, { status })` for errors
-- Use server Supabase client for all DB operations
+- Use NestJS API endpoints for all DB operations
 
-**Supabase patterns:**
-- Browser: `createClient()` from `@/lib/supabase/client` (sync)
-- Server: `createClient()` from `@/lib/supabase/server` (async, uses cookies)
-- All DB operations go through Supabase client, no custom REST layer
+**API patterns:**
+- Browser: `apiRequest()` / `apiFetchRaw()` from `@/lib/api/browser-client` (Bearer token auth)
+- Server: `apiClient()` / `getCurrentUser()` from `@/lib/api/client` (cookie marker check)
+- All DB operations go through NestJS REST API via Prisma
 
 **UI patterns:**
 - Cards: `Card` / `CardHeader` / `CardTitle` / `CardDescription` / `CardContent` from shadcn
@@ -124,12 +124,12 @@ so that I can invite my classmates and organize our study activities in one plac
 **Invite Code Generation:**
 - Use `nanoid` package with `customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 12)` for 12-char URL-safe codes
 - Generate server-side only (in API route), never on client
-- Handle uniqueness constraint violation with retry (the `invite_code` column has UNIQUE constraint in Supabase)
+- Handle uniqueness constraint violation with retry (the `invite_code` column has UNIQUE constraint in PostgreSQL)
 
 **Database Schema Gap:**
 - The current `src/types/database.ts` is missing `description` field on `groups` table
 - Architecture doc specifies: `groups.description text` (nullable)
-- Must add this column via Supabase migration AND update the TypeScript types
+- Must add this column via Prisma migration AND update the TypeScript types
 - Also ensure `groups.Update` includes `description?: string | null` for Story 2.4
 
 **RLS Policies Required for `groups` table:**
@@ -144,7 +144,7 @@ so that I can invite my classmates and organize our study activities in one plac
 - UPDATE: only group admin can change roles
 - DELETE: only group admin can remove members (or self-removal)
 
-**Transaction safety:** The group creation (INSERT into `groups` + INSERT into `group_members`) should ideally be atomic. If Supabase doesn't support multi-table transactions from client, handle it in the API route: insert group first, if member insert fails, delete the group.
+**Transaction safety:** The group creation (INSERT into `groups` + INSERT into `group_members`) is handled by NestJS service layer using Prisma transactions for atomicity.
 
 ### File Structure Requirements
 
@@ -222,7 +222,7 @@ GPT-5.3 Codex
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `package.json`
 - `package-lock.json`
-- `supabase/migrations/20260315_add_groups_description_and_rls_policies.sql`
+- `packages/database/prisma/migrations/` (groups description + policies)
 - `src/types/database.ts`
 - `src/app/api/groups/group-schema.ts`
 - `src/app/api/groups/route.ts`

@@ -2,6 +2,11 @@
 
 Contributors can create exercises using templates and macros. The system performs a weekly derangement shuffle to assign exercises. Members complete assigned exercises, creators grade with line-level feedback, threaded debates resolve disagreements, and disputes are escalated and resolved by Editors.
 
+> **API Convention:** All client API calls use `browser-client.ts` calling NestJS directly
+> via `NEXT_PUBLIC_API_URL`. Paths below are NestJS endpoints (e.g. `POST /groups` means
+> `${NEXT_PUBLIC_API_URL}/groups`). Cron routes (`/api/cron/`*) are Vercel cron handlers
+> on Next.js.
+
 ### Story 6.1: Exercise Studio — Create Exercise with Templates
 
 As a Contributor,
@@ -12,12 +17,12 @@ So that I can quickly produce well-formatted group challenges or personal practi
 
 **Given** I navigate to `/studio/exercises`
 **When** the page loads
-**Then** my existing exercises are listed with title, type badge (Group Challenge / Personal Practice), week cycle, and status
+**Then** `GET /exercises?author=me` (JwtAuthGuard) returns my existing exercises with title, type badge (Group Challenge / Personal Practice), week cycle, and status
 **And** a "New Exercise" button is visible
 
 **Given** I click "New Exercise" and choose "Group Challenge" or "Personal Practice"
 **When** the exercise is created
-**Then** an `exercises` row is created with the appropriate `type` and current `week_cycle`
+**Then** `POST /exercises` creates an `exercises` row via Prisma with the appropriate `type` and current `week_cycle`
 **And** I am redirected to the exercise editor at `/studio/exercises/[exerciseId]`
 
 **Given** I am in the exercise editor and click a template button in the toolbar
@@ -32,7 +37,7 @@ So that I can quickly produce well-formatted group challenges or personal practi
 
 **Given** I finish editing and click "Save"
 **When** the auto-save or manual save runs
-**Then** `exercises.content` (Tiptap JSON) is persisted to Supabase
+**Then** `PATCH /exercises/:exerciseId` (ResourceOwnerGuard) persists `exercises.content` (Tiptap JSON) via Prisma
 **And** the exercise is listed with "Draft" status in my exercise list
 
 ---
@@ -47,9 +52,9 @@ So that I can create exercises quickly without manually retyping flashcard conte
 
 **Given** I am in the exercise editor and click "Flashcard Macro"
 **When** the macro picker opens
-**Then** I can select a flashcard deck or filter by unit/tags from my group's published decks
+**Then** `GET /groups/:groupId/flashcard-decks?status=published` (GroupMemberGuard) returns available decks I can select from or filter by unit/tags
 
-**Given** I select a deck and choose a question type: Word→Definition, Sound→Word, IPA→Word, or Word→Free-text Sentence
+**Given** I select a deck and choose a question type: Word to Definition, Sound to Word, IPA to Word, or Word to Free-text Sentence
 **When** I click "Generate"
 **Then** the system generates question blocks from the selected flashcard data (FR21)
 **And** the generated questions are inserted into the exercise editor as properly formatted question blocks
@@ -70,20 +75,20 @@ So that our group's mandatory reciprocal practice loop can run each week.
 **Acceptance Criteria:**
 
 **Given** it is a new week cycle (Monday 00:00 per cron schedule)
-**When** the weekly-start cron runs at `/api/cron/weekly-start`
-**Then** a new `week_cycle` is registered in the system
+**When** the weekly-start cron runs at `/api/cron/weekly-start` (Vercel Cron, verified by `CRON_SECRET`)
+**Then** the cron handler calls NestJS to register a new `week_cycle` in the system
 **And** all group members with `type = 'group_challenge'` exercises are expected to submit before the deadline
 
 **Given** I have a drafted Group Challenge exercise
 **When** I click "Submit Exercise"
-**Then** the exercise `type` is confirmed as `group_challenge` and it is linked to the current `week_cycle`
+**Then** `PATCH /exercises/:exerciseId/submit` (ResourceOwnerGuard) confirms the exercise `type` is `group_challenge` and links it to the current `week_cycle`
 **And** the exercise is marked as submitted and locked for editing
 **And** my submission appears in the group's exercise list as "Submitted"
 
 **Given** the weekly deadline passes (Saturday 23:59 per cron schedule)
 **When** the weekly-shuffle cron runs at `/api/cron/weekly-shuffle`
-**Then** the derangement algorithm (`lib/shuffle/derangement.ts`) runs on all submitted group challenge exercises for the week
-**And** `exercise_assignments` rows are created — each member receives exactly one exercise created by another member (no self-assignment)
+**Then** the cron handler calls NestJS which runs the derangement algorithm (`lib/shuffle/derangement.ts`) on all submitted group challenge exercises for the week
+**And** `exercise_assignments` rows are created via Prisma — each member receives exactly one exercise created by another member (no self-assignment)
 **And** no member receives their own exercise (derangement guarantee)
 
 **Given** only 1 member submitted an exercise (edge case)
@@ -106,17 +111,17 @@ So that I fulfil my weekly accountability obligation and contribute to my peer's
 
 **Given** I have been assigned an exercise via the derangement shuffle
 **When** I navigate to my group's exercises page
-**Then** my assigned exercise is prominently shown with creator name, title, and deadline
+**Then** `GET /exercises/assigned` (JwtAuthGuard) returns my assigned exercise prominently with creator name, title, and deadline
 **And** a "Start Exercise" button is visible
 
 **Given** I click "Start Exercise"
 **When** the exercise opens
-**Then** the questions render in the correct format (MCQ, Fill, Cloze, Dictation, IPA→Word) as authored by the creator
+**Then** the questions render in the correct format (MCQ, Fill, Cloze, Dictation, IPA to Word) as authored by the creator
 **And** if it is a Group Challenge, Focus Mode activates (tab-switch logging as per Story 5.4)
 
 **Given** I complete all questions and click "Submit Answers"
-**When** the submission executes
-**Then** an `exercise_submissions` row is created with my `submitter_id`, `exercise_id`, and `answers` JSONB
+**When** `POST /exercises/:exerciseId/submissions` (JwtAuthGuard) executes
+**Then** an `exercise_submissions` row is created via Prisma with my `submitter_id`, `exercise_id`, and `answers` JSONB
 **And** the creator receives a notification (Epic 7): "Your exercise has been submitted by [name]!"
 **And** the exercise is marked as "Submitted" in my assignment list
 
@@ -137,23 +142,23 @@ So that my peer receives meaningful, specific guidance on their performance.
 
 **Given** a peer has submitted answers to my exercise
 **When** I navigate to the review queue at `/review/exercise/[submissionId]`
-**Then** each question is shown with the peer's answer alongside the correct answer
+**Then** `GET /exercise-submissions/:submissionId` (ResourceOwnerGuard for creator) returns each question with the peer's answer alongside the correct answer
 **And** MCQ questions show an "Auto-graded" tag with the result already computed
-**And** Fill-in-the-blank and Free-text questions show ✓ Correct and ✗ Incorrect buttons for manual grading
+**And** Fill-in-the-blank and Free-text questions show Correct and Incorrect buttons for manual grading
 
-**Given** I click ✓ Correct or ✗ Incorrect on a manual-grade question
-**When** the action is recorded
-**Then** a `peer_review_comments` row is created with `question_ref`, `decision` (correct/incorrect), and optional `body` text
+**Given** I click Correct or Incorrect on a manual-grade question
+**When** `POST /peer-reviews/:reviewId/comments` (ResourceOwnerGuard) executes
+**Then** a `peer_review_comments` row is created via Prisma with `question_ref`, `decision` (correct/incorrect), and optional `body` text
 **And** the question is marked with a green or red indicator
 
 **Given** I have graded all questions and click "Submit Grade"
-**When** the action executes
-**Then** the `peer_reviews` row is updated with `status = 'graded'` and `overall_score`
+**When** `PATCH /peer-reviews/:reviewId/submit` (ResourceOwnerGuard) executes
+**Then** the `peer_reviews` row is updated via Prisma with `status = 'graded'` and `overall_score`
 **And** the submitter receives a notification (Epic 7): "Your exercise has been graded!"
 
 **Given** I graded an exercise and want to revise my decision after reflection
 **When** I return to the review and update a grade decision
-**Then** the `peer_review_comments` decision is updated
+**Then** the `peer_review_comments` decision is updated via NestJS API
 **And** `peer_reviews.overall_score` is recalculated (FR39)
 
 ---
@@ -171,28 +176,28 @@ So that incorrect exercise questions can be fairly adjudicated.
 **Then** each graded question shows a "Dispute this question" flag button (FR40a)
 
 **Given** I click "Dispute this question" and enter a reason
-**When** I submit the dispute
-**Then** an `exercise_disputes` row is created with `status = 'open'`, `reporter_id`, `question_ref`, and `reason`
+**When** `POST /exercise-disputes` (JwtAuthGuard) executes
+**Then** an `exercise_disputes` row is created via Prisma with `status = 'open'`, `reporter_id`, `question_ref`, and `reason`
 **And** the creator receives a notification: "A dispute has been filed on your exercise."
 
 **Given** a dispute is open on a question
 **When** the creator and I view the submission
 **Then** a threaded debate panel is shown below the disputed question (FR38)
-**And** both parties can post replies — `peer_review_comments` rows with `parent_id` chaining
+**And** both parties can post replies — `peer_review_comments` rows with `parent_id` chaining via NestJS API
 
 **Given** both parties agree on an outcome in the debate thread
-**When** the creator updates their grade decision
+**When** the creator updates their grade decision via NestJS API
 **Then** `exercise_disputes.status` is updated to `'resolved'`
 **And** weekly error counts are updated accordingly (FR40c/FR40d)
 
 **Given** the debate remains unresolved and I click "Escalate to Editor"
-**When** the escalation executes
+**When** `PATCH /exercise-disputes/:disputeId/escalate` executes
 **Then** `exercise_disputes` is flagged for editor review
 **And** an Editor in the group receives a notification: "A dispute requires your arbitration."
 
 **Given** the weekly exercise period ends (Sunday 23:59 cron)
 **When** the weekly-close cron runs at `/api/cron/weekly-close`
-**Then** all `exercises` with the closing `week_cycle` have `is_public` set to `true` (FR40e)
+**Then** the cron handler calls NestJS which updates all `exercises` with the closing `week_cycle` to `is_public = true` via Prisma (FR40e)
 **And** these exercises appear in the group's public exercise archive for additional unscored practice
 
 ---
@@ -207,25 +212,24 @@ So that dispute outcomes are finalized fairly and weekly error counts are applie
 
 **Given** an `exercise_disputes` record is marked for editor review
 **When** I navigate to `/review/exercise/[submissionId]`
-**Then** I can view the disputed question, the reporter reason, and the full debate thread
+**Then** `GET /exercise-disputes/:disputeId` (GroupEditorGuard) returns the disputed question, the reporter reason, and the full debate thread
 
 **Given** I select "Rule: Creator is wrong"
-**When** I submit the arbitration decision
-**Then** `exercise_disputes.status` is updated to `'resolved'`
+**When** `PATCH /exercise-disputes/:disputeId/arbitrate` (GroupEditorGuard) executes
+**Then** `exercise_disputes.status` is updated to `'resolved'` via Prisma
 **And** `exercise_disputes.arbitration_decision` is set to `'creator_wrong'`
-**And** creator weekly error count is incremented according to FR40c
+**And** NestJS service increments creator weekly error count via Prisma (FR40c)
 **And** both creator and taker receive a dispute resolved notification
 
 **Given** I select "Rule: Taker is wrong"
-**When** I submit the arbitration decision
-**Then** `exercise_disputes.status` is updated to `'resolved'`
+**When** the arbitration executes
+**Then** `exercise_disputes.status` is updated to `'resolved'` via Prisma
 **And** `exercise_disputes.arbitration_decision` is set to `'taker_wrong'`
-**And** taker weekly error count is incremented according to FR40d
+**And** NestJS service increments taker weekly error count via Prisma (FR40d)
 **And** both creator and taker receive a dispute resolved notification
 
 **Given** I am not an Editor in the group
 **When** I attempt to submit an arbitration decision
-**Then** access is denied by role-based authorization
+**Then** access is denied by NestJS GroupEditorGuard
 
 ---
-

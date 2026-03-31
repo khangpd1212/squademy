@@ -1,6 +1,11 @@
 # Epic 8: Gamification & Engagement Engine
 
-The system tracks daily learning streaks, calculates and displays a live leaderboard updated in real-time, awards contributor badges for milestone achievements, and renders a GitHub-style Activity Heatmap on user profiles to visualize learning consistency.
+The system tracks daily learning streaks, calculates and displays a live leaderboard updated via React Query polling (refetchInterval: 30s), awards contributor badges for milestone achievements, and renders a GitHub-style Activity Heatmap on user profiles to visualize learning consistency.
+
+> **API Convention:** All client API calls use `browser-client.ts` calling NestJS directly
+> via `NEXT_PUBLIC_API_URL`. Paths below are NestJS endpoints (e.g. `POST /groups` means
+> `${NEXT_PUBLIC_API_URL}/groups`). Cron routes (`/api/cron/`*) are Vercel cron handlers
+> on Next.js.
 
 ### Story 8.1: Daily Learning Streaks
 
@@ -11,28 +16,28 @@ So that I am motivated to study every day and build a consistent habit.
 **Acceptance Criteria:**
 
 **Given** I complete at least one flashcard session or exercise submission in a day
-**When** the activity is recorded
+**When** NestJS records the activity via Prisma
 **Then** `streaks.last_activity_at` is updated and `streaks.current_streak` is incremented by 1 if the previous activity was yesterday
 **And** if the previous activity was today already, the streak count is not incremented again (idempotent)
 
 **Given** I miss a day (no activity recorded)
-**When** the next activity is recorded
+**When** the next activity is recorded by NestJS
 **Then** `streaks.current_streak` resets to 1
 **And** `streaks.longest_streak` is preserved if the reset streak was less than the longest
 
 **Given** I navigate to my profile or the group leaderboard
 **When** the page loads
-**Then** my current streak is displayed as a 🔥 flame icon with the streak count in amber/orange color
+**Then** my current streak is displayed as a flame icon with the streak count in amber/orange color
 **And** if my current streak equals my longest streak, a subtle "Personal best!" indicator is shown
 
 **Given** I earn a 7-day streak
-**When** the streak milestone is reached
-**Then** a `badges` row is created with `badge_type = 'streak_7'`
-**And** a notification is created: "🎉 You've earned the 7-Day Streak badge!"
+**When** NestJS StreaksService detects the milestone
+**Then** a `badges` row is created via Prisma with `badge_type = 'streak_7'`
+**And** a notification is created via NestJS NotificationsService: "You've earned the 7-Day Streak badge!"
 
 **Given** I earn a 30-day streak
 **When** the milestone is reached
-**Then** a `badges` row is created with `badge_type = 'streak_30'`
+**Then** a `badges` row is created via Prisma with `badge_type = 'streak_30'`
 
 ---
 
@@ -46,18 +51,17 @@ So that friendly competition motivates me to stay engaged.
 
 **Given** I navigate to `/group/[groupId]/leaderboard`
 **When** the page loads
-**Then** all group members are listed ranked by `leaderboard.total_score` descending
+**Then** `GET /groups/:groupId/leaderboard` (GroupMemberGuard) returns all group members ranked by `leaderboard.total_score` descending
 **And** each row shows: rank position, avatar, display name, total score, weekly score, and streak badge
 
 **Given** a group member completes an activity that earns points (exercise submission, peer review, lesson approved, streak day)
-**When** the `leaderboard` table is updated on the server
-**Then** Supabase Realtime fires a `postgres_changes UPDATE` event on the `leaderboard:group:[id]` channel
-**And** React Query invalidates the leaderboard query
-**And** the leaderboard re-renders with the new scores within 2 seconds (NFR3)
+**When** NestJS LeaderboardService updates the `leaderboard` table via Prisma
+**Then** on the next React Query polling cycle (refetchInterval: 30s), `GET /groups/:groupId/leaderboard` returns updated scores
+**And** the leaderboard re-renders with the new scores (NFR3: within 30s polling interval)
 
 **Given** the end-of-week cron runs (`/api/cron/weekly-close`)
-**When** leaderboard scores are recalculated
-**Then** score components are applied: exercise submission +10pts, peer review completed +15pts, lesson approved +25pts, streak day +5pts, dispute error incurred -5pts
+**When** the cron handler calls NestJS LeaderboardService to recalculate scores
+**Then** score components are applied via Prisma: exercise submission +10pts, peer review completed +15pts, lesson approved +25pts, streak day +5pts, dispute error incurred -5pts
 **And** `leaderboard.week_score` resets to 0 for the new week
 **And** `leaderboard.total_score` is updated cumulatively
 
@@ -76,13 +80,13 @@ So that my efforts are recognized and visible to my group.
 **Acceptance Criteria:**
 
 **Given** my first lesson submission is approved by an Editor
-**When** `lessons.status` changes to `'published'` for my first ever lesson
-**Then** a `badges` row is created with `badge_type = 'first_contribution'`
-**And** a notification is created: "🏆 You've earned the First Contribution badge!"
+**When** NestJS LessonsService processes the approval
+**Then** NestJS BadgesService creates a `badges` row via Prisma with `badge_type = 'first_contribution'`
+**And** a notification is created: "You've earned the First Contribution badge!"
 
 **Given** an Editor approves any of my lesson submissions
-**When** the approval action executes
-**Then** a `badges` row is created with `badge_type = 'editor_approved'` for this specific lesson approval
+**When** the approval action executes in NestJS
+**Then** a `badges` row is created via Prisma with `badge_type = 'editor_approved'` for this specific lesson approval
 
 **Given** I navigate to my profile or the leaderboard
 **When** the page loads
@@ -90,7 +94,7 @@ So that my efforts are recognized and visible to my group.
 
 **Given** I have earned the same badge type multiple times (e.g. `editor_approved` for multiple lessons)
 **When** my profile displays badges
-**Then** the badge is shown once with a count indicator (e.g. "Editor Approved ×3") rather than duplicated
+**Then** the badge is shown once with a count indicator (e.g. "Editor Approved x3") rather than duplicated
 
 ---
 
@@ -104,11 +108,12 @@ So that I can visualize my consistency and stay motivated to fill in gaps.
 
 **Given** I navigate to my profile or settings page
 **When** the page loads
-**Then** a heatmap grid showing the past 52 weeks (12 months) is displayed
+**Then** `GET /users/activity-heatmap` (JwtAuthGuard) returns my daily activity data for the past 52 weeks
+**And** a heatmap grid showing the past 52 weeks (12 months) is displayed
 **And** each cell represents one day and is colored by activity intensity:
   - 0 actions: `zinc-200` (light) / `zinc-800` (dark)
-  - 1–2 actions: `emerald-200` / `emerald-900`
-  - 3–5 actions: `emerald-400` / `emerald-700`
+  - 1-2 actions: `emerald-200` / `emerald-900`
+  - 3-5 actions: `emerald-400` / `emerald-700`
   - 6+ actions: `emerald-600` / `emerald-500`
 
 **Given** I hover over a specific day cell on desktop
@@ -116,8 +121,8 @@ So that I can visualize my consistency and stay motivated to fill in gaps.
 **Then** it shows: date, flashcards reviewed, exercises completed, reviews submitted, lessons read (e.g., "Mar 15: 4 flashcards, 1 exercise, 1 review")
 
 **Given** I complete a tracked action (flashcard grade, exercise submit, review submit, lesson read)
-**When** the action is recorded
-**Then** the corresponding counter in `daily_activity` is incremented via UPSERT on `(user_id, group_id, activity_date)`
+**When** the action is recorded by NestJS
+**Then** NestJS ActivityService increments the corresponding counter in `daily_activity` via Prisma UPSERT on `(user_id, group_id, activity_date)`
 **And** the heatmap reflects the updated count on next page load or via React Query invalidation
 
 **Given** I am on a mobile device (< 768px)
@@ -130,4 +135,3 @@ So that I can visualize my consistency and stay motivated to fill in gaps.
 **Then** below the grid, my "Current streak: X days" and "Longest streak: Y days" are displayed in amber/orange styling
 
 ---
-
