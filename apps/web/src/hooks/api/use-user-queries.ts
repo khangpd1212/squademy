@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/api-error";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
-import { ProfileFormValues } from "@squademy/shared";
-
-export type ProfileUpdatePayload = Omit<ProfileFormValues, "email">;
+import {
+  type ProfileApiValues,
+  type ProfileEditValues,
+} from "@squademy/shared";
 
 export type SearchResult = {
   id: string;
@@ -17,9 +18,9 @@ export type SearchResult = {
 
 export function useProfile() {
   return useQuery({
-    queryKey: queryKeys.users.profile(),
+    queryKey: queryKeys.users.profile,
     queryFn: async () => {
-      const result = await apiRequest<ProfileFormValues>("/users/me");
+      const result = await apiRequest<ProfileApiValues>("/users/me");
       if (result.message) {
         throw new ApiError({
           message: result.message,
@@ -55,10 +56,17 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: ProfileUpdatePayload) => {
-      const result = await apiRequest<ProfileFormValues>("/users/me", {
+    mutationFn: async (formValues: ProfileEditValues) => {
+      const result = await apiRequest<ProfileApiValues>("/users/me", {
         method: "PATCH",
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          displayName: formValues.displayName,
+          fullName: formValues.fullName,
+          avatarUrl: formValues.avatarUrl ?? null,
+          school: formValues.school,
+          location: formValues.location,
+          age: formValues.age,
+        }),
       });
 
       if (result.message) {
@@ -71,25 +79,33 @@ export function useUpdateProfile() {
 
       return result.data;
     },
-    onMutate: async (newProfile) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.users.profile() });
-      const previous = queryClient.getQueryData<ProfileFormValues>(queryKeys.users.profile());
+    onMutate: async (formValues) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.users.profile });
+      const previous = queryClient.getQueryData<ProfileApiValues>(queryKeys.users.profile);
       if (previous) {
-        queryClient.setQueryData<ProfileFormValues>(
-          queryKeys.users.profile(),
-          { ...previous, ...newProfile },
+        queryClient.setQueryData<ProfileApiValues>(
+          queryKeys.users.profile,
+          { 
+            ...previous, 
+            displayName: formValues.displayName,
+            fullName: formValues.fullName,
+            avatarUrl: formValues.avatarUrl ?? null,
+            school: formValues.school,
+            location: formValues.location,
+            age: formValues.age,
+          },
         );
       }
       return { previous };
     },
-    onError: (_err, _newProfile, context) => {
+    onError: (_err, _formValues, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(queryKeys.users.profile(), context.previous);
+        queryClient.setQueryData(queryKeys.users.profile, context.previous);
       }
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.users.profile(),
+        queryKey: queryKeys.users.profile,
       });
     },
   });

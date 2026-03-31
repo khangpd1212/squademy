@@ -1,6 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { DashboardView } from "./dashboard-view";
 
+const searchParamsMock = new URLSearchParams();
+
+jest.mock("next/navigation", () => ({
+  useSearchParams: () => searchParamsMock,
+}));
+
 jest.mock("@/hooks/api/use-group-queries", () => ({
   useMyGroups: jest.fn(),
 }));
@@ -33,6 +39,7 @@ describe("DashboardView", () => {
   beforeEach(() => {
     useMyGroups.mockReset();
     useInvitations.mockReset();
+    searchParamsMock.delete("groupDeleted");
   });
 
   it("renders loading skeleton while fetching", () => {
@@ -136,5 +143,23 @@ describe("DashboardView", () => {
     render(<DashboardView />);
 
     expect(screen.getByText("Pending Invitations Section")).toBeInTheDocument();
+  });
+
+  it("renders inline confirmation when redirected after group deletion", () => {
+    searchParamsMock.set("groupDeleted", "1");
+    useMyGroups.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+    useInvitations.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    render(<DashboardView />);
+
+    expect(screen.getByText("Group deleted.")).toBeInTheDocument();
   });
 });

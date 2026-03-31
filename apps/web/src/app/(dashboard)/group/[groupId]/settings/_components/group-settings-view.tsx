@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGroup } from "@/hooks/api/use-group-queries";
 import { useCurrentUser } from "@/hooks/api/use-auth-queries";
+import { DeleteGroupSection } from "./delete-group-section";
 import { GroupSettingsForm } from "./group-settings-form";
 
 function normalizeTime(value: string | null) {
@@ -42,7 +43,7 @@ export function GroupSettingsView({ groupId }: { groupId: string }) {
             groupId={groupId}
             initialValues={{
               name: group.name,
-              description: group.description ?? "",
+              description: group.description,
               exerciseDeadlineDay: group.exerciseDeadlineDay,
               exerciseDeadlineTime: normalizeTime(group.exerciseDeadlineTime),
             }}
@@ -50,6 +51,9 @@ export function GroupSettingsView({ groupId }: { groupId: string }) {
           />
         </CardContent>
       </Card>
+      {isAdmin ? (
+        <DeleteGroupSection groupId={groupId} groupName={group.name} />
+      ) : null}
     </div>
   );
 }

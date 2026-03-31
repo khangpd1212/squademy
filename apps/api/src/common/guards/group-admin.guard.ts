@@ -27,7 +27,7 @@ export class GroupAdminGuard implements CanActivate {
       where: { groupId_userId: { groupId, userId } },
     });
 
-    if (!membership || membership.role !== GROUP_ROLES.ADMIN) {
+    if (!membership || membership.isDeleted || membership.role !== GROUP_ROLES.ADMIN) {
       throw new ForbiddenException({
         code: ErrorCode.FORBIDDEN_NOT_ADMIN,
       });

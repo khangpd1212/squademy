@@ -5,7 +5,7 @@ export const queryKeys = {
   users: {
     search: (query: string, groupId: string) =>
       ["users", "search", query, groupId] as const,
-    profile: () => ["users", "profile"] as const,
+    profile: ["users", "profile"] as const,
   },
   groups: {
     myGroups: ["groups", "my"] as const,

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -57,6 +58,13 @@ export class GroupsController {
   ) {
     const group = await this.groupsService.join(user.userId, dto.inviteCode);
     return { ok: true, data: group };
+  }
+
+  @Delete(":id")
+  @UseGuards(GroupAdminGuard)
+  async delete(@Param("id") id: string) {
+    await this.groupsService.deleteGroup(id);
+    return { ok: true };
   }
 
   @Post(":id/invite-link")

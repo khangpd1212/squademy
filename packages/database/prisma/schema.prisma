@@ -38,6 +38,7 @@ model Group {
   inviteCode           String   @unique @map("invite_code")
   exerciseDeadlineDay  Int?     @map("exercise_deadline_day")
   exerciseDeadlineTime String?  @map("exercise_deadline_time")
+  isDeleted            Boolean  @default(false) @map("is_deleted")
   createdBy            String   @map("created_by")
   createdAt            DateTime @default(now()) @map("created_at")
 
@@ -51,10 +52,11 @@ model Group {
 }
 
 model GroupMember {
-  groupId  String   @map("group_id")
-  userId   String   @map("user_id")
-  role     String   @default("member")
-  joinedAt DateTime @default(now()) @map("joined_at")
+  groupId   String   @map("group_id")
+  userId    String   @map("user_id")
+  role      String   @default("member")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+  isDeleted Boolean  @default(false) @map("is_deleted")
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -87,6 +89,7 @@ model Lesson {
   content        Json?
   status         String   @default("draft")
   editorFeedback String?  @map("editor_feedback")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -104,6 +107,7 @@ model Exercise {
   type             String
   payload          Json
   isGroupChallenge Boolean   @default(false) @map("is_group_challenge")
+  isDeleted        Boolean   @default(false) @map("is_deleted")
   scheduledAt      DateTime? @map("scheduled_at")
   createdAt        DateTime  @default(now()) @map("created_at")
 

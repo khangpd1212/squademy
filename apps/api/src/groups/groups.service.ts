@@ -31,13 +31,19 @@ export class GroupsService {
 
   async findMyGroups(userId: string) {
     const memberships = await this.prisma.groupMember.findMany({
-      where: { userId },
+      where: {
+        userId,
+        isDeleted: false,
+        group: {
+          isDeleted: false,
+        },
+      },
       include: {
         group: {
           include: {
             _count: {
               select: {
-                members: true,
+                members: { where: { isDeleted: false } },
               },
             },
           },
@@ -91,10 +97,14 @@ export class GroupsService {
   }
 
   async findById(id: string) {
-    const group = await this.prisma.group.findUnique({
-      where: { id },
+    const group = await this.prisma.group.findFirst({
+      where: {
+        id,
+        isDeleted: false,
+      },
       include: {
         members: {
+          where: { isDeleted: false },
           include: {
             user: {
               select: {
@@ -119,6 +129,14 @@ export class GroupsService {
   }
 
   async update(id: string, dto: UpdateGroupDto) {
+    const group = await this.prisma.group.findFirst({
+      where: { id, isDeleted: false },
+    });
+
+    if (!group) {
+      throw new NotFoundException({ code: ErrorCode.GROUP_NOT_FOUND });
+    }
+
     return this.prisma.group.update({
       where: { id },
       data: dto,
@@ -126,8 +144,11 @@ export class GroupsService {
   }
 
   async join(userId: string, inviteCode: string) {
-    const group = await this.prisma.group.findUnique({
-      where: { inviteCode },
+    const group = await this.prisma.group.findFirst({
+      where: {
+        inviteCode,
+        isDeleted: false,
+      },
     });
 
     if (!group) {
@@ -141,9 +162,18 @@ export class GroupsService {
     });
 
     if (existingMember) {
-      throw new BadRequestException({
-        code: ErrorCode.GROUP_ALREADY_MEMBER,
+      if (!existingMember.isDeleted) {
+        throw new BadRequestException({
+          code: ErrorCode.GROUP_ALREADY_MEMBER,
+        });
+      }
+
+      await this.prisma.groupMember.update({
+        where: { groupId_userId: { groupId: group.id, userId } },
+        data: { isDeleted: false },
       });
+
+      return group;
     }
 
     await this.prisma.groupMember.create({
@@ -157,7 +187,60 @@ export class GroupsService {
     return group;
   }
 
+  async deleteGroup(id: string) {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const updatedGroups = await tx.group.updateMany({
+          where: {
+            id,
+            isDeleted: false,
+          },
+          data: {
+            isDeleted: true,
+          },
+        });
+
+        if (updatedGroups.count === 0) {
+          throw new NotFoundException({ code: ErrorCode.GROUP_NOT_FOUND });
+        }
+
+        await tx.lesson.updateMany({
+          where: { groupId: id },
+          data: { isDeleted: true },
+        });
+
+        await tx.exercise.updateMany({
+          where: { groupId: id },
+          data: { isDeleted: true },
+        });
+
+        await tx.groupInvitation.deleteMany({
+          where: { groupId: id },
+        });
+
+        await tx.groupMember.updateMany({
+          where: { groupId: id, isDeleted: false },
+          data: { isDeleted: true },
+        });
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new BadRequestException({ code: ErrorCode.GROUP_DELETE_FAILED });
+    }
+  }
+
   async regenerateInviteCode(groupId: string) {
+    const group = await this.prisma.group.findFirst({
+      where: { id: groupId, isDeleted: false },
+    });
+
+    if (!group) {
+      throw new NotFoundException({ code: ErrorCode.GROUP_NOT_FOUND });
+    }
+
     for (let attempt = 0; attempt < MAX_INVITE_CODE_RETRIES; attempt++) {
       try {
         return await this.prisma.group.update({

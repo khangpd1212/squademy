@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInvitations } from "@/hooks/api/use-invitation-queries";
@@ -22,6 +23,7 @@ function DashboardSkeleton() {
 }
 
 export function DashboardView() {
+  const searchParams = useSearchParams();
   const {
     data: groups,
     isLoading: groupsLoading,
@@ -57,10 +59,17 @@ export function DashboardView() {
 
   const hasInvitations = Boolean(invitations?.length);
   const hasGroups = Boolean(groups?.length);
+  const showGroupDeletedMessage = searchParams.get("groupDeleted") === "1";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-4">
       <h1 className="text-2xl font-bold">My Groups</h1>
+
+      {showGroupDeletedMessage ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+          Group deleted.
+        </div>
+      ) : null}
 
       {invitationsError ? (
         <p className="text-sm text-destructive">Could not load invitations.</p>

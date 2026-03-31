@@ -35,12 +35,12 @@ export type MyGroupItem = {
 
 type CreateGroupInput = {
   name: string;
-  description?: string;
+  description: string | null;
 };
 
 type UpdateGroupPayload = {
   name: string;
-  description: string;
+  description: string | null;
   exerciseDeadlineDay: number | null;
   exerciseDeadlineTime: string | null;
 };
@@ -110,6 +110,7 @@ export function useUpdateGroup(groupId: string) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
     },
   });
 }
@@ -151,6 +152,28 @@ export function useMyGroups() {
         });
       }
       return result.data;
+    },
+  });
+}
+
+export function useDeleteGroup(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await apiRequest(`/groups/${groupId}`, {
+        method: "DELETE",
+      });
+      if (result.message) {
+        throw new ApiError({
+          message: result.message ?? "Could not delete group.",
+          code: result.code,
+          status: result.status,
+        });
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.myGroups });
     },
   });
 }

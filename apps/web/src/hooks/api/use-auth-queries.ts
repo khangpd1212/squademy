@@ -115,7 +115,7 @@ export function useLogout() {
       clearAuthTokens();
     },
     onSuccess: async () => {
-      await queryClient.removeQueries({ queryKey: queryKeys.auth.me });
+      queryClient.clear();
     },
   });
 }

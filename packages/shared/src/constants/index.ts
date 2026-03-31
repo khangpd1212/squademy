@@ -1,5 +1,15 @@
 export { VALIDATION } from "./validation";
 
+export const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
 export const ErrorCode = {
   AUTH_INVALID_CREDENTIALS: "AUTH_INVALID_CREDENTIALS",
   AUTH_PRIVACY_NOT_ACCEPTED: "AUTH_PRIVACY_NOT_ACCEPTED",
@@ -23,6 +33,7 @@ export const ErrorCode = {
   FORBIDDEN_NOT_ADMIN: "FORBIDDEN_NOT_ADMIN",
   FORBIDDEN_MISSING_CONTEXT: "FORBIDDEN_MISSING_CONTEXT",
   USER_NOT_FOUND: "USER_NOT_FOUND",
+  GROUP_DELETE_FAILED: "GROUP_DELETE_FAILED",
 } as const;
 
 export const GROUP_ROLES = {

@@ -14,7 +14,6 @@ describe("MembersService", () => {
       findMany: jest.Mock;
       findUnique: jest.Mock;
       count: jest.Mock;
-      delete: jest.Mock;
       update: jest.Mock;
     };
   };
@@ -25,7 +24,6 @@ describe("MembersService", () => {
         findMany: jest.fn(),
         findUnique: jest.fn(),
         count: jest.fn(),
-        delete: jest.fn(),
         update: jest.fn(),
       },
     };
@@ -44,7 +42,7 @@ describe("MembersService", () => {
 
       expect(result).toEqual(mockMembers);
       expect(prisma.groupMember.findMany).toHaveBeenCalledWith({
-        where: { groupId: "g1" },
+        where: { groupId: "g1", isDeleted: false },
         include: {
           user: { select: { id: true, displayName: true, email: true, avatarUrl: true } },
         },
@@ -82,7 +80,7 @@ describe("MembersService", () => {
 
       await expect(service.changeRole("g1", "u1", "member")).resolves.toBeDefined();
       expect(prisma.groupMember.count).toHaveBeenCalledWith({
-        where: { groupId: "g1", role: "admin" },
+        where: { groupId: "g1", role: "admin", isDeleted: false },
       });
     });
 
@@ -128,14 +126,17 @@ describe("MembersService", () => {
   describe("remove", () => {
     it("allows admin to remove another member", async () => {
       prisma.groupMember.findUnique
-        .mockResolvedValueOnce({ userId: "u2", role: "member", groupId: "g1" })
-        .mockResolvedValueOnce({ userId: "u1", role: "admin", groupId: "g1" });
-      prisma.groupMember.delete.mockResolvedValue({});
+        .mockResolvedValueOnce({ userId: "u2", role: "member", groupId: "g1", isDeleted: false })
+        .mockResolvedValueOnce({ userId: "u1", role: "admin", groupId: "g1", isDeleted: false });
+      prisma.groupMember.update.mockResolvedValue({});
 
       const result = await service.remove("g1", "u2", "u1");
 
       expect(result).toEqual({ removed: true });
-      expect(prisma.groupMember.delete).toHaveBeenCalled();
+      expect(prisma.groupMember.update).toHaveBeenCalledWith({
+        where: { groupId_userId: { groupId: "g1", userId: "u2" } },
+        data: { isDeleted: true },
+      });
     });
 
     it("allows self-removal without admin check", async () => {
@@ -143,8 +144,9 @@ describe("MembersService", () => {
         userId: "u2",
         role: "member",
         groupId: "g1",
+        isDeleted: false,
       });
-      prisma.groupMember.delete.mockResolvedValue({});
+      prisma.groupMember.update.mockResolvedValue({});
 
       const result = await service.remove("g1", "u2", "u2");
 
@@ -154,8 +156,8 @@ describe("MembersService", () => {
 
     it("throws MEMBER_ADMIN_REQUIRED when non-admin removes another", async () => {
       prisma.groupMember.findUnique
-        .mockResolvedValueOnce({ userId: "u2", role: "member", groupId: "g1" })
-        .mockResolvedValueOnce({ userId: "u3", role: "member", groupId: "g1" });
+        .mockResolvedValueOnce({ userId: "u2", role: "member", groupId: "g1", isDeleted: false })
+        .mockResolvedValueOnce({ userId: "u3", role: "member", groupId: "g1", isDeleted: false });
 
       await expect(service.remove("g1", "u2", "u3")).rejects.toThrow(
         ForbiddenException,
@@ -164,8 +166,8 @@ describe("MembersService", () => {
 
     it("throws MEMBER_SOLE_ADMIN_REMOVE when removing the only admin", async () => {
       prisma.groupMember.findUnique
-        .mockResolvedValueOnce({ userId: "u1", role: "admin", groupId: "g1" })
-        .mockResolvedValueOnce({ userId: "u99", role: "admin", groupId: "g1" });
+        .mockResolvedValueOnce({ userId: "u1", role: "admin", groupId: "g1", isDeleted: false })
+        .mockResolvedValueOnce({ userId: "u99", role: "admin", groupId: "g1", isDeleted: false });
       prisma.groupMember.count.mockResolvedValue(1);
 
       await expect(service.remove("g1", "u1", "u99")).rejects.toThrow(
@@ -181,9 +183,20 @@ describe("MembersService", () => {
       );
     });
 
+    it("throws MEMBER_NOT_FOUND when target membership is soft-deleted", async () => {
+      prisma.groupMember.findUnique.mockResolvedValue({
+        userId: "u2",
+        role: "member",
+        groupId: "g1",
+        isDeleted: true,
+      });
+
+      await expect(service.remove("g1", "u2", "u1")).rejects.toThrow(NotFoundException);
+    });
+
     it("throws MEMBER_ADMIN_REQUIRED when requester is not a group member", async () => {
       prisma.groupMember.findUnique
-        .mockResolvedValueOnce({ userId: "u2", role: "member", groupId: "g1" })
+        .mockResolvedValueOnce({ userId: "u2", role: "member", groupId: "g1", isDeleted: false })
         .mockResolvedValueOnce(null);
 
       await expect(service.remove("g1", "u2", "outsider")).rejects.toThrow(

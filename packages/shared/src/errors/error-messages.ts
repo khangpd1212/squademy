@@ -23,6 +23,7 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.FORBIDDEN_NOT_ADMIN]: "Admin access required.",
   [ErrorCode.FORBIDDEN_MISSING_CONTEXT]: "Missing context.",
   [ErrorCode.USER_NOT_FOUND]: "User not found.",
+  [ErrorCode.GROUP_DELETE_FAILED]: "Failed to delete group. Please try again.",
 };
 
 export function getErrorMessage(code: string): string {

@@ -8,18 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DAY_NAMES } from "@squademy/shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGroup } from "@/hooks/api/use-group-queries";
-
-const DAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
 
 export function GroupOverview({ groupId }: { groupId: string }) {
   const { data: group, isLoading } = useGroup(groupId);

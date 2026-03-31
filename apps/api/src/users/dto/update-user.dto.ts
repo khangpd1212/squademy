@@ -9,32 +9,36 @@ import {
   MinLength,
   ValidateIf,
 } from "class-validator";
-import { VALIDATION } from "@squademy/shared";
+import { ProfileEditValues, VALIDATION } from "@squademy/shared";
 
-export class UpdateUserDto {
+export class UpdateUserDto implements ProfileEditValues {
   @IsString()
   @MinLength(VALIDATION.DISPLAY_NAME_MIN)
   @MaxLength(VALIDATION.DISPLAY_NAME_MAX)
   displayName: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.fullName !== null)
   @IsString()
   @MaxLength(VALIDATION.PROFILE_FIELD_MAX)
-  fullName?: string;
+  fullName: string | null;
 
   @IsOptional()
+  @ValidateIf((o) => o.avatarUrl !== null)
   @IsUrl()
-  avatarUrl?: string | null;
+  avatarUrl: string | null;
 
   @IsOptional()
+  @ValidateIf((o) => o.school !== null)
   @IsString()
   @MaxLength(VALIDATION.PROFILE_FIELD_MAX)
-  school?: string;
+  school: string | null;
 
   @IsOptional()
+  @ValidateIf((o) => o.location !== null)
   @IsString()
   @MaxLength(VALIDATION.PROFILE_FIELD_MAX)
-  location?: string;
+  location: string | null;
 
   @ValidateIf((o) => o.age !== null)
   @IsInt()

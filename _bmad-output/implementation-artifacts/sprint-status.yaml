@@ -55,9 +55,9 @@ development_status:
   2-1-create-configure-a-group: done
   2-2-invite-members-link-direct-invite: done
   2-3-member-role-management: done
-  2-4-group-settings-exercise-scheduling: in-progress
+  2-4-group-settings-exercise-scheduling: done
   2-5-dashboard-my-groups-list: done
-  2-6-delete-group: ready-for-dev
+  2-6-delete-group: done
   epic-2-retrospective: optional
 
   # ── Epic 3: Content Studio — Lesson & Flashcard Creation ──

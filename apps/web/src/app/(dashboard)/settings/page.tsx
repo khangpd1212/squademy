@@ -12,9 +12,14 @@ import { ProfileForm } from "./_components/profile-form";
 
 export default function SettingsPage() {
   const { data: profile, isLoading } = useProfile();
-  const { displayName, email = "", age = null, ...restProfile } = profile ?? {};
-  const displayNameValue = displayName ?? email?.split("@")[0] ?? "";
-  
+
+  const initialProfile = profile
+    ? {
+        ...profile,
+        displayName: profile.displayName || profile.email.split("@")[0],
+      }
+    : undefined;
+
   return (
     <div className="max-w-3xl space-y-4">
       <Card>
@@ -27,15 +32,8 @@ export default function SettingsPage() {
         <CardContent>
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading profile...</p>
-          ) : profile ? (
-            <ProfileForm
-              initialProfile={{
-                displayName: displayNameValue,
-                email,
-                age,
-                ...restProfile,
-              }}
-            />
+          ) : initialProfile ? (
+            <ProfileForm initialProfile={initialProfile} />
           ) : null}
         </CardContent>
       </Card>

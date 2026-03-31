@@ -13,7 +13,7 @@ export class MembersService {
 
   async listByGroup(groupId: string) {
     return this.prisma.groupMember.findMany({
-      where: { groupId },
+      where: { groupId, isDeleted: false },
       include: {
         user: {
           select: {
@@ -33,7 +33,7 @@ export class MembersService {
       where: { groupId_userId: { groupId, userId: memberId } },
     });
 
-    if (!target) {
+    if (!target || target.isDeleted) {
       throw new NotFoundException({
         code: ErrorCode.MEMBER_NOT_FOUND,
       });
@@ -46,7 +46,7 @@ export class MembersService {
         where: { groupId_userId: { groupId, userId: requesterId } },
       });
 
-      if (!requester || requester.role !== GROUP_ROLES.ADMIN) {
+      if (!requester || requester.isDeleted || requester.role !== GROUP_ROLES.ADMIN) {
         throw new ForbiddenException({
           code: ErrorCode.MEMBER_ADMIN_REQUIRED,
         });
@@ -55,7 +55,7 @@ export class MembersService {
 
     if (target.role === GROUP_ROLES.ADMIN) {
       const adminCount = await this.prisma.groupMember.count({
-        where: { groupId, role: GROUP_ROLES.ADMIN },
+        where: { groupId, role: GROUP_ROLES.ADMIN, isDeleted: false },
       });
 
       if (adminCount <= 1) {
@@ -65,8 +65,9 @@ export class MembersService {
       }
     }
 
-    await this.prisma.groupMember.delete({
+    await this.prisma.groupMember.update({
       where: { groupId_userId: { groupId, userId: memberId } },
+      data: { isDeleted: true },
     });
 
     return { removed: true };
@@ -77,7 +78,7 @@ export class MembersService {
       where: { groupId_userId: { groupId, userId: memberId } },
     });
 
-    if (!target) {
+    if (!target || target.isDeleted) {
       throw new NotFoundException({
         code: ErrorCode.MEMBER_NOT_FOUND,
       });
@@ -85,7 +86,7 @@ export class MembersService {
 
     if (target.role === GROUP_ROLES.ADMIN && role !== GROUP_ROLES.ADMIN) {
       const adminCount = await this.prisma.groupMember.count({
-        where: { groupId, role: GROUP_ROLES.ADMIN },
+        where: { groupId, role: GROUP_ROLES.ADMIN, isDeleted: false },
       });
 
       if (adminCount <= 1) {

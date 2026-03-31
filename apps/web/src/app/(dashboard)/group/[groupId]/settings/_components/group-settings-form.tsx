@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateGroup } from "@/hooks/api/use-group-queries";
-import { GroupSettingsInput, groupSettingsSchema } from "@squademy/shared";
+import { DAY_NAMES, GroupSettingsInput, groupSettingsSchema } from "@squademy/shared";
 
 
 type GroupSettingsFormProps = {
@@ -25,16 +25,6 @@ type GroupSettingsFormProps = {
   initialValues: GroupSettingsInput;
   isAdmin: boolean;
 };
-
-const DAY_OPTIONS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-] as const;
 
 function getScheduleText(values: GroupSettingsInput) {
   if (
@@ -44,7 +34,7 @@ function getScheduleText(values: GroupSettingsInput) {
     return "No schedule";
   }
 
-  return `Every ${DAY_OPTIONS[values.exerciseDeadlineDay]} at ${values.exerciseDeadlineTime}`;
+  return `Every ${DAY_NAMES[values.exerciseDeadlineDay]} at ${values.exerciseDeadlineTime}`;
 }
 
 export function GroupSettingsForm({
@@ -68,7 +58,7 @@ export function GroupSettingsForm({
 
     const payload = {
       name: values.name,
-      description: values.description ?? "",
+      description: values.description,
       exerciseDeadlineDay:
         typeof values.exerciseDeadlineDay === "number" ? values.exerciseDeadlineDay : null,
       exerciseDeadlineTime:
@@ -136,7 +126,7 @@ export function GroupSettingsForm({
       <div className="space-y-2">
         <Label id="exerciseDeadlineDayLabel">Weekly exercise deadline day</Label>
         <Select
-          value={typeof selectedDay === "number" ? String(selectedDay) : undefined}
+          value={typeof selectedDay === "number" ? String(selectedDay) : ""}
           onValueChange={(val) => {
             const day = !val || val === "clear" ? null : Number(val);
             form.setValue("exerciseDeadlineDay", day, { shouldValidate: true });
@@ -153,7 +143,7 @@ export function GroupSettingsForm({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="clear">No schedule</SelectItem>
-            {DAY_OPTIONS.map((day, index) => (
+            {DAY_NAMES.map((day, index) => (
               <SelectItem key={day} value={String(index)}>
                 {day}
               </SelectItem>

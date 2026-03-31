@@ -127,7 +127,7 @@ So that members know what the group is about and when exercises are due.
 
 **Given** I navigate to the Group Settings page (`/group/[groupId]/settings`)
 **When** the page loads
-**Then** `GET /groups/:groupId` (GroupAdminGuard) returns the current group name, description, and exercise schedule settings pre-populated
+**Then** `GET /groups/:groupId` (GroupMemberGuard) returns the current group name, description, and exercise schedule settings pre-populated
 
 **Given** I update the group name or description and click Save
 **When** `PATCH /groups/:groupId` (GroupAdminGuard) executes

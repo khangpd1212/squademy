@@ -11,6 +11,8 @@ const customJestConfig = {
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   roots: ["<rootDir>/src", "<rootDir>/tests"],
   testMatch: ["**/__tests__/**/*.test.ts?(x)", "**/?(*.)+(spec|test).ts?(x)"],
+  // Allow Next/Jest transforms for ESM-only i18n packages used by page modules.
+  transformIgnorePatterns: ["/node_modules/(?!(next-intl|use-intl)/)"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },

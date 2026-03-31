@@ -16,7 +16,11 @@ export class InvitationsService {
       where: { groupId_userId: { groupId, userId: invitedBy } },
     });
 
-    if (!membership || membership.role !== GROUP_ROLES.ADMIN) {
+    if (
+      !membership ||
+      membership.isDeleted ||
+      membership.role !== GROUP_ROLES.ADMIN
+    ) {
       throw new ForbiddenException({
         code: ErrorCode.INVITATION_ADMIN_ONLY,
       });
@@ -26,7 +30,7 @@ export class InvitationsService {
       where: { groupId_userId: { groupId, userId: inviteeId } },
     });
 
-    if (existingMember) {
+    if (existingMember && !existingMember.isDeleted) {
       throw new BadRequestException({
         code: ErrorCode.INVITATION_ALREADY_MEMBER,
       });
@@ -80,23 +84,45 @@ export class InvitationsService {
     }
 
     if (status === INVITATION_STATUS.ACCEPTED) {
-      const [updated] = await this.prisma.$transaction([
-        this.prisma.groupInvitation.update({
+      return this.prisma.$transaction(async (tx) => {
+        const updated = await tx.groupInvitation.update({
           where: { id },
           data: { status },
           include: {
             group: { select: { id: true, name: true } },
           },
-        }),
-        this.prisma.groupMember.create({
-          data: {
-            groupId: invitation.groupId,
-            userId,
-            role: GROUP_ROLES.MEMBER,
+        });
+
+        const existing = await tx.groupMember.findUnique({
+          where: {
+            groupId_userId: { groupId: invitation.groupId, userId },
           },
-        }),
-      ]);
-      return updated;
+        });
+
+        if (existing) {
+          if (!existing.isDeleted) {
+            throw new BadRequestException({
+              code: ErrorCode.GROUP_ALREADY_MEMBER,
+            });
+          }
+          await tx.groupMember.update({
+            where: {
+              groupId_userId: { groupId: invitation.groupId, userId },
+            },
+            data: { isDeleted: false, role: GROUP_ROLES.MEMBER },
+          });
+        } else {
+          await tx.groupMember.create({
+            data: {
+              groupId: invitation.groupId,
+              userId,
+              role: GROUP_ROLES.MEMBER,
+            },
+          });
+        }
+
+        return updated;
+      });
     }
 
     return this.prisma.groupInvitation.update({

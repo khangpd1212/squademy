@@ -32,7 +32,10 @@ export function CreateGroupForm() {
     setSubmitError(null);
 
     try {
-      const group = await createGroupMutation.mutateAsync(values);
+      const group = await createGroupMutation.mutateAsync({
+        name: values.name,
+        description: values.description,
+      });
       if (!group?.id) {
         setSubmitError("Group created but redirect failed. Please refresh.");
         return;

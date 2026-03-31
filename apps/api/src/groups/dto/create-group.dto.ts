@@ -1,6 +1,5 @@
-import { IsOptional, IsString, MaxLength, MinLength } from "class-validator";
-import { VALIDATION } from "@squademy/shared";
-import type { CreateGroupInput } from "@squademy/shared";
+import { IsOptional, IsString, MaxLength, MinLength, ValidateIf } from "class-validator";
+import { CreateGroupInput, VALIDATION } from "@squademy/shared";
 
 export class CreateGroupDto implements CreateGroupInput {
   @IsString()
@@ -9,7 +8,8 @@ export class CreateGroupDto implements CreateGroupInput {
   name: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.description !== null)
   @IsString()
   @MaxLength(VALIDATION.GROUP_DESCRIPTION_MAX)
-  description?: string;
+  description: string | null;
 }

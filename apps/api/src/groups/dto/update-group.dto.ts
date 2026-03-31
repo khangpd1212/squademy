@@ -1,6 +1,5 @@
-import { IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from "class-validator";
-import { VALIDATION } from "@squademy/shared";
-import type { GroupSettingsInput } from "@squademy/shared";
+import { IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength, ValidateIf } from "class-validator";
+import { GroupSettingsInput, VALIDATION } from "@squademy/shared";
 
 export class UpdateGroupDto implements GroupSettingsInput {
   @IsString()
@@ -9,18 +8,20 @@ export class UpdateGroupDto implements GroupSettingsInput {
   name: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.description !== null)
   @IsString()
   @MaxLength(VALIDATION.GROUP_DESCRIPTION_MAX)
-  description?: string;
+  description: string | null;
 
   @IsOptional()
   @IsInt()
   @Min(VALIDATION.DEADLINE_DAY_MIN)
   @Max(VALIDATION.DEADLINE_DAY_MAX)
-  exerciseDeadlineDay?: number;
+  exerciseDeadlineDay: number | null;
 
   @IsOptional()
+  @ValidateIf((o) => o.exerciseDeadlineTime !== null)
   @IsString()
-  @Matches(/^\d{2}:\d{2}$/, { message: "Time must be in HH:MM format." })
-  exerciseDeadlineTime?: string;
+  @Matches(VALIDATION.DEADLINE_TIME_REGEX, { message: "Time must be in HH:MM format (00:00–23:59)." })
+  exerciseDeadlineTime: string | null;
 }

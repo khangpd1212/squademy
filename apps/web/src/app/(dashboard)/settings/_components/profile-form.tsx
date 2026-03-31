@@ -8,16 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RHFInputNumber } from "@/components/form/rhf-input-number";
-import { useUpdateProfile, ProfileUpdatePayload } from "@/hooks/api/use-user-queries";
+import { useUpdateProfile } from "@/hooks/api/use-user-queries";
 import {
   profileEditSchema,
   type ProfileEditValues,
-  type ProfileFormValues,
+  type ProfileApiValues,
   VALIDATION,
 } from "@squademy/shared";
 
 type ProfileFormProps = {
-  initialProfile: ProfileFormValues;
+  initialProfile: ProfileApiValues;
 };
 
 function formatInitials(name: string) {
@@ -40,7 +40,14 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
   const form = useForm<ProfileEditValues>({
     resolver: zodResolver(profileEditSchema),
-    defaultValues: initialProfile,
+    defaultValues: {
+      displayName: initialProfile.displayName,
+      fullName: initialProfile.fullName,
+      avatarUrl: initialProfile.avatarUrl,
+      school: initialProfile.school,
+      location: initialProfile.location,
+      age: initialProfile.age,
+    },
     mode: "onSubmit",
   });
   const avatarUrl = useWatch({ control: form.control, name: "avatarUrl" });
@@ -55,10 +62,8 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     setSubmitError(null);
     setSaveSuccess(null);
 
-    const updatePayload: ProfileUpdatePayload = values;
-
     try {
-      await updateProfileMutation.mutateAsync(updatePayload);
+      await updateProfileMutation.mutateAsync(values);
 
       setSaveSuccess("Profile saved.");
     } catch (error) {
@@ -120,7 +125,11 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="fullName">Full name</Label>
-          <Input id="fullName" autoComplete="name" {...form.register("fullName")} />
+          <Input 
+            id="fullName" 
+            autoComplete="name" 
+            {...form.register("fullName")} 
+          />
           {form.formState.errors.fullName ? (
             <p className="text-xs text-destructive">{form.formState.errors.fullName.message}</p>
           ) : null}
@@ -139,7 +148,10 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="school">School</Label>
-          <Input id="school" {...form.register("school")} />
+          <Input 
+            id="school" 
+            {...form.register("school")} 
+          />
           {form.formState.errors.school ? (
             <p className="text-xs text-destructive">{form.formState.errors.school.message}</p>
           ) : null}
@@ -147,7 +159,10 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
-          <Input id="location" {...form.register("location")} />
+          <Input 
+            id="location" 
+            {...form.register("location")} 
+          />
           {form.formState.errors.location ? (
             <p className="text-xs text-destructive">{form.formState.errors.location.message}</p>
           ) : null}

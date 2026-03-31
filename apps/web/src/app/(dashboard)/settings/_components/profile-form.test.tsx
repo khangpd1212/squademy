@@ -1,5 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ProfileApiValues } from "@squademy/shared";
 import { ProfileForm } from "./profile-form";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
@@ -15,6 +16,24 @@ function createDeferred<T>() {
   return { promise, resolve, reject };
 }
 
+const BASE_PROFILE: ProfileApiValues = {
+  id: "u1",
+  displayName: "Tina",
+  avatarUrl: null,
+  fullName: null,
+  school: null,
+  location: null,
+  age: null,
+  email: "tina@example.com",
+};
+
+function mockApiResponse(overrides: Partial<ProfileApiValues> = {}) {
+  return {
+    ok: true,
+    json: async () => ({ ok: true, data: { ...BASE_PROFILE, ...overrides } }),
+  } as Response;
+}
+
 describe("ProfileForm", () => {
   beforeEach(() => {
     global.fetch = jest.fn();
@@ -23,19 +42,7 @@ describe("ProfileForm", () => {
   it("blocks save with inline validation when display name is empty", async () => {
     const user = userEvent.setup();
 
-    renderWithQueryClient(
-      <ProfileForm
-        initialProfile={{
-          displayName: "Tina",
-          avatarUrl: undefined,
-          fullName: undefined,
-          school: undefined,
-          location: undefined,
-          age: null,
-          email: "tina@example.com",
-        }}
-      />
-    );
+    renderWithQueryClient(<ProfileForm initialProfile={BASE_PROFILE} />);
 
     const displayNameInput = screen.getByLabelText("Display name");
     await user.clear(displayNameInput);
@@ -46,19 +53,7 @@ describe("ProfileForm", () => {
   });
 
   it("shows avatar placeholder message when upload is not configured", () => {
-    renderWithQueryClient(
-      <ProfileForm
-        initialProfile={{
-          displayName: "Tina",
-          avatarUrl: undefined,
-          fullName: undefined,
-          school: undefined,
-          location: undefined,
-          age: null,
-          email: "tina@example.com",
-        }}
-      />
-    );
+    renderWithQueryClient(<ProfileForm initialProfile={BASE_PROFILE} />);
 
     expect(
       screen.getByText("Paste avatar URL to update preview and submit value.")
@@ -70,19 +65,7 @@ describe("ProfileForm", () => {
     const deferred = createDeferred<Response>();
     (global.fetch as jest.Mock).mockReturnValue(deferred.promise);
 
-    renderWithQueryClient(
-      <ProfileForm
-        initialProfile={{
-          displayName: "Tina",
-            avatarUrl: undefined,
-          fullName: undefined,
-          school: undefined,
-          location: undefined,
-          age: null,
-          email: "tina@example.com",
-        }}
-      />
-    );
+    renderWithQueryClient(<ProfileForm initialProfile={BASE_PROFILE} />);
 
     const displayNameInput = screen.getByLabelText("Display name");
     await user.clear(displayNameInput);
@@ -91,55 +74,17 @@ describe("ProfileForm", () => {
 
     expect(screen.getByTestId("profile-preview-name")).toHaveTextContent("Tina Updated");
 
-    deferred.resolve({
-      ok: true,
-      json: async () => ({
-        ok: true,
-        profile: {
-          displayName: "Tina Updated",
-          avatarUrl: undefined,
-          fullName: undefined,
-          school: undefined,
-          location: undefined,
-          age: null,
-          email: "tina@example.com",
-        },
-      }),
-    } as Response);
+    deferred.resolve(mockApiResponse({ displayName: "Tina Updated" }));
 
     await waitFor(() => expect(screen.getByText("Profile saved.")).toBeInTheDocument());
   });
 
   it("wires age as null into profile update payload when input is empty", async () => {
     const user = userEvent.setup();
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        ok: true,
-        profile: {
-          displayName: "Tina",
-          avatarUrl: undefined,
-          fullName: undefined,
-          school: undefined,
-          location: null,
-          age: null,
-          email: "tina@example.com",
-        },
-      }),
-    } as Response);
+    (global.fetch as jest.Mock).mockResolvedValue(mockApiResponse({ age: null }));
 
     renderWithQueryClient(
-      <ProfileForm
-        initialProfile={{
-          displayName: "Tina",
-          avatarUrl: undefined,
-          fullName: undefined,
-          school: undefined,
-          location: undefined,
-          age: 20,
-          email: "tina@example.com",
-        }}
-      />
+      <ProfileForm initialProfile={{ ...BASE_PROFILE, age: 20 }} />
     );
 
     const ageInput = screen.getByLabelText("Age");
@@ -148,9 +93,25 @@ describe("ProfileForm", () => {
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
     const requestInit = (global.fetch as jest.Mock).mock.calls[0][1];
-    const payload = JSON.parse(requestInit.body as string) as { age: number | null };
+    const payload = JSON.parse(requestInit.body as string);
 
     expect(payload.age).toBeNull();
   });
 
+  it("handles null API values in form and submits null for empty text fields", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue(mockApiResponse());
+
+    renderWithQueryClient(<ProfileForm initialProfile={BASE_PROFILE} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Save profile" }));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    const requestInit = (global.fetch as jest.Mock).mock.calls[0][1];
+    const payload = JSON.parse(requestInit.body as string);
+
+    expect(payload.fullName).toBeNull();
+    expect(payload.school).toBeNull();
+    expect(payload.location).toBeNull();
+    expect(screen.queryByText("Invalid input: expected string, received null")).not.toBeInTheDocument();
+  });
 });

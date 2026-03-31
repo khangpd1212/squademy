@@ -1,0 +1,8 @@
+ALTER TABLE "groups"
+ADD COLUMN "is_deleted" BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE "lessons"
+ADD COLUMN "is_deleted" BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE "exercises"
+ADD COLUMN "is_deleted" BOOLEAN NOT NULL DEFAULT false;

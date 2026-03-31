@@ -27,7 +27,7 @@ export class GroupMemberGuard implements CanActivate {
       where: { groupId_userId: { groupId, userId } },
     });
 
-    if (!membership) {
+    if (!membership || membership.isDeleted) {
       throw new ForbiddenException({
         code: ErrorCode.FORBIDDEN_NOT_MEMBER,
       });
