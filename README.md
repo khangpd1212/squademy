@@ -4,6 +4,8 @@ Community-driven English learning platform — monorepo with Next.js frontend, N
 
 ## Architecture
 
+![Squademy FE + BE System Design](./docs/images/squademy-fe-be-system-design.png)
+
 | Package | Name | Stack | Purpose |
 |---------|------|-------|---------|
 | `apps/web` | @squademy/web | Next.js 16, React 19, Tailwind CSS v4, shadcn/ui | Frontend (Vercel) |
