@@ -8,6 +8,7 @@ import { UsersModule } from "./users/users.module";
 import { GroupsModule } from "./groups/groups.module";
 import { MembersModule } from "./members/members.module";
 import { InvitationsModule } from "./invitations/invitations.module";
+import { LessonsModule } from "./lessons/lessons.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { InvitationsModule } from "./invitations/invitations.module";
     GroupsModule,
     MembersModule,
     InvitationsModule,
+    LessonsModule,
   ],
   providers: [
     {

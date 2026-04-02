@@ -82,16 +82,17 @@ model GroupInvitation {
 }
 
 model Lesson {
-  id             String   @id @default(uuid())
-  groupId        String   @map("group_id")
-  authorId       String   @map("author_id")
-  title          String
-  content        Json?
-  status         String   @default("draft")
-  editorFeedback String?  @map("editor_feedback")
-  isDeleted      Boolean  @default(false) @map("is_deleted")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  groupId         String   @map("group_id")
+  authorId        String   @map("author_id")
+  title           String
+  content         Json?
+  contentMarkdown String?  @map("content_markdown")
+  status          String   @default("draft")
+  editorFeedback  String?  @map("editor_feedback")
+  isDeleted       Boolean  @default(false) @map("is_deleted")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
   author    User       @relation(fields: [authorId], references: [id])

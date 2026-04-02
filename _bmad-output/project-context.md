@@ -76,7 +76,6 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ### Planned (NOT yet installed — do NOT import)
 
-- **Tiptap Community** — Rich text editor (WYSIWYG)
 - **Framer Motion** — Animations, gestures, flashcard flip
 - **Dexie.js** — IndexedDB offline cache for flashcards
 - **Cloudflare R2 SDK** — File storage (audio, images)

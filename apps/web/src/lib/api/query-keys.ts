@@ -16,4 +16,8 @@ export const queryKeys = {
   invitations: {
     list: () => ["invitations"] as const,
   },
+  lessons: {
+    myLessons: ["lessons", "my"] as const,
+    detail: (id: string) => ["lessons", id] as const,
+  },
 } as const;

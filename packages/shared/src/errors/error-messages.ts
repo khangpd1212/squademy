@@ -24,6 +24,11 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.FORBIDDEN_MISSING_CONTEXT]: "Missing context.",
   [ErrorCode.USER_NOT_FOUND]: "User not found.",
   [ErrorCode.GROUP_DELETE_FAILED]: "Failed to delete group. Please try again.",
+  [ErrorCode.LESSON_CREATE_FAILED]: "Failed to create lesson. Please try again.",
+  [ErrorCode.LESSON_NOT_FOUND]: "Lesson not found.",
+  [ErrorCode.LESSON_UPDATE_FAILED]: "Failed to update lesson. Please try again.",
+  [ErrorCode.LESSON_NOT_OWNER]: "You are not the owner of this lesson.",
+  [ErrorCode.LESSON_NOT_EDITABLE]: "Lesson cannot be edited in its current status.",
 };
 
 export function getErrorMessage(code: string): string {

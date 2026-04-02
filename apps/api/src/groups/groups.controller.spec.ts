@@ -118,6 +118,8 @@ describe("GroupsController", () => {
       expect(groupsService.update).toHaveBeenCalledWith("group-1", {
         name: "Renamed Group",
         description: "New desc",
+        exerciseDeadlineDay: 1,
+        exerciseDeadlineTime: "14:30",
       });
       expect(result).toEqual({ ok: true, data: updatedGroup });
     });
