@@ -177,7 +177,13 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
         <div className="flex-1 px-6 py-4">
           <LessonEditor
             content={lesson.content}
+            contentMarkdown={lesson.contentMarkdown ?? undefined}
+            lessonTitle={lesson.title}
             editable={!isReadOnly}
+            onImportAction={(_content: Record<string, unknown>) => {
+              if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+              if (editorInstance) triggerSave(editorInstance);
+            }}
             ref={editorRefCallback}
           />
         </div>

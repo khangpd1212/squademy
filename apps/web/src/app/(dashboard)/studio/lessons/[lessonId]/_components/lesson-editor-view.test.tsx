@@ -2,18 +2,22 @@ import { screen } from "@testing-library/react";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 import { LessonEditorView } from "./lesson-editor-view";
 
+const updateLessonMock = { mutate: jest.fn(), isPending: false };
+
 jest.mock("@/hooks/api/use-lesson-queries", () => ({
   useLesson: jest.fn(),
-  useUpdateLesson: jest.fn(() => ({
-    mutate: jest.fn(),
-    isPending: false,
-  })),
+  useUpdateLesson: jest.fn(() => updateLessonMock),
 }));
 
+let capturedOnImportAction: ((content: Record<string, unknown>) => void) | undefined;
+
 jest.mock("@/components/editor/lesson-editor", () => ({
-  LessonEditor: ({ editable }: { editable: boolean }) => (
-    <div data-testid="lesson-editor" data-editable={String(editable)} />
-  ),
+  LessonEditor: ({ editable, onImportAction }: { editable: boolean; onImportAction?: (content: Record<string, unknown>) => void }) => {
+    capturedOnImportAction = onImportAction;
+    return (
+      <div data-testid="lesson-editor" data-editable={String(editable)} />
+    );
+  },
 }));
 
 jest.mock("@/components/editor/outline-panel", () => ({
@@ -100,5 +104,16 @@ describe("LessonEditorView", () => {
     renderWithQueryClient(<LessonEditorView lessonId="lesson-x" />);
 
     expect(screen.getByText("Lesson not found")).toBeInTheDocument();
+  });
+
+  it("passes imported content through onImportAction callback", () => {
+    useLesson.mockReturnValue({ data: mockLesson, isLoading: false, isError: false });
+
+    renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+    const importedContent = { type: "doc", content: [{ type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: "Imported" }] }] };
+
+    expect(capturedOnImportAction).toBeDefined();
+    capturedOnImportAction!(importedContent);
   });
 });
