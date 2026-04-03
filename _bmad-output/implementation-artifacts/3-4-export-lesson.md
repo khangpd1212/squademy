@@ -1,6 +1,6 @@
 # Story 3.4: Export Lesson
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -42,7 +42,7 @@ so that I can read or share the content offline.
     - [x] Preserve: H1/H2/H3 headings, bold, italic, unordered/ordered lists, links
     - [x] Use Inter font for body text
   - [x] Create `apps/web/src/lib/export/pdf-export.ts` with:
-    - [x] `downloadPdf(lessonTitle: string, contentHtml: string, filename: string): Promise<void>`
+    - [x] `downloadPdf(contentHtml: string, filename: string): Promise<void>`
     - [x] Use html2canvas + jsPDF for rendering
     - [x] Render with Inter font for body text
     - [x] Handle multi-page content
@@ -166,3 +166,9 @@ gpt-5.3-codex-low
 - `apps/web/src/app/(dashboard)/studio/lessons/[lessonId]/_components/lesson-editor-view.tsx` — modified (wired export)
 - `apps/web/src/components/editor/editor-toolbar.test.tsx` — modified (added export tests)
 - `_bmad-output/implementation-artifacts/3-4-export-lesson.md` — created
+
+### Review Findings
+
+- [x] [Review][Patch] SSR Guard missing - `document`/`URL` used without browser check [markdown-export.ts:1, docx-export.ts:212, pdf-export.ts:4]
+- [x] [Review][Patch] Missing error boundaries - no user-facing fallback [editor-toolbar.tsx:164-185]
+- [x] [Review][Patch] Magic numbers - 250KB hardcoded, should use constants [editor-toolbar.tsx:130, validation.ts]

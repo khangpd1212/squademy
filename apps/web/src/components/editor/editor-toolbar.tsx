@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { type Editor } from "@tiptap/react";
+import { VALIDATION } from "@squademy/shared";
 import {
   Bold,
   Italic,
@@ -126,7 +127,7 @@ export function EditorToolbar({
 
     const hasValidExtension = file.name.toLowerCase().endsWith(".md");
     const hasValidMime = file.type === "text/markdown" || file.type === "text/plain" || file.type === "";
-    const isUnderSizeLimit = file.size <= 250 * 1024; // 250KB as per AC 1
+    const isUnderSizeLimit = file.size <= VALIDATION.MAX_MARKDOWN_FILE_SIZE; // 250KB as per AC 1
 
     if (!hasValidExtension || !hasValidMime) {
       setImportError("Only .md files are supported for import.");
@@ -135,7 +136,7 @@ export function EditorToolbar({
     }
 
     if (!isUnderSizeLimit) {
-      setImportError("File too large. Maximum size is 250KB.");
+      setImportError(`File too large. Maximum size is ${VALIDATION.MAX_MARKDOWN_FILE_SIZE / 1024}KB.`);
       setIsImporting(false);
       return;
     }
@@ -182,7 +183,7 @@ export function EditorToolbar({
 
   const handleExportPdf = async () => {
     try {
-      await downloadPdf(lessonTitle || "Lesson", editor.getHTML(), lessonTitle || "lesson");
+      await downloadPdf(editor.getHTML(), lessonTitle || "lesson");
     } catch (e) {
       setExportError(e instanceof Error ? e.message : "PDF export failed.");
     }

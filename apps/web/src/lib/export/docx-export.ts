@@ -214,6 +214,8 @@ export async function downloadDocx(
   content: string,
   filename: string,
 ): Promise<void> {
+  if (typeof document === "undefined") return;
+
   let tiptapJson: TiptapNode;
 
   try {

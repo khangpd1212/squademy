@@ -2,10 +2,11 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
 export async function downloadPdf(
-  lessonTitle: string,
   contentHtml: string,
   filename: string,
 ): Promise<void> {
+  if (typeof document === "undefined") return;
+
   const container = document.createElement("div");
   // Note: contentHtml comes from Tiptap editor which sanitizes input.
   // If content comes from external sources, add DOMPurify sanitization.
