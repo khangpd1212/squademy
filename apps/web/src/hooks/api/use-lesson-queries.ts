@@ -124,3 +124,49 @@ export function useCreateLesson() {
     },
   });
 }
+
+export function useSubmitLesson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      const result = await apiRequest<LessonDetail>(`/lessons/${lessonId}/submit`, {
+        method: "PATCH",
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to submit lesson",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: (data, lessonId) => {
+      queryClient.setQueryData(queryKeys.lessons.detail(lessonId), data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.myLessons });
+    },
+  });
+}
+
+export function useDeleteLesson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      const result = await apiRequest(`/lessons/${lessonId}`, {
+        method: "DELETE",
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to delete lesson",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result;
+    },
+    onSuccess: async (_data, lessonId) => {
+      queryClient.removeQueries({ queryKey: queryKeys.lessons.detail(lessonId) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.lessons.myLessons });
+    },
+  });
+}

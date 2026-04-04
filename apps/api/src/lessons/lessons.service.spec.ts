@@ -361,4 +361,104 @@ describe("LessonsService", () => {
       });
     });
   });
+
+  describe("submit", () => {
+    const draftLesson = {
+      id: "lesson-1",
+      title: "My Lesson",
+      content: null,
+      contentMarkdown: null,
+      status: "draft",
+      groupId: "group-1",
+      authorId: "user-1",
+      updatedAt: new Date("2026-04-01"),
+      isDeleted: false,
+    };
+
+    it("updates status from draft to review", async () => {
+      prisma.lesson.findFirst.mockResolvedValue(draftLesson);
+      const updatedLesson = { ...draftLesson, status: "review" };
+      prisma.lesson.update.mockResolvedValue(updatedLesson);
+
+      const result = await service.submit("lesson-1");
+
+      expect(prisma.lesson.findFirst).toHaveBeenCalledWith({
+        where: { id: "lesson-1", isDeleted: false },
+      });
+      expect(prisma.lesson.update).toHaveBeenCalledWith({
+        where: { id: "lesson-1" },
+        data: { status: "review" },
+        select: expect.any(Object),
+      });
+      expect(result.status).toBe("review");
+    });
+
+    it("updates status from rejected to review", async () => {
+      const rejectedLesson = { ...draftLesson, status: "rejected" };
+      prisma.lesson.findFirst.mockResolvedValue(rejectedLesson);
+      const updatedLesson = { ...draftLesson, status: "review" };
+      prisma.lesson.update.mockResolvedValue(updatedLesson);
+
+      const result = await service.submit("lesson-1");
+
+      expect(prisma.lesson.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "lesson-1" },
+          data: { status: "review" },
+        }),
+      );
+      expect(result.status).toBe("review");
+    });
+
+    it("throws BadRequestException when status is already review", async () => {
+      prisma.lesson.findFirst.mockResolvedValue({
+        ...draftLesson,
+        status: "review",
+      });
+
+      await expect(service.submit("lesson-1")).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.submit("lesson-1")).rejects.toMatchObject({
+        response: { code: ErrorCode.LESSON_INVALID_STATUS_FOR_SUBMIT },
+      });
+    });
+
+    it("throws BadRequestException when status is published", async () => {
+      prisma.lesson.findFirst.mockResolvedValue({
+        ...draftLesson,
+        status: "published",
+      });
+
+      await expect(service.submit("lesson-1")).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.submit("lesson-1")).rejects.toMatchObject({
+        response: { code: ErrorCode.LESSON_INVALID_STATUS_FOR_SUBMIT },
+      });
+    });
+
+    it("throws NotFoundException when lesson does not exist", async () => {
+      prisma.lesson.findFirst.mockResolvedValue(null);
+
+      await expect(service.submit("lesson-x")).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.submit("lesson-x")).rejects.toMatchObject({
+        response: { code: ErrorCode.LESSON_NOT_FOUND },
+      });
+    });
+
+    it("throws BadRequestException with LESSON_SUBMIT_FAILED on update error", async () => {
+      prisma.lesson.findFirst.mockResolvedValue(draftLesson);
+      prisma.lesson.update.mockRejectedValue(new Error("DB error"));
+
+      await expect(service.submit("lesson-1")).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.submit("lesson-1")).rejects.toMatchObject({
+        response: { code: ErrorCode.LESSON_SUBMIT_FAILED },
+      });
+    });
+  });
 });

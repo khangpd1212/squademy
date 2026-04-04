@@ -1,12 +1,15 @@
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 import { LessonEditorView } from "./lesson-editor-view";
 
 const updateLessonMock = { mutate: jest.fn(), isPending: false };
+const submitLessonMock = { mutate: jest.fn(), isPending: false };
 
 jest.mock("@/hooks/api/use-lesson-queries", () => ({
   useLesson: jest.fn(),
   useUpdateLesson: jest.fn(() => updateLessonMock),
+  useSubmitLesson: jest.fn(() => submitLessonMock),
 }));
 
 let capturedOnImportAction: ((content: Record<string, unknown>) => void) | undefined;
@@ -39,13 +42,19 @@ const mockLesson = {
   updatedAt: new Date().toISOString(),
 };
 
+beforeEach(() => {
+  jest.clearAllMocks();
+  updateLessonMock.mutate = jest.fn();
+  submitLessonMock.mutate = jest.fn();
+  submitLessonMock.isPending = false;
+});
+
 describe("LessonEditorView", () => {
   it("renders loading skeleton while fetching", () => {
     useLesson.mockReturnValue({ data: undefined, isLoading: true, isError: false });
 
     renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
 
-    // Skeleton divs with animate-pulse
     const skeletons = document.querySelectorAll(".animate-pulse");
     expect(skeletons.length).toBeGreaterThan(0);
   });
@@ -115,5 +124,159 @@ describe("LessonEditorView", () => {
 
     expect(capturedOnImportAction).toBeDefined();
     capturedOnImportAction!(importedContent);
+  });
+
+  describe("submit for review", () => {
+    it("shows Submit for Review button for draft lessons", async () => {
+      useLesson.mockReturnValue({ data: mockLesson, isLoading: false, isError: false });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(await screen.findByText("Submit for Review")).toBeInTheDocument();
+    });
+
+    it("does not show Submit for Review button when status is review", async () => {
+      useLesson.mockReturnValue({
+        data: { ...mockLesson, status: "review" },
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(screen.queryByText("Submit for Review")).not.toBeInTheDocument();
+    });
+
+    it("does not show Submit for Review button when status is published", async () => {
+      useLesson.mockReturnValue({
+        data: { ...mockLesson, status: "published" },
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(screen.queryByText("Submit for Review")).not.toBeInTheDocument();
+    });
+
+    it("calls submit mutation when Submit for Review is clicked", async () => {
+      useLesson.mockReturnValue({ data: mockLesson, isLoading: false, isError: false });
+      const user = userEvent.setup();
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      const submitButton = await screen.findByText("Submit for Review");
+      await user.click(submitButton);
+
+      expect(submitLessonMock.mutate).toHaveBeenCalledWith("lesson-1");
+    });
+
+    it("shows submitting state when submit is pending", async () => {
+      useLesson.mockReturnValue({ data: mockLesson, isLoading: false, isError: false });
+      submitLessonMock.isPending = true;
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(await screen.findByText("Submitting...")).toBeInTheDocument();
+      expect(screen.queryByText("Submit for Review")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("resubmit for review", () => {
+    it("shows Resubmit for Review button for rejected lessons", async () => {
+      useLesson.mockReturnValue({
+        data: { ...mockLesson, status: "rejected" },
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(await screen.findByText("Resubmit for Review")).toBeInTheDocument();
+    });
+
+    it("does not show Resubmit for Review button when status is draft", async () => {
+      useLesson.mockReturnValue({ data: mockLesson, isLoading: false, isError: false });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(screen.queryByText("Resubmit for Review")).not.toBeInTheDocument();
+    });
+
+    it("calls submit mutation when Resubmit for Review is clicked", async () => {
+      useLesson.mockReturnValue({
+        data: { ...mockLesson, status: "rejected" },
+        isLoading: false,
+        isError: false,
+      });
+      const user = userEvent.setup();
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      const resubmitButton = await screen.findByText("Resubmit for Review");
+      await user.click(resubmitButton);
+
+      expect(submitLessonMock.mutate).toHaveBeenCalledWith("lesson-1");
+    });
+
+    it("shows submitting state when submit is pending for rejected lesson", async () => {
+      useLesson.mockReturnValue({
+        data: { ...mockLesson, status: "rejected" },
+        isLoading: false,
+        isError: false,
+      });
+      submitLessonMock.isPending = true;
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(await screen.findByText("Submitting...")).toBeInTheDocument();
+      expect(screen.queryByText("Resubmit for Review")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("status badge", () => {
+    it("shows styled In Review badge when status is review", async () => {
+      useLesson.mockReturnValue({
+        data: { ...mockLesson, status: "review" },
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(await screen.findByText("In Review")).toBeInTheDocument();
+    });
+
+    it("shows styled Draft badge when status is draft", async () => {
+      useLesson.mockReturnValue({ data: mockLesson, isLoading: false, isError: false });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(await screen.findByText("Draft")).toBeInTheDocument();
+    });
+
+    it("shows styled Published badge when status is published", async () => {
+      useLesson.mockReturnValue({
+        data: { ...mockLesson, status: "published" },
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(await screen.findByText("Published")).toBeInTheDocument();
+    });
+
+    it("shows styled Rejected badge when status is rejected", async () => {
+      useLesson.mockReturnValue({
+        data: { ...mockLesson, status: "rejected" },
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
+
+      expect(await screen.findByText("Rejected")).toBeInTheDocument();
+    });
   });
 });

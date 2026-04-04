@@ -1,17 +1,30 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import { type Editor } from "@tiptap/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { LESSON_STATUS } from "@squademy/shared";
-import { useLesson, useUpdateLesson } from "@/hooks/api/use-lesson-queries";
+import {
+  useLesson,
+  useUpdateLesson,
+  useSubmitLesson,
+  LessonDetail,
+} from "@/hooks/api/use-lesson-queries";
 import { queryKeys } from "@/lib/api/query-keys";
+import { STATUS_STYLES } from "@/lib/status-styles";
 import { LessonEditor } from "@/components/editor/lesson-editor";
 import { OutlinePanel } from "@/components/editor/outline-panel";
 import { SaveIndicator } from "./save-indicator";
 import { cn } from "@/lib/utils";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
+const SUBMIT_UI = {
+  BUTTON_SUBMIT: "Submit for Review",
+  BUTTON_RESUBMIT: "Resubmit for Review",
+  BUTTON_LOADING: "Submitting...",
+} as const;
+
+const EDITOR_DEBOUNCE_MS = 2000;
 
 type LessonEditorViewProps = {
   lessonId: string;
@@ -20,22 +33,31 @@ type LessonEditorViewProps = {
 export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   const { data: lesson, isLoading, isError } = useLesson(lessonId);
   const updateLesson = useUpdateLesson();
+  const submitLesson = useSubmitLesson();
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
-  const editorRefCallback = useCallback((editor: Editor | null) => setEditorInstance(editor), []);
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef = useRef(title);
   const initializedRef = useRef(false);
+  const lessonIdRef = useRef(lessonId);
+  const updateLessonRef = useRef(updateLesson);
+
+  useEffect(() => {
+    lessonIdRef.current = lessonId;
+  }, [lessonId]);
+
+  useEffect(() => {
+    updateLessonRef.current = updateLesson;
+  }, [updateLesson]);
 
   useEffect(() => {
     if (lesson && !initializedRef.current) {
       initializedRef.current = true;
       const lessonTitle = lesson.title;
-      // Queue microtask to avoid synchronous setState in effect
       queueMicrotask(() => {
         setTitle(lessonTitle);
         titleRef.current = lessonTitle;
@@ -47,7 +69,6 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
     titleRef.current = title;
   }, [title]);
 
-  // Invalidate myLessons on unmount so list page reflects latest updatedAt
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -55,61 +76,52 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
     };
   }, [queryClient]);
 
-  const triggerSave = useCallback(
-    (editor: Editor) => {
-      setSaveStatus("saving");
-      updateLesson.mutate(
-        {
-          lessonId,
-          data: {
-            content: editor.getJSON(),
-            contentMarkdown: editor.getText(),
-            title: titleRef.current,
-          },
+  const triggerSave = (editor: Editor) => {
+    setSaveStatus("saving");
+    updateLessonRef.current.mutate(
+      {
+        lessonId: lessonIdRef.current,
+        data: {
+          content: editor.getJSON(),
+          contentMarkdown: editor.getText(),
+          title: titleRef.current,
         },
-        {
-          onSuccess: () => {
-            setSaveStatus("saved");
-            setTimeout(() => setSaveStatus("idle"), 2000);
-          },
-          onError: () => setSaveStatus("error"),
+      },
+      {
+        onSuccess: () => {
+          setSaveStatus("saved");
+          setTimeout(() => setSaveStatus("idle"), EDITOR_DEBOUNCE_MS);
         },
-      );
-    },
-    [lessonId, updateLesson],
-  );
+        onError: () => setSaveStatus("error"),
+      },
+    );
+  };
 
-  const handleEditorUpdate = useCallback(
-    (editor: Editor) => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(() => triggerSave(editor), 2000);
-    },
-    [triggerSave],
-  );
-
-  // Attach update handler directly on the editor to avoid function props crossing the client boundary
   useEffect(() => {
     if (!editorInstance) return;
-    const handler = ({ editor: e }: { editor: Editor }) => handleEditorUpdate(e);
+    const handler = ({ editor: e }: { editor: Editor }) => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => triggerSave(e), EDITOR_DEBOUNCE_MS);
+    };
     editorInstance.on("update", handler);
     return () => {
       editorInstance.off("update", handler);
     };
-  }, [editorInstance, handleEditorUpdate]);
+  }, [editorInstance]);
 
-  // Ctrl+S / Cmd+S manual save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        if (!editorInstance) return;
+        const editor = editorInstance;
+        if (!editor) return;
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-        triggerSave(editorInstance);
+        triggerSave(editor);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editorInstance, triggerSave]);
+  }, [editorInstance]);
 
   const handleTitleBlur = () => {
     if (!editorInstance || !lesson) return;
@@ -118,9 +130,24 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
     triggerSave(editorInstance);
   };
 
+  const handleSetEditor = (editor: Editor | null) => setEditorInstance(editor);
+
+  const handleSubmit = () => {
+    queryClient.setQueryData(
+      queryKeys.lessons.detail(lessonId),
+      (old: LessonDetail | undefined) =>
+        old ? { ...old, status: LESSON_STATUS.REVIEW } : old,
+    );
+    submitLesson.mutate(lessonId);
+  };
+
   const isReadOnly =
     lesson?.status === LESSON_STATUS.REVIEW ||
     lesson?.status === LESSON_STATUS.PUBLISHED;
+
+  const canSubmit = lesson?.status === LESSON_STATUS.DRAFT;
+  const canResubmit = lesson?.status === LESSON_STATUS.REJECTED;
+  const statusStyle = lesson ? STATUS_STYLES[lesson.status] : null;
 
   if (isLoading) {
     return (
@@ -149,7 +176,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
     <div className="flex h-full min-h-0 flex-row">
       {/* Main editor area */}
       <div className="flex flex-1 flex-col overflow-auto">
-        {/* Header: title + save indicator */}
+        {/* Header: title + save indicator + status/actions */}
         <div className="flex items-center gap-3 border-b border-zinc-200 px-6 py-3 dark:border-zinc-800">
           <input
             type="text"
@@ -165,10 +192,34 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
           />
           <div className="flex items-center gap-2">
             <SaveIndicator status={saveStatus} />
-            {isReadOnly && (
-              <span className="rounded-full bg-zinc-200 px-2.5 py-0.5 text-xs font-medium capitalize text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
-                {lesson.status}
+            {statusStyle && (
+              <span
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  statusStyle.className,
+                )}>
+                {statusStyle.label}
               </span>
+            )}
+            {canSubmit && (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitLesson.isPending}
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+                {submitLesson.isPending ? SUBMIT_UI.BUTTON_LOADING : SUBMIT_UI.BUTTON_SUBMIT}
+              </button>
+            )}
+            {canResubmit && (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitLesson.isPending}
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+                {submitLesson.isPending
+                  ? SUBMIT_UI.BUTTON_LOADING
+                  : SUBMIT_UI.BUTTON_RESUBMIT}
+              </button>
             )}
           </div>
         </div>
@@ -184,13 +235,13 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
               if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
               if (editorInstance) triggerSave(editorInstance);
             }}
-            ref={editorRefCallback}
+            ref={handleSetEditor}
           />
         </div>
       </div>
 
       {/* Outline sidebar — hidden on mobile */}
-      <aside className="hidden w-[200px] shrink-0 border-l border-zinc-200 dark:border-zinc-800 md:block">
+      <aside className="hidden w-50 shrink-0 border-l border-zinc-200 dark:border-zinc-800 md:block">
         <OutlinePanel editor={editorInstance} />
       </aside>
     </div>

@@ -29,6 +29,8 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.LESSON_UPDATE_FAILED]: "Failed to update lesson. Please try again.",
   [ErrorCode.LESSON_NOT_OWNER]: "You are not the owner of this lesson.",
   [ErrorCode.LESSON_NOT_EDITABLE]: "Lesson cannot be edited in its current status.",
+  [ErrorCode.LESSON_DELETE_FAILED]: "Failed to delete lesson. Please try again.",
+  [ErrorCode.LESSON_DELETE_NOT_ALLOWED]: "You cannot delete a lesson that is under review or published.",
 };
 
 export function getErrorMessage(code: string): string {

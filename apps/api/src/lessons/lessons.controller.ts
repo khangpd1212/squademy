@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import {
   CurrentUser,
   JwtPayload,
 } from "../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { ResourceOwnerGuard } from "../common/guards/resource-owner.guard";
 import { CreateLessonDto } from "./dto/create-lesson.dto";
 import { UpdateLessonDto } from "./dto/update-lesson.dto";
 import { LessonsService } from "./lessons.service";
@@ -45,5 +46,19 @@ export class LessonsController {
   ) {
     const lesson = await this.lessonsService.update(id, user.userId, dto);
     return { ok: true, data: lesson };
+  }
+
+  @Patch(":id/submit")
+  @UseGuards(ResourceOwnerGuard)
+  async submit(@Param("id") id: string) {
+    const lesson = await this.lessonsService.submit(id);
+    return { ok: true, data: lesson };
+  }
+
+  @Delete(":id")
+  @UseGuards(ResourceOwnerGuard)
+  async delete(@Param("id") id: string) {
+    await this.lessonsService.deleteLesson(id);
+    return { ok: true };
   }
 }

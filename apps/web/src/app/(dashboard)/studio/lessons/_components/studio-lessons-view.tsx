@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyLessons } from "@/hooks/api/use-lesson-queries";
+import { DeleteLessonDialog } from "./delete-lesson-dialog";
 import { EmptyLessonState } from "./empty-lesson-state";
 import { LessonListItem } from "./lesson-list-item";
 import { NewLessonDialog } from "./new-lesson-dialog";
@@ -11,6 +12,17 @@ import { NewLessonDialog } from "./new-lesson-dialog";
 export function StudioLessonsView() {
   const { data: lessons, isLoading, isError } = useMyLessons();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogState, setDeleteDialogState] = useState<{
+    lessonId: string | null;
+    lessonTitle: string | null;
+  }>({ lessonId: null, lessonTitle: null });
+
+  function handleDelete(lessonId: string) {
+    const lesson = lessons?.find((l) => l.id === lessonId);
+    if (lesson) {
+      setDeleteDialogState({ lessonId, lessonTitle: lesson.title });
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,7 +57,11 @@ export function StudioLessonsView() {
           ) : (
             <div className="flex flex-col gap-2">
               {lessons.map((lesson) => (
-                <LessonListItem key={lesson.id} lesson={lesson} />
+                <LessonListItem
+                  key={lesson.id}
+                  lesson={lesson}
+                  onDelete={handleDelete}
+                />
               ))}
             </div>
           )}
@@ -53,6 +69,16 @@ export function StudioLessonsView() {
       )}
 
       <NewLessonDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <DeleteLessonDialog
+        lessonId={deleteDialogState.lessonId ?? ""}
+        lessonTitle={deleteDialogState.lessonTitle ?? ""}
+        open={!!deleteDialogState.lessonId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteDialogState({ lessonId: null, lessonTitle: null });
+          }
+        }}
+      />
     </div>
   );
 }

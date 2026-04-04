@@ -1,9 +1,3 @@
-import { GROUP_ROLES, LESSON_STATUS } from "@squademy/shared";
-
-export type UserRole = (typeof GROUP_ROLES)[keyof typeof GROUP_ROLES];
-
-export type LessonStatus = (typeof LESSON_STATUS)[keyof typeof LESSON_STATUS];
-
 export type ExerciseType =
   | "multiple_choice"
   | "cloze"

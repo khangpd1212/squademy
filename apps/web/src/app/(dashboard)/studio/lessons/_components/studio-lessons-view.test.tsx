@@ -14,6 +14,10 @@ jest.mock("@/hooks/api/use-lesson-queries", () => ({
     isError: false,
     reset: jest.fn(),
   })),
+  useDeleteLesson: jest.fn(() => ({
+    mutateAsync: jest.fn(),
+    isPending: false,
+  })),
 }));
 
 jest.mock("@/hooks/api/use-group-queries", () => ({

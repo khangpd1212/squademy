@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { ResourceOwnerGuard } from "../common/guards/resource-owner.guard";
 import { LessonsController } from "./lessons.controller";
 import type { LessonsService } from "./lessons.service";
 
@@ -8,6 +9,22 @@ describe("LessonsController", () => {
     const guards = Reflect.getMetadata("__guards__", LessonsController);
     expect(guards).toBeDefined();
     expect(guards).toContain(JwtAuthGuard);
+  });
+
+  it("has ResourceOwnerGuard on submit method", () => {
+    const submitGuards = Reflect.getMetadata(
+      "__guards__",
+      LessonsController.prototype.submit,
+    );
+    expect(submitGuards).toContain(ResourceOwnerGuard);
+  });
+
+  it("has ResourceOwnerGuard on delete method", () => {
+    const deleteGuards = Reflect.getMetadata(
+      "__guards__",
+      LessonsController.prototype.delete,
+    );
+    expect(deleteGuards).toContain(ResourceOwnerGuard);
   });
 
   let controller: LessonsController;
@@ -21,6 +38,8 @@ describe("LessonsController", () => {
       findOneById: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      submit: jest.fn(),
+      deleteLesson: jest.fn(),
     } as unknown as jest.Mocked<LessonsService>;
 
     controller = new LessonsController(lessonsService);
@@ -156,6 +175,83 @@ describe("LessonsController", () => {
       await expect(
         controller.create(mockUser, { groupId: "group-99" }),
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe("PATCH /lessons/:id/submit (submit)", () => {
+    it("submits lesson for review and returns data", async () => {
+      const submittedLesson = {
+        id: "lesson-1",
+        title: "My Lesson",
+        content: null,
+        contentMarkdown: null,
+        status: "review",
+        groupId: "group-1",
+        authorId: "user-1",
+        updatedAt: new Date("2026-04-01"),
+      };
+      lessonsService.submit.mockResolvedValue(submittedLesson);
+
+      const result = await controller.submit("lesson-1");
+
+      expect(lessonsService.submit).toHaveBeenCalledWith("lesson-1");
+      expect(result).toEqual({ ok: true, data: submittedLesson });
+    });
+
+    it("propagates BadRequestException when status is invalid", async () => {
+      const { BadRequestException } = await import("@nestjs/common");
+      lessonsService.submit.mockRejectedValue(new BadRequestException());
+
+      await expect(controller.submit("lesson-1")).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe("DELETE /lessons/:id (delete)", () => {
+    it("deletes draft lesson and returns ok", async () => {
+      lessonsService.deleteLesson.mockResolvedValue(undefined);
+
+      const result = await controller.delete("lesson-1");
+
+      expect(lessonsService.deleteLesson).toHaveBeenCalledWith("lesson-1");
+      expect(result).toEqual({ ok: true });
+    });
+
+    it("deletes rejected lesson and returns ok", async () => {
+      lessonsService.deleteLesson.mockResolvedValue(undefined);
+
+      const result = await controller.delete("lesson-2");
+
+      expect(lessonsService.deleteLesson).toHaveBeenCalledWith("lesson-2");
+      expect(result).toEqual({ ok: true });
+    });
+
+    it("propagates BadRequestException when lesson is in review", async () => {
+      const { BadRequestException } = await import("@nestjs/common");
+      lessonsService.deleteLesson.mockRejectedValue(new BadRequestException());
+
+      await expect(controller.delete("lesson-1")).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it("propagates BadRequestException when lesson is published", async () => {
+      const { BadRequestException } = await import("@nestjs/common");
+      lessonsService.deleteLesson.mockRejectedValue(new BadRequestException());
+
+      await expect(controller.delete("lesson-3")).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it("propagates NotFoundException when lesson not found", async () => {
+      const { NotFoundException } = await import("@nestjs/common");
+      lessonsService.deleteLesson.mockRejectedValue(new NotFoundException());
+
+      await expect(controller.delete("lesson-x")).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

@@ -126,4 +126,55 @@ export class LessonsService {
       });
     }
   }
+
+  async submit(lessonId: string) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id: lessonId, isDeleted: false },
+    });
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+    if (lesson.status !== LESSON_STATUS.DRAFT && lesson.status !== LESSON_STATUS.REJECTED) {
+      throw new BadRequestException({ code: ErrorCode.LESSON_INVALID_STATUS_FOR_SUBMIT });
+    }
+
+    try {
+      return await this.prisma.lesson.update({
+        where: { id: lessonId },
+        data: { status: LESSON_STATUS.REVIEW },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          contentMarkdown: true,
+          status: true,
+          groupId: true,
+          authorId: true,
+          updatedAt: true,
+        },
+      });
+    } catch {
+      throw new BadRequestException({ code: ErrorCode.LESSON_SUBMIT_FAILED });
+    }
+  }
+
+  async deleteLesson(id: string) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id, isDeleted: false },
+    });
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+    if (lesson.status === LESSON_STATUS.REVIEW || lesson.status === LESSON_STATUS.PUBLISHED) {
+      throw new BadRequestException({ code: ErrorCode.LESSON_DELETE_NOT_ALLOWED });
+    }
+    try {
+      await this.prisma.lesson.update({
+        where: { id },
+        data: { isDeleted: true },
+      });
+    } catch {
+      throw new BadRequestException({ code: ErrorCode.LESSON_DELETE_FAILED });
+    }
+  }
 }
