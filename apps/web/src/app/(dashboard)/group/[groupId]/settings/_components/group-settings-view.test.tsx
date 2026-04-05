@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { GroupSettingsView } from "./group-settings-view";
+import { GROUP_ROLES } from "@squademy/shared";
 
 jest.mock("@/hooks/api/use-group-queries", () => ({
   useGroup: jest.fn(),
@@ -11,7 +12,7 @@ jest.mock("@/hooks/api/use-auth-queries", () => ({
 
 jest.mock("./group-settings-form", () => ({
   GroupSettingsForm: ({ isAdmin }: { isAdmin: boolean }) => (
-    <div>Group Settings Form ({isAdmin ? "admin" : "member"})</div>
+    <div>Group Settings Form ({isAdmin ? GROUP_ROLES.ADMIN : GROUP_ROLES.MEMBER})</div>
   ),
 }));
 
@@ -38,7 +39,7 @@ const baseGroup = {
   members: [
     {
       userId: "user-1",
-      role: "admin",
+      role: GROUP_ROLES.ADMIN,
       joinedAt: "2026-03-30T00:00:00.000Z",
       user: {
         displayName: "Admin",
@@ -79,7 +80,7 @@ describe("GroupSettingsView", () => {
         members: [
           {
             ...baseGroup.members[0],
-            role: "member",
+            role: GROUP_ROLES.MEMBER,
           },
         ],
       },

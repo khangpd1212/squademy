@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 import { NewLessonDialog } from "./new-lesson-dialog";
+import { GROUP_ROLES, LESSON_STATUS } from "@squademy/shared";
 
 const mockPush = jest.fn();
 
@@ -24,8 +25,8 @@ const { useCreateLesson } = jest.requireMock("@/hooks/api/use-lesson-queries") a
   useCreateLesson: jest.Mock;
 };
 
-const mockGroup1 = { id: "group-1", name: "IELTS Warriors", role: "member", memberCount: 3, createdAt: "" };
-const mockGroup2 = { id: "group-2", name: "TOEFL Squad", role: "member", memberCount: 2, createdAt: "" };
+const mockGroup1 = { id: "group-1", name: "IELTS Warriors", role: GROUP_ROLES.MEMBER, memberCount: 3, createdAt: "" };
+const mockGroup2 = { id: "group-2", name: "TOEFL Squad", role: GROUP_ROLES.MEMBER, memberCount: 2, createdAt: "" };
 
 function renderDialog(open = true) {
   const onOpenChange = jest.fn();
@@ -80,7 +81,7 @@ describe("NewLessonDialog", () => {
     const mutateAsync = jest.fn().mockResolvedValue({
       id: "lesson-new",
       title: "Untitled Lesson",
-      status: "draft",
+      status: LESSON_STATUS.DRAFT,
       groupId: "group-1",
     });
     useCreateLesson.mockReturnValue({

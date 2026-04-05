@@ -3,6 +3,7 @@ import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import type { JwtPayload } from "../common/decorators/current-user.decorator";
 import { MembersController } from "./members.controller";
 import type { MembersService } from "./members.service";
+import { GROUP_ROLES } from "@squademy/shared";
 
 describe("MembersController", () => {
   it("has JwtAuthGuard applied at controller level", () => {
@@ -28,7 +29,7 @@ describe("MembersController", () => {
     const rows = [
       {
         userId: "u1",
-        role: "admin",
+        role: GROUP_ROLES.ADMIN,
         joinedAt: new Date("2026-01-01"),
         user: {
           id: "u1",
@@ -49,14 +50,14 @@ describe("MembersController", () => {
   it("changes member role via service", async () => {
     const updated = {
       userId: "u2",
-      role: "editor",
+      role: GROUP_ROLES.EDITOR,
       user: { id: "u2", displayName: "B", email: "b@e.com", avatarUrl: null },
     };
     membersService.changeRole.mockResolvedValue(updated as never);
 
-    const result = await controller.changeRole("g1", "u2", { role: "editor" });
+    const result = await controller.changeRole("g1", "u2", { role: GROUP_ROLES.EDITOR  });
 
-    expect(membersService.changeRole).toHaveBeenCalledWith("g1", "u2", "editor");
+    expect(membersService.changeRole).toHaveBeenCalledWith("g1", "u2", GROUP_ROLES.EDITOR);
     expect(result).toEqual({ ok: true, data: updated });
   });
 

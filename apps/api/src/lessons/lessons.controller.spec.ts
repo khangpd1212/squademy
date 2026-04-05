@@ -3,6 +3,7 @@ import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { ResourceOwnerGuard } from "../common/guards/resource-owner.guard";
 import { LessonsController } from "./lessons.controller";
 import type { LessonsService } from "./lessons.service";
+import { LESSON_STATUS } from "@squademy/shared";
 
 describe("LessonsController", () => {
   it("has JwtAuthGuard applied at controller level", () => {
@@ -51,7 +52,7 @@ describe("LessonsController", () => {
         {
           id: "lesson-1",
           title: "My First Lesson",
-          status: "draft",
+          status: LESSON_STATUS.DRAFT,
           groupId: "group-1",
           updatedAt: new Date("2026-03-01T00:00:00.000Z"),
           group: { name: "IELTS Warriors" },
@@ -91,7 +92,7 @@ describe("LessonsController", () => {
         title: "My Lesson",
         content: { type: "doc", content: [] },
         contentMarkdown: "some text",
-        status: "draft",
+        status: LESSON_STATUS.DRAFT,
         groupId: "group-1",
         authorId: "user-1",
         updatedAt: new Date("2026-04-01"),
@@ -121,7 +122,7 @@ describe("LessonsController", () => {
         title: "Updated Title",
         content: { type: "doc", content: [] },
         contentMarkdown: "updated text",
-        status: "draft",
+        status: LESSON_STATUS.DRAFT,
         groupId: "group-1",
         authorId: "user-1",
         updatedAt: new Date("2026-04-01"),
@@ -155,7 +156,7 @@ describe("LessonsController", () => {
       const mockLesson = {
         id: "lesson-new",
         title: "Untitled Lesson",
-        status: "draft",
+        status: LESSON_STATUS.DRAFT,
         groupId: "group-1",
       };
       lessonsService.create.mockResolvedValue(mockLesson);
@@ -185,7 +186,7 @@ describe("LessonsController", () => {
         title: "My Lesson",
         content: null,
         contentMarkdown: null,
-        status: "review",
+        status: LESSON_STATUS.REVIEW,
         groupId: "group-1",
         authorId: "user-1",
         updatedAt: new Date("2026-04-01"),

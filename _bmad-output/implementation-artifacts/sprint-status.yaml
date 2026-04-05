@@ -67,12 +67,12 @@ development_status:
   3-3-markdown-file-import: done
   3-4-export-lesson: done
   3-5-submit-for-review-track-status: done
-  3-6-delete-lesson: review
+  3-6-delete-lesson: done
   epic-3-retrospective: optional
 
   # ── Epic 4: Editorial Review & Learning Path ──
-  epic-4: backlog
-  4-1-editor-review-queue-lesson-approval-rejection: backlog
+  epic-4: in-progress
+  4-1-editor-review-queue-lesson-approval-rejection: ready-for-dev
   4-2-line-level-comments-on-lessons: backlog
   4-3-published-lesson-view-learning-path: backlog
   4-4-content-moderation-soft-delete: backlog

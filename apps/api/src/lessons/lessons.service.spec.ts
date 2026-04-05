@@ -3,7 +3,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from "@nestjs/common";
-import { ErrorCode } from "@squademy/shared";
+import { ErrorCode, LESSON_STATUS } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { LessonsService } from "./lessons.service";
 
@@ -49,7 +49,7 @@ describe("LessonsService", () => {
         {
           id: "lesson-1",
           title: "Lesson A",
-          status: "published",
+          status: LESSON_STATUS.PUBLISHED,
           groupId: "group-1",
           updatedAt: new Date("2026-03-10"),
           group: { name: "IELTS Warriors" },
@@ -57,7 +57,7 @@ describe("LessonsService", () => {
         {
           id: "lesson-2",
           title: "Lesson B",
-          status: "draft",
+          status: LESSON_STATUS.DRAFT,
           groupId: "group-1",
           updatedAt: new Date("2026-03-05"),
           group: { name: "IELTS Warriors" },
@@ -101,7 +101,7 @@ describe("LessonsService", () => {
       title: "My Lesson",
       content: { type: "doc", content: [] },
       contentMarkdown: "some text",
-      status: "draft",
+      status: LESSON_STATUS.DRAFT,
       groupId: "group-1",
       authorId: "user-1",
       updatedAt: new Date("2026-04-01"),
@@ -160,7 +160,7 @@ describe("LessonsService", () => {
       title: "My Lesson",
       content: null,
       contentMarkdown: null,
-      status: "draft",
+      status: LESSON_STATUS.DRAFT,
       groupId: "group-1",
       authorId: "user-1",
       updatedAt: new Date("2026-04-01"),
@@ -209,7 +209,7 @@ describe("LessonsService", () => {
     it("throws ForbiddenException when lesson status is review", async () => {
       prisma.lesson.findFirst.mockResolvedValue({
         ...draftLesson,
-        status: "review",
+        status: LESSON_STATUS.REVIEW,
       });
 
       await expect(service.update("lesson-1", "user-1", {})).rejects.toThrow(
@@ -225,7 +225,7 @@ describe("LessonsService", () => {
     it("throws ForbiddenException when lesson status is published", async () => {
       prisma.lesson.findFirst.mockResolvedValue({
         ...draftLesson,
-        status: "published",
+        status: LESSON_STATUS.PUBLISHED,
       });
 
       await expect(service.update("lesson-1", "user-1", {})).rejects.toThrow(
@@ -241,11 +241,11 @@ describe("LessonsService", () => {
     it("allows update when status is rejected", async () => {
       prisma.lesson.findFirst.mockResolvedValue({
         ...draftLesson,
-        status: "rejected",
+        status: LESSON_STATUS.REJECTED,
       });
       prisma.lesson.update.mockResolvedValue({
         ...draftLesson,
-        status: "rejected",
+        status: LESSON_STATUS.REJECTED,
         title: "Fixed",
       });
 
@@ -277,7 +277,7 @@ describe("LessonsService", () => {
       const mockLesson = {
         id: "lesson-new",
         title: "Untitled Lesson",
-        status: "draft",
+        status: LESSON_STATUS.DRAFT,
         groupId: "group-1",
       };
       prisma.lesson.create.mockResolvedValue(mockLesson);
@@ -295,7 +295,7 @@ describe("LessonsService", () => {
           authorId: "user-1",
           groupId: "group-1",
           title: "Untitled Lesson",
-          status: "draft",
+          status: LESSON_STATUS.DRAFT,
         },
         select: { id: true, title: true, status: true, groupId: true },
       });
@@ -368,7 +368,7 @@ describe("LessonsService", () => {
       title: "My Lesson",
       content: null,
       contentMarkdown: null,
-      status: "draft",
+      status: LESSON_STATUS.DRAFT,
       groupId: "group-1",
       authorId: "user-1",
       updatedAt: new Date("2026-04-01"),
@@ -377,7 +377,7 @@ describe("LessonsService", () => {
 
     it("updates status from draft to review", async () => {
       prisma.lesson.findFirst.mockResolvedValue(draftLesson);
-      const updatedLesson = { ...draftLesson, status: "review" };
+      const updatedLesson = { ...draftLesson, status: LESSON_STATUS.REVIEW };
       prisma.lesson.update.mockResolvedValue(updatedLesson);
 
       const result = await service.submit("lesson-1");
@@ -387,16 +387,16 @@ describe("LessonsService", () => {
       });
       expect(prisma.lesson.update).toHaveBeenCalledWith({
         where: { id: "lesson-1" },
-        data: { status: "review" },
+        data: { status: LESSON_STATUS.REVIEW },
         select: expect.any(Object),
       });
-      expect(result.status).toBe("review");
+      expect(result.status).toBe(LESSON_STATUS.REVIEW);
     });
 
     it("updates status from rejected to review", async () => {
-      const rejectedLesson = { ...draftLesson, status: "rejected" };
+      const rejectedLesson = { ...draftLesson, status: LESSON_STATUS.REJECTED };
       prisma.lesson.findFirst.mockResolvedValue(rejectedLesson);
-      const updatedLesson = { ...draftLesson, status: "review" };
+      const updatedLesson = { ...draftLesson, status: LESSON_STATUS.REVIEW };
       prisma.lesson.update.mockResolvedValue(updatedLesson);
 
       const result = await service.submit("lesson-1");
@@ -404,16 +404,16 @@ describe("LessonsService", () => {
       expect(prisma.lesson.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "lesson-1" },
-          data: { status: "review" },
+          data: { status: LESSON_STATUS.REVIEW },
         }),
       );
-      expect(result.status).toBe("review");
+      expect(result.status).toBe(LESSON_STATUS.REVIEW);
     });
 
     it("throws BadRequestException when status is already review", async () => {
       prisma.lesson.findFirst.mockResolvedValue({
         ...draftLesson,
-        status: "review",
+        status: LESSON_STATUS.REVIEW,
       });
 
       await expect(service.submit("lesson-1")).rejects.toThrow(
@@ -427,7 +427,7 @@ describe("LessonsService", () => {
     it("throws BadRequestException when status is published", async () => {
       prisma.lesson.findFirst.mockResolvedValue({
         ...draftLesson,
-        status: "published",
+        status: LESSON_STATUS.PUBLISHED,
       });
 
       await expect(service.submit("lesson-1")).rejects.toThrow(

@@ -1,6 +1,6 @@
 # Story 3.6: Delete Draft Lesson
 
-Status: review
+Status: done
 
 ## Story
 

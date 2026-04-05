@@ -6,12 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { MyGroupItem } from "@/hooks/api/use-group-queries";
 import { cn } from "@/lib/utils";
+import { GROUP_ROLES, MemberRole } from "@squademy/shared";
 
-function getRoleBadgeClass(role: string) {
+function getRoleBadgeClass(role: MemberRole) {
   switch (role) {
-    case "admin":
+    case GROUP_ROLES.ADMIN:
       return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300";
-    case "editor":
+    case GROUP_ROLES.EDITOR:
       return "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300";
     default:
       return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";

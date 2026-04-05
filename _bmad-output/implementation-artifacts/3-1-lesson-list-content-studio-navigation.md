@@ -43,7 +43,7 @@ so that I can manage my contributions to the group curriculum in one place.
   - [x] Register `LessonsModule` in `app.module.ts` imports
   - [x] Create `lessons.service.ts`:
     - `findAllByAuthor(userId: string)` — `prisma.lesson.findMany({ where: { authorId: userId, isDeleted: false, group: { isDeleted: false } }, select: { id, title, status, groupId, updatedAt, group: { select: { name } } }, orderBy: { updatedAt: "desc" } })`
-    - `create(authorId: string, groupId: string)` — `prisma.lesson.create({ data: { authorId, groupId, title: "Untitled Lesson", status: "draft" } })` — returns `{ id, title, status, groupId }`
+    - `create(authorId: string, groupId: string)` — `prisma.lesson.create({ data: { authorId, groupId, title: "Untitled Lesson", status: LESSON_STATUS.DRAFT } })` — returns `{ id, title, status, groupId }`
   - [x] Create `lessons.controller.ts`:
     - `@Controller("lessons")` with global prefix `/api` (Nest globalPrefix)
     - `GET /lessons?author=me` → `@Get()` + `@UseGuards(JwtAuthGuard)` — extract `user.userId` via `@CurrentUser()`, call `findAllByAuthor(user.userId)`, return `{ ok: true, data: lessons }`
@@ -123,7 +123,7 @@ so that I can manage my contributions to the group curriculum in one place.
 The current `Lesson` model in `packages/database/prisma/schema.prisma` has these fields:
 
 ```
-id, groupId, authorId, title, content (Json?), status (default: "draft"),
+id, groupId, authorId, title, content (Json?), status (default: LESSON_STATUS.DRAFT),
 editorFeedback, isDeleted, createdAt, updatedAt
 ```
 
@@ -218,7 +218,7 @@ export class LessonsService {
         authorId,
         groupId,
         title: "Untitled Lesson",
-        status: "draft",
+        status: "LESSON_STATUS.DRAFT,
       },
       select: { id: true, title: true, status: true, groupId: true },
     });

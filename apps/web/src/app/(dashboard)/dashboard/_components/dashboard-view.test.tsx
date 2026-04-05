@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { DashboardView } from "./dashboard-view";
+import { GROUP_ROLES } from "@squademy/shared";
 
 const searchParamsMock = new URLSearchParams();
 
@@ -66,7 +67,7 @@ describe("DashboardView", () => {
           id: "group-1",
           name: "IELTS Warriors",
           description: null,
-          role: "member",
+          role: GROUP_ROLES.MEMBER,
           memberCount: 3,
           createdAt: "2026-03-30T00:00:00.000Z",
         },

@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 import { StudioLessonsView } from "./studio-lessons-view";
+import { LESSON_STATUS } from "@squademy/shared";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
@@ -31,7 +32,7 @@ const { useMyLessons } = jest.requireMock("@/hooks/api/use-lesson-queries") as {
 const mockLesson = {
   id: "lesson-1",
   title: "Introduction to IELTS",
-  status: "draft",
+  status: LESSON_STATUS.DRAFT,
   groupId: "group-1",
   updatedAt: new Date(Date.now() - 3600_000).toISOString(),
   group: { name: "IELTS Warriors" },
@@ -62,10 +63,10 @@ describe("StudioLessonsView", () => {
 
   it("renders all 4 status badges correctly", () => {
     const statuses = [
-      { status: "draft", label: "Draft" },
-      { status: "review", label: "In Review" },
-      { status: "published", label: "Published" },
-      { status: "rejected", label: "Rejected" },
+      { status: LESSON_STATUS.DRAFT, label: "Draft" },
+      { status: LESSON_STATUS.REVIEW, label: "In Review" },
+      { status: LESSON_STATUS.PUBLISHED, label: "Published" },
+      { status: LESSON_STATUS.REJECTED, label: "Rejected" },
     ];
 
     useMyLessons.mockReturnValue({

@@ -3,6 +3,7 @@ import { GroupAdminGuard } from "../common/guards/group-admin.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { GroupsController } from "./groups.controller";
 import type { GroupsService } from "./groups.service";
+import { GROUP_ROLES } from "@squademy/shared";
 
 describe("GroupsController", () => {
   it("has JwtAuthGuard applied at controller level", () => {
@@ -44,7 +45,7 @@ describe("GroupsController", () => {
         id: "group-1",
         name: "IELTS Warriors",
         description: "Desc",
-        role: "admin",
+        role: GROUP_ROLES.ADMIN,
         memberCount: 3,
         createdAt: "2026-03-30T00:00:00.000Z",
       },
@@ -63,7 +64,7 @@ describe("GroupsController", () => {
           id: "group-1",
           name: "IELTS Warriors",
           description: "Desc",
-          role: "admin",
+          role: GROUP_ROLES.ADMIN,
           memberCount: 3,
           createdAt: "2026-03-30T00:00:00.000Z",
         },

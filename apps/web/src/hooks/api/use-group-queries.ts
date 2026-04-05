@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/api-error";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
+import { MemberRole } from "@squademy/shared";
 
 export type GroupDetail = {
   id: string;
@@ -28,7 +29,7 @@ export type MyGroupItem = {
   id: string;
   name: string;
   description: string | null;
-  role: string;
+  role: MemberRole;
   memberCount: number;
   createdAt: string;
 };

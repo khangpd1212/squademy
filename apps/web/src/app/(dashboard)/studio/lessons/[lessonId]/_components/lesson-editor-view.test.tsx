@@ -2,6 +2,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 import { LessonEditorView } from "./lesson-editor-view";
+import { LESSON_STATUS } from "@squademy/shared";
 
 const updateLessonMock = { mutate: jest.fn(), isPending: false };
 const submitLessonMock = { mutate: jest.fn(), isPending: false };
@@ -36,7 +37,7 @@ const mockLesson = {
   title: "My Lesson Title",
   content: { type: "doc", content: [] },
   contentMarkdown: "some text",
-  status: "draft",
+  status: LESSON_STATUS.DRAFT,
   groupId: "group-1",
   authorId: "user-1",
   updatedAt: new Date().toISOString(),
@@ -80,7 +81,7 @@ describe("LessonEditorView", () => {
 
   it("editor is read-only when lesson status is review", async () => {
     useLesson.mockReturnValue({
-      data: { ...mockLesson, status: "review" },
+      data: { ...mockLesson, status: LESSON_STATUS.REVIEW },
       isLoading: false,
       isError: false,
     });
@@ -96,7 +97,7 @@ describe("LessonEditorView", () => {
 
   it("editor is read-only when lesson status is published", () => {
     useLesson.mockReturnValue({
-      data: { ...mockLesson, status: "published" },
+      data: { ...mockLesson, status: LESSON_STATUS.PUBLISHED },
       isLoading: false,
       isError: false,
     });
@@ -137,7 +138,7 @@ describe("LessonEditorView", () => {
 
     it("does not show Submit for Review button when status is review", async () => {
       useLesson.mockReturnValue({
-        data: { ...mockLesson, status: "review" },
+        data: { ...mockLesson, status: LESSON_STATUS.REVIEW },
         isLoading: false,
         isError: false,
       });
@@ -149,7 +150,7 @@ describe("LessonEditorView", () => {
 
     it("does not show Submit for Review button when status is published", async () => {
       useLesson.mockReturnValue({
-        data: { ...mockLesson, status: "published" },
+        data: { ...mockLesson, status: LESSON_STATUS.PUBLISHED },
         isLoading: false,
         isError: false,
       });
@@ -185,7 +186,7 @@ describe("LessonEditorView", () => {
   describe("resubmit for review", () => {
     it("shows Resubmit for Review button for rejected lessons", async () => {
       useLesson.mockReturnValue({
-        data: { ...mockLesson, status: "rejected" },
+        data: { ...mockLesson, status: LESSON_STATUS.REJECTED },
         isLoading: false,
         isError: false,
       });
@@ -205,7 +206,7 @@ describe("LessonEditorView", () => {
 
     it("calls submit mutation when Resubmit for Review is clicked", async () => {
       useLesson.mockReturnValue({
-        data: { ...mockLesson, status: "rejected" },
+        data: { ...mockLesson, status: LESSON_STATUS.REJECTED },
         isLoading: false,
         isError: false,
       });
@@ -221,7 +222,7 @@ describe("LessonEditorView", () => {
 
     it("shows submitting state when submit is pending for rejected lesson", async () => {
       useLesson.mockReturnValue({
-        data: { ...mockLesson, status: "rejected" },
+        data: { ...mockLesson, status: LESSON_STATUS.REJECTED },
         isLoading: false,
         isError: false,
       });
@@ -237,7 +238,7 @@ describe("LessonEditorView", () => {
   describe("status badge", () => {
     it("shows styled In Review badge when status is review", async () => {
       useLesson.mockReturnValue({
-        data: { ...mockLesson, status: "review" },
+        data: { ...mockLesson, status: LESSON_STATUS.REVIEW },
         isLoading: false,
         isError: false,
       });
@@ -257,26 +258,26 @@ describe("LessonEditorView", () => {
 
     it("shows styled Published badge when status is published", async () => {
       useLesson.mockReturnValue({
-        data: { ...mockLesson, status: "published" },
+        data: { ...mockLesson, status: LESSON_STATUS.PUBLISHED },
         isLoading: false,
         isError: false,
       });
 
       renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
 
-      expect(await screen.findByText("Published")).toBeInTheDocument();
+      expect(await screen.findByText(LESSON_STATUS.PUBLISHED)).toBeInTheDocument();
     });
 
     it("shows styled Rejected badge when status is rejected", async () => {
       useLesson.mockReturnValue({
-        data: { ...mockLesson, status: "rejected" },
+        data: { ...mockLesson, status: LESSON_STATUS.REJECTED },
         isLoading: false,
         isError: false,
       });
 
       renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
 
-      expect(await screen.findByText("Rejected")).toBeInTheDocument();
+      expect(await screen.findByText(LESSON_STATUS.REJECTED)).toBeInTheDocument();
     });
   });
 });
