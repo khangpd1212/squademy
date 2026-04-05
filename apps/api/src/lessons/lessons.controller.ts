@@ -5,8 +5,10 @@ import {
 } from "../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { ResourceOwnerGuard } from "../common/guards/resource-owner.guard";
+import { GroupEditorGuard } from "../common/guards/group-editor.guard";
 import { CreateLessonDto } from "./dto/create-lesson.dto";
 import { UpdateLessonDto } from "./dto/update-lesson.dto";
+import { RejectLessonDto } from "./dto/reject-lesson.dto";
 import { LessonsService } from "./lessons.service";
 
 @Controller("lessons")
@@ -60,5 +62,33 @@ export class LessonsController {
   async delete(@Param("id") id: string) {
     await this.lessonsService.deleteLesson(id);
     return { ok: true };
+  }
+
+  @Get("review-queue")
+  @UseGuards(JwtAuthGuard)
+  async findReviewQueue(@CurrentUser() user: JwtPayload) {
+    const lessons = await this.lessonsService.findReviewQueue(user.userId);
+    return { ok: true, data: lessons };
+  }
+
+  @Get("review/:id")
+  @UseGuards(GroupEditorGuard)
+  async findReviewDetail(@Param("id") id: string) {
+    const lesson = await this.lessonsService.findReviewDetail(id);
+    return { ok: true, data: lesson };
+  }
+
+  @Patch(":id/approve")
+  @UseGuards(GroupEditorGuard)
+  async approve(@Param("id") id: string) {
+    const lesson = await this.lessonsService.approveLesson(id);
+    return { ok: true, data: lesson };
+  }
+
+  @Patch(":id/reject")
+  @UseGuards(GroupEditorGuard)
+  async reject(@Param("id") id: string, @Body() dto: RejectLessonDto) {
+    const lesson = await this.lessonsService.rejectLesson(id, dto.feedback);
+    return { ok: true, data: lesson };
   }
 }

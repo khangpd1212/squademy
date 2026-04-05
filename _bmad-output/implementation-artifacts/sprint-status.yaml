@@ -72,7 +72,7 @@ development_status:
 
   # ── Epic 4: Editorial Review & Learning Path ──
   epic-4: in-progress
-  4-1-editor-review-queue-lesson-approval-rejection: ready-for-dev
+  4-1-editor-review-queue-lesson-approval-rejection: review
   4-2-line-level-comments-on-lessons: backlog
   4-3-published-lesson-view-learning-path: backlog
   4-4-content-moderation-soft-delete: backlog
@@ -80,8 +80,8 @@ development_status:
   epic-4-retrospective: optional
 
   # ── Epic 5: Practice Engine — Flashcard SRS & Quizzes ──
-  epic-5: backlog
-  5-1-flashcard-deck-management-anki-import: backlog
+  epic-5: in-progress
+  5-1-flashcard-deck-management-anki-import: in-progress
   5-2-flashcard-practice-session-swipe-ui-offline-first: backlog
   5-3-spaced-repetition-scheduling-sm-2: backlog
   5-4-quiz-completion: backlog

@@ -31,6 +31,11 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.LESSON_NOT_EDITABLE]: "Lesson cannot be edited in its current status.",
   [ErrorCode.LESSON_DELETE_FAILED]: "Failed to delete lesson. Please try again.",
   [ErrorCode.LESSON_DELETE_NOT_ALLOWED]: "You cannot delete a lesson that is under review or published.",
+  [ErrorCode.FLASHCARD_DECK_NOT_FOUND]: "Flashcard deck not found.",
+  [ErrorCode.FLASHCARD_CARD_NOT_FOUND]: "Flashcard card not found.",
+  [ErrorCode.FLASHCARD_CREATE_FAILED]: "Failed to create flashcard. Please try again.",
+  [ErrorCode.FLASHCARD_DELETE_FAILED]: "Failed to delete flashcard. Please try again.",
+  [ErrorCode.FLASHCARD_IMPORT_FAILED]: "Failed to import Anki deck. Please try again.",
 };
 
 export function getErrorMessage(code: string): string {

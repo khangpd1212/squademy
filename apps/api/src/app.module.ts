@@ -9,6 +9,7 @@ import { GroupsModule } from "./groups/groups.module";
 import { MembersModule } from "./members/members.module";
 import { InvitationsModule } from "./invitations/invitations.module";
 import { LessonsModule } from "./lessons/lessons.module";
+import { FlashcardsModule } from "./flashcards/flashcards.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { LessonsModule } from "./lessons/lessons.module";
     MembersModule,
     InvitationsModule,
     LessonsModule,
+    FlashcardsModule,
   ],
   providers: [
     {

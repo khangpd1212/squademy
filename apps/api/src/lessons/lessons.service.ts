@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { ErrorCode, LESSON_STATUS } from "@squademy/shared";
+import { ErrorCode, GROUP_ROLES, LESSON_STATUS } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateLessonDto } from "./dto/update-lesson.dto";
 
@@ -175,6 +175,104 @@ export class LessonsService {
       });
     } catch {
       throw new BadRequestException({ code: ErrorCode.LESSON_DELETE_FAILED });
+    }
+  }
+
+  async findReviewQueue(userId: string) {
+    const memberships = await this.prisma.groupMember.findMany({
+      where: {
+        userId,
+        isDeleted: false,
+        role: { in: [GROUP_ROLES.EDITOR, GROUP_ROLES.ADMIN] },
+      },
+      select: { groupId: true },
+    });
+    const groupIds = memberships.map((m) => m.groupId);
+    if (groupIds.length === 0) return [];
+
+    return this.prisma.lesson.findMany({
+      where: {
+        groupId: { in: groupIds },
+        status: LESSON_STATUS.REVIEW,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        createdAt: true,
+        author: { select: { displayName: true, fullName: true } },
+        group: { select: { name: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
+  async findReviewDetail(lessonId: string) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id: lessonId, isDeleted: false },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        contentMarkdown: true,
+        status: true,
+        groupId: true,
+        authorId: true,
+        updatedAt: true,
+        author: { select: { displayName: true, fullName: true } },
+        group: { select: { name: true } },
+      },
+    });
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+    return lesson;
+  }
+
+  async approveLesson(id: string) {
+    try {
+      const updated = await this.prisma.lesson.update({
+        where: { id, isDeleted: false, status: LESSON_STATUS.REVIEW },
+        data: { status: LESSON_STATUS.PUBLISHED },
+        select: { id: true, title: true, status: true, groupId: true, authorId: true },
+      });
+      return updated;
+    } catch (err) {
+      if (err instanceof Error && "code" in err && (err as { code: string }).code === "P2025") {
+        const lesson = await this.prisma.lesson.findFirst({
+          where: { id, isDeleted: false },
+          select: { status: true },
+        });
+        if (!lesson) {
+          throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+        }
+        throw new BadRequestException({ code: ErrorCode.LESSON_NOT_IN_REVIEW });
+      }
+      throw new BadRequestException({ code: ErrorCode.LESSON_APPROVE_FAILED });
+    }
+  }
+
+  async rejectLesson(id: string, feedback: string) {
+    try {
+      const updated = await this.prisma.lesson.update({
+        where: { id, isDeleted: false, status: LESSON_STATUS.REVIEW },
+        data: { status: LESSON_STATUS.REJECTED, editorFeedback: feedback },
+        select: { id: true, title: true, status: true, groupId: true, authorId: true, editorFeedback: true },
+      });
+      return updated;
+    } catch (err) {
+      if (err instanceof Error && "code" in err && (err as { code: string }).code === "P2025") {
+        const lesson = await this.prisma.lesson.findFirst({
+          where: { id, isDeleted: false },
+          select: { status: true },
+        });
+        if (!lesson) {
+          throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+        }
+        throw new BadRequestException({ code: ErrorCode.LESSON_NOT_IN_REVIEW });
+      }
+      throw new BadRequestException({ code: ErrorCode.LESSON_REJECT_FAILED });
     }
   }
 }

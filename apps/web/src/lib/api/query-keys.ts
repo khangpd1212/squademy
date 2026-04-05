@@ -19,5 +19,6 @@ export const queryKeys = {
   lessons: {
     myLessons: ["lessons", "my"] as const,
     detail: (id: string) => ["lessons", id] as const,
+    reviewQueue: ["lessons", "review"] as const,
   },
 } as const;

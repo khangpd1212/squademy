@@ -170,3 +170,106 @@ export function useDeleteLesson() {
     },
   });
 }
+
+export type ReviewQueueItem = {
+  id: string;
+  title: string;
+  status: LessonStatus;
+  createdAt: string;
+  author: { displayName: string | null; fullName: string | null };
+  group: { name: string };
+};
+
+export type ReviewLessonDetail = {
+  id: string;
+  title: string;
+  content: Record<string, unknown> | null;
+  contentMarkdown: string | null;
+  status: LessonStatus;
+  groupId: string;
+  authorId: string;
+  updatedAt: string;
+  author: { displayName: string | null; fullName: string | null };
+  group: { name: string };
+};
+
+export function useReviewQueue() {
+  return useQuery({
+    queryKey: queryKeys.lessons.reviewQueue,
+    queryFn: async () => {
+      const result = await apiRequest<ReviewQueueItem[]>("/lessons/review-queue");
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to fetch review queue",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+  });
+}
+
+export function useReviewLesson(lessonId: string) {
+  return useQuery({
+    queryKey: ["lessons", "review", lessonId] as const,
+    queryFn: async () => {
+      const result = await apiRequest<ReviewLessonDetail>(`/lessons/review/${lessonId}`);
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to fetch lesson for review",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    enabled: !!lessonId,
+  });
+}
+
+export function useApproveLesson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      const result = await apiRequest(`/lessons/${lessonId}/approve`, {
+        method: "PATCH",
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to approve lesson",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.lessons.reviewQueue });
+    },
+  });
+}
+
+export function useRejectLesson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lessonId, feedback }: { lessonId: string; feedback: string }) => {
+      const result = await apiRequest(`/lessons/${lessonId}/reject`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedback }),
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to reject lesson",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.lessons.reviewQueue });
+    },
+  });
+}
