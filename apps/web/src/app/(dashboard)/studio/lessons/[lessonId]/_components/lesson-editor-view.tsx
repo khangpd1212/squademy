@@ -133,6 +133,12 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   const handleSetEditor = (editor: Editor | null) => setEditorInstance(editor);
 
   const handleSubmit = () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    if (editorInstance) {
+      triggerSave(editorInstance);
+    }
     queryClient.setQueryData(
       queryKeys.lessons.detail(lessonId),
       (old: LessonDetail | undefined) =>

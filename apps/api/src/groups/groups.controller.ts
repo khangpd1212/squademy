@@ -8,7 +8,10 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { CurrentUser, JwtPayload } from "../common/decorators/current-user.decorator";
+import {
+  CurrentUser,
+  JwtPayload,
+} from "../common/decorators/current-user.decorator";
 import { GroupAdminGuard } from "../common/guards/group-admin.guard";
 import { GroupMemberGuard } from "../common/guards/group-member.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
@@ -23,10 +26,7 @@ export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
   @Post()
-  async create(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: CreateGroupDto,
-  ) {
+  async create(@CurrentUser() user: JwtPayload, @Body() dto: CreateGroupDto) {
     const group = await this.groupsService.create(user.userId, dto);
     return { ok: true, data: group };
   }
@@ -35,6 +35,12 @@ export class GroupsController {
   async findMine(@CurrentUser() user: JwtPayload) {
     const groups = await this.groupsService.findMyGroups(user.userId);
     return { ok: true, data: groups };
+  }
+
+  @Post("join")
+  async join(@CurrentUser() user: JwtPayload, @Body() dto: JoinGroupDto) {
+    const group = await this.groupsService.join(user.userId, dto.inviteCode);
+    return { ok: true, data: group };
   }
 
   @Get(":id")
@@ -48,15 +54,6 @@ export class GroupsController {
   @UseGuards(GroupAdminGuard)
   async update(@Param("id") id: string, @Body() dto: UpdateGroupDto) {
     const group = await this.groupsService.update(id, dto);
-    return { ok: true, data: group };
-  }
-
-  @Post("join")
-  async join(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: JoinGroupDto,
-  ) {
-    const group = await this.groupsService.join(user.userId, dto.inviteCode);
     return { ok: true, data: group };
   }
 

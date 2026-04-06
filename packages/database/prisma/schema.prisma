@@ -27,6 +27,7 @@ model User {
   sentInvitations     GroupInvitation[]   @relation("InvitedBy")
   receivedInvitations GroupInvitation[]   @relation("Invitee")
   lessons             Lesson[]
+  flashcardDecks      FlashcardDeck[]
 
   @@map("users")
 }
@@ -116,4 +117,38 @@ model Exercise {
   lesson Lesson? @relation(fields: [lessonId], references: [id])
 
   @@map("exercises")
+}
+
+model FlashcardDeck {
+  id          String   @id @default(cuid())
+  title       String
+  authorId    String   @map("author_id")
+  status      String   @default("draft")
+  cardCount   Int      @default(0) @map("card_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  author User           @relation(fields: [authorId], references: [id])
+  cards  FlashcardCard[]
+
+  @@map("flashcard_decks")
+}
+
+model FlashcardCard {
+  id              String   @id @default(cuid())
+  deckId          String   @map("deck_id")
+  front           String
+  back            String?
+  pronunciation   String?
+  audioUrl        String?  @map("audio_url")
+  exampleSentence String?  @map("example_sentence")
+  imageUrl        String?  @map("image_url")
+  tags            Json?
+  extraNotes      String?  @map("extra_notes")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  deck FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@map("flashcard_cards")
 }

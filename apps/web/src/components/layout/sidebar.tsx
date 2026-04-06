@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
@@ -8,15 +9,15 @@ import {
   LayoutDashboard,
   Mail,
   MessageSquare,
-  PenTool,
   Plus,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+const navItems: { title: string; href: string; icon?: React.ComponentType<{ className?: string }>; iconSrc?: string }[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Lesson Studio", href: "/studio/lessons", icon: PenTool },
+  { title: "Flashcards", href: "/studio/flashcards", iconSrc: "/flash-cards.png" },
+  { title: "Lesson Studio", href: "/studio/lessons", icon: BookOpen },
   { title: "Exercise Studio", href: "/studio/exercises", icon: Dumbbell },
   { title: "Create Group", href: "/groups/create", icon: Plus },
   { title: "Invitations", href: "/invitations", icon: Mail },
@@ -50,7 +51,17 @@ export function Sidebar() {
                   : "text-sidebar-foreground"
               )}
             >
-              <Icon className="h-4 w-4" />
+              {item.iconSrc ? (
+                <Image
+                  src={item.iconSrc}
+                  alt={item.title}
+                  className="h-4 w-4"
+                  width={16}
+                  height={16}
+                />
+              ) : Icon ? (
+                <Icon className="h-4 w-4" />
+              ) : null}
               {item.title}
             </Link>
           );

@@ -72,8 +72,8 @@ development_status:
 
   # ── Epic 4: Editorial Review & Learning Path ──
   epic-4: in-progress
-  4-1-editor-review-queue-lesson-approval-rejection: review
-  4-2-line-level-comments-on-lessons: backlog
+  4-1-editor-review-queue-lesson-approval-rejection: done
+  4-2-line-level-comments-on-lessons: ready-for-dev
   4-3-published-lesson-view-learning-path: backlog
   4-4-content-moderation-soft-delete: backlog
   4-5-learning-path-roadmap-editor: backlog
