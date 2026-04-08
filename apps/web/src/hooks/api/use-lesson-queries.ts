@@ -255,7 +255,7 @@ export function useApproveLesson() {
       return result.data;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.lessons.reviewQueue });
+      await queryClient.invalidateQueries({ queryKey: ["lessons"] });
     },
   });
 }
@@ -279,7 +279,7 @@ export function useRejectLesson() {
       return result.data;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.lessons.reviewQueue });
+      await queryClient.invalidateQueries({ queryKey: ["lessons"] });
     },
   });
 }
