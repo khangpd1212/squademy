@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { Reply, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -174,7 +172,7 @@ export function CommentThread({
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Write a reply..."
-                className="min-h-[80px] text-sm"
+                className="min-h-20 text-sm"
                 maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
               />
               <div className="flex justify-between items-center">
@@ -206,7 +204,7 @@ export function CommentThread({
         </div>
       ))}
 
-      <div className="space-y-2 pt-2 border-t">
+      <div className="space-y-2 pt-2">
         {error && (
           <p className="text-xs text-destructive">{error}</p>
         )}
@@ -215,7 +213,7 @@ export function CommentThread({
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Write a comment..."
-          className="min-h-[80px] text-sm"
+          className="min-h-20 text-sm"
           maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
         />
         <div className="flex justify-between items-center">

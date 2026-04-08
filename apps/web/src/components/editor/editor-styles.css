@@ -41,6 +41,21 @@
     @apply bg-slate-800 text-slate-100 font-semibold p-4 border-b border-slate-700 text-sm sm:text-base;
   }
 
+  .markdown-content th:first-child {
+    @apply rounded-tl-xl;
+  }
+
+  .markdown-content th:last-child {
+    @apply rounded-tr-xl;
+  }
+
+  .markdown-content tbody tr:last-child td:first-child{
+    @apply rounded-bl-xl;
+  }
+  .markdown-content tbody tr:last-child td:last-child{
+    @apply rounded-br-xl;
+  }
+
   .markdown-content td {
     @apply p-4 border-b border-slate-700 bg-slate-900 text-sm sm:text-base text-slate-300 align-top;
   }

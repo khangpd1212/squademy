@@ -26,7 +26,7 @@ export function ParagraphCommentTrigger({
 
   return (
     <div className="group/paragraph relative">
-      <div className="absolute left-0 top-0 -translate-x-full pr-2 opacity-0 group-hover/paragraph:opacity-100 transition-opacity">
+      <div className="absolute left-0 top-0 -translate-x-full mr-1 opacity-0 group-hover/paragraph:opacity-100 transition-opacity">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(

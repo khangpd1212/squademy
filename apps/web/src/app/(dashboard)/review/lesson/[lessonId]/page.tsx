@@ -17,7 +17,7 @@ import { ArrowLeft, Calendar, Check, User, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MarkdownRenderer } from "@/components/markdown-renderer";
+import MarkdownRenderer from "@/components/markdown-renderer";
 import "@/components/editor/editor-styles.css";
 
 type PageProps = {

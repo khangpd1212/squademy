@@ -18,7 +18,7 @@ import { OutlinePanel } from "@/components/editor/outline-panel";
 import { SaveIndicator } from "./save-indicator";
 import { ParagraphCommentTrigger } from "@/components/lessons/paragraph-comment-trigger";
 import { cn } from "@/lib/utils";
-import { MarkdownRenderer } from "@/components/markdown-renderer";
+import MarkdownRenderer from "@/components/markdown-renderer";
 import "@/components/editor/editor-styles.css";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
