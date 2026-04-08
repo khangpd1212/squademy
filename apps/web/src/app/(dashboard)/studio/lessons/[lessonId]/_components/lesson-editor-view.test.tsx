@@ -9,14 +9,15 @@ const submitLessonMock = { mutate: jest.fn(), isPending: false };
 
 jest.mock("@/hooks/api/use-lesson-queries", () => ({
   useLesson: jest.fn(),
+  useLessonComments: jest.fn(() => ({ data: [] })),
   useUpdateLesson: jest.fn(() => updateLessonMock),
   useSubmitLesson: jest.fn(() => submitLessonMock),
 }));
 
-let capturedOnImportAction: ((content: Record<string, unknown>) => void) | undefined;
+let capturedOnImportAction: ((content: Record<string, unknown>, markdown?: string) => void) | undefined;
 
 jest.mock("@/components/editor/lesson-editor", () => ({
-  LessonEditor: ({ editable, onImportAction }: { editable: boolean; onImportAction?: (content: Record<string, unknown>) => void }) => {
+  LessonEditor: ({ editable, onImportAction }: { editable: boolean; onImportAction?: (content: Record<string, unknown>, markdown?: string) => void }) => {
     capturedOnImportAction = onImportAction;
     return (
       <div data-testid="lesson-editor" data-editable={String(editable)} />
@@ -26,6 +27,18 @@ jest.mock("@/components/editor/lesson-editor", () => ({
 
 jest.mock("@/components/editor/outline-panel", () => ({
   OutlinePanel: () => <div data-testid="outline-panel" />,
+}));
+
+jest.mock("@/components/markdown-renderer", () => ({
+  MarkdownRenderer: () => <div data-testid="markdown-renderer" />,
+}));
+
+jest.mock("@/components/lessons/paragraph-comment-trigger", () => ({
+  ParagraphCommentTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+jest.mock("./save-indicator", () => ({
+  SaveIndicator: () => <div data-testid="save-indicator" />,
 }));
 
 const { useLesson } = jest.requireMock("@/hooks/api/use-lesson-queries") as {
@@ -79,7 +92,7 @@ describe("LessonEditorView", () => {
     expect(titleInput).not.toHaveAttribute("readonly");
   });
 
-  it("editor is read-only when lesson status is review", async () => {
+  it("renders markdown renderer when lesson status is review", async () => {
     useLesson.mockReturnValue({
       data: { ...mockLesson, status: LESSON_STATUS.REVIEW },
       isLoading: false,
@@ -88,14 +101,13 @@ describe("LessonEditorView", () => {
 
     renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
 
-    const editor = screen.getByTestId("lesson-editor");
-    expect(editor).toHaveAttribute("data-editable", "false");
+    expect(screen.getByTestId("markdown-renderer")).toBeInTheDocument();
 
     const titleInput = await screen.findByDisplayValue("My Lesson Title");
     expect(titleInput).toHaveAttribute("readonly");
   });
 
-  it("editor is read-only when lesson status is published", () => {
+  it("renders markdown renderer when lesson status is published", () => {
     useLesson.mockReturnValue({
       data: { ...mockLesson, status: LESSON_STATUS.PUBLISHED },
       isLoading: false,
@@ -104,8 +116,7 @@ describe("LessonEditorView", () => {
 
     renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
 
-    const editor = screen.getByTestId("lesson-editor");
-    expect(editor).toHaveAttribute("data-editable", "false");
+    expect(screen.getByTestId("markdown-renderer")).toBeInTheDocument();
   });
 
   it("shows error state when lesson fetch fails", () => {
@@ -265,10 +276,10 @@ describe("LessonEditorView", () => {
 
       renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
 
-      expect(await screen.findByText(LESSON_STATUS.PUBLISHED)).toBeInTheDocument();
+      expect(await screen.findByText("Published")).toBeInTheDocument();
     });
 
-    it("shows styled Rejected badge when status is rejected", async () => {
+    it("shows styled Rejected badge when status is rejected", () => {
       useLesson.mockReturnValue({
         data: { ...mockLesson, status: LESSON_STATUS.REJECTED },
         isLoading: false,
@@ -277,7 +288,7 @@ describe("LessonEditorView", () => {
 
       renderWithQueryClient(<LessonEditorView lessonId="lesson-1" />);
 
-      expect(await screen.findByText(LESSON_STATUS.REJECTED)).toBeInTheDocument();
+      expect(screen.getByText("Rejected")).toBeInTheDocument();
     });
   });
 });

@@ -26,6 +26,16 @@ export type LessonDetail = {
   updatedAt: string;
 };
 
+export type PublishedLessonItem = {
+  id: string;
+  title: string;
+  contentMarkdown: string | null;
+  authorId: string;
+  createdAt: string;
+  updatedAt: string;
+  author: { displayName: string | null; fullName: string | null; avatarUrl: string | null };
+};
+
 type CreateLessonResult = {
   id: string;
   title: string;
@@ -271,5 +281,107 @@ export function useRejectLesson() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.lessons.reviewQueue });
     },
+  });
+}
+
+export type ReviewComment = {
+  id: string;
+  lessonId: string;
+  userId: string;
+  lineRef: string;
+  body: string;
+  parentId: string | null;
+  createdAt: string;
+  author: { displayName: string | null; fullName: string | null; avatarUrl: string | null };
+};
+
+export function useLessonComments(lessonId: string) {
+  return useQuery({
+    queryKey: queryKeys.lessons.comments(lessonId),
+    queryFn: async () => {
+      const result = await apiRequest<ReviewComment[]>(`/lessons/${lessonId}/comments`);
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to fetch comments",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    staleTime: 30_000,
+    enabled: !!lessonId,
+  });
+}
+
+type CreateCommentParams = {
+  lessonId: string;
+  lineRef: string;
+  body: string;
+  parentId?: string;
+};
+
+export function useCreateLessonComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lessonId, lineRef, body, parentId }: CreateCommentParams) => {
+      const result = await apiRequest<ReviewComment>(`/lessons/${lessonId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lineRef, body, parentId }),
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to create comment",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: (_data, { lessonId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.comments(lessonId) });
+    },
+  });
+}
+
+export function useDeleteLessonComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lessonId, commentId }: { lessonId: string; commentId: string }) => {
+      const result = await apiRequest(`/lessons/${lessonId}/comments/${commentId}`, {
+        method: "DELETE",
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to delete comment",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result;
+    },
+    onSuccess: async (_data, { lessonId }) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.lessons.comments(lessonId) });
+    },
+  });
+}
+
+export function useGroupPublishedLessons(groupId: string) {
+  return useQuery({
+    queryKey: queryKeys.lessons.publishedByGroup(groupId),
+    queryFn: async () => {
+      const result = await apiRequest<PublishedLessonItem[]>(`/lessons/group/${groupId}`);
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to fetch group lessons",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    staleTime: 60_000,
+    enabled: !!groupId,
   });
 }

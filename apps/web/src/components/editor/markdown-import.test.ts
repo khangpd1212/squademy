@@ -1,4 +1,4 @@
-import { parseMarkdownToTiptap, parseInline } from "./markdown-import";
+import { parseMarkdownToTiptap, parseInline, preprocessLiteralMarkdown, tiptapDocToHtml } from "./markdown-import";
 
 describe("markdown-import parser", () => {
   describe("parseInline", () => {
@@ -100,5 +100,122 @@ describe("markdown-import parser", () => {
       const doc = parseMarkdownToTiptap("| a | b |\n|---|---|\n| 1 | 2 |");
       expect(doc.content[0].type).toBe("paragraph");
     });
+  });
+
+  describe("literal mode", () => {
+    describe("parseInline in literal mode", () => {
+      it("returns text as-is without parsing marks", () => {
+        const nodes = parseInline("**bold** and *italic*", "literal");
+        expect(nodes).toEqual([{ type: "text", text: "**bold** and *italic*" }]);
+      });
+    });
+
+    describe("preprocessLiteralMarkdown", () => {
+      it("escapes bold markers", () => {
+        const result = preprocessLiteralMarkdown("This is **bold** text");
+        expect(result).toContain("\u200B**\u200Bbold\u200B**\u200B");
+      });
+
+      it("does not escape single asterisks", () => {
+        const result = preprocessLiteralMarkdown("This is *italic* text");
+        expect(result).toBe("This is *italic* text");
+      });
+
+      it("preserves underscores for italic detection", () => {
+        const result = preprocessLiteralMarkdown("This is _italic_ text");
+        expect(result).toBe("This is _italic_ text");
+      });
+
+      it("preserves blockquote markers", () => {
+        const result = preprocessLiteralMarkdown("> Quote text");
+        expect(result).toBe("> Quote text");
+      });
+
+      it("preserves list markers", () => {
+        const result = preprocessLiteralMarkdown("- Bullet item\n* Another item");
+        expect(result).toContain("- Bullet item");
+        expect(result).toContain("* Another item");
+      });
+
+      it("adds paragraph breaks between lines", () => {
+        const result = preprocessLiteralMarkdown("Line 1\nLine 2");
+        expect(result).toBe("Line 1\n\nLine 2");
+      });
+
+      it("handles mixed content", () => {
+        const result = preprocessLiteralMarkdown("**bold**\n\nNormal text with _italic_");
+        expect(result).toContain("\u200B**\u200B");
+        expect(result).toContain("_italic_");
+      });
+    });
+
+    describe("parseMarkdownToTiptap in literal mode", () => {
+      it("creates separate paragraphs for each line", () => {
+        const doc = parseMarkdownToTiptap("Line 1\nLine 2\nLine 3", "literal");
+        expect(doc.content).toHaveLength(3);
+        expect(doc.content[0].type).toBe("paragraph");
+        expect(doc.content[1].type).toBe("paragraph");
+        expect(doc.content[2].type).toBe("paragraph");
+      });
+
+      it("preserves markdown syntax as plain text", () => {
+        const doc = parseMarkdownToTiptap("**bold text**", "literal");
+        expect(doc.content[0].content).toEqual([
+          { type: "text", text: "\u200B**\u200Bbold text\u200B**\u200B" }
+        ]);
+      });
+
+      it("does not parse headings as headings", () => {
+        const doc = parseMarkdownToTiptap("# Heading text", "literal");
+        expect(doc.content).toHaveLength(1);
+        expect(doc.content[0].type).toBe("paragraph");
+      });
+
+      it("handles empty input gracefully", () => {
+        const doc = parseMarkdownToTiptap("", "literal");
+        expect(doc.content).toEqual([{ type: "paragraph" }]);
+      });
+
+      it("skips blank lines", () => {
+        const doc = parseMarkdownToTiptap("Text 1\n\n\nText 2", "literal");
+        expect(doc.content).toHaveLength(2);
+      });
+
+      it("detects blockquote with italic as card", () => {
+        const doc = parseMarkdownToTiptap("> _Nền tảng: Hãy thành thạo_", "literal");
+        expect(doc.content).toHaveLength(1);
+        expect(doc.content[0].type).toBe("blockquoteCard");
+      });
+
+      it("detects blockquote without italic as title", () => {
+        const doc = parseMarkdownToTiptap("> IELTS WRITING MASTERY", "literal");
+        expect(doc.content).toHaveLength(1);
+        expect(doc.content[0].type).toBe("blockquoteTitle");
+      });
+
+      it("detects blockquote with # as title", () => {
+        const doc = parseMarkdownToTiptap("> # IELTS WRITING MASTERY", "literal");
+        expect(doc.content).toHaveLength(1);
+        expect(doc.content[0].type).toBe("blockquoteTitle");
+      });
+    });
+
+    describe("tiptapDocToHtml (literal mode)", () => {
+      it("converts blockquoteCard with literal underscores", () => {
+        const doc = parseMarkdownToTiptap("> _Nền tảng_", "literal");
+        const html = tiptapDocToHtml(doc);
+        expect(html).toContain('data-blockquote="card"');
+        expect(html).toContain("_Nền tảng_");
+      });
+
+      it("converts blockquoteTitle with uppercase", () => {
+        const doc = parseMarkdownToTiptap("> IELTS WRITING", "literal");
+        const html = tiptapDocToHtml(doc);
+        expect(html).toContain('data-blockquote="title"');
+        expect(html).toContain("IELTS WRITING");
+      });
+    });
+
+    // Note: tiptapDocToViewHtml tests removed - view mode now uses react-markdown directly
   });
 });

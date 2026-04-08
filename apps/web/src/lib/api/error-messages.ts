@@ -13,5 +13,3 @@ export function useErrorMessage() {
     }
   };
 }
-
-export { getErrorMessage as getUserMessage } from "@squademy/shared";

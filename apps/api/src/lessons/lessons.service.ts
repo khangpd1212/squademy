@@ -7,6 +7,7 @@ import {
 import { ErrorCode, GROUP_ROLES, LESSON_STATUS } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateLessonDto } from "./dto/update-lesson.dto";
+import { CreateReviewCommentDto } from "./dto/create-review-comment.dto";
 
 @Injectable()
 export class LessonsService {
@@ -38,6 +39,27 @@ export class LessonsService {
     if (!lesson) {
       throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
     }
+
+    // Allow any group member to view published lessons
+    if (lesson.status === LESSON_STATUS.PUBLISHED) {
+      const membership = await this.prisma.groupMember.findFirst({
+        where: { userId, groupId: lesson.groupId, isDeleted: false },
+      });
+      if (membership) {
+        return {
+          id: lesson.id,
+          title: lesson.title,
+          content: lesson.content,
+          contentMarkdown: lesson.contentMarkdown,
+          status: lesson.status,
+          groupId: lesson.groupId,
+          authorId: lesson.authorId,
+          updatedAt: lesson.updatedAt,
+        };
+      }
+    }
+
+    // Original logic: only owner can view non-published lessons
     if (lesson.authorId !== userId) {
       throw new ForbiddenException({ code: ErrorCode.LESSON_NOT_OWNER });
     }
@@ -274,5 +296,81 @@ export class LessonsService {
       }
       throw new BadRequestException({ code: ErrorCode.LESSON_REJECT_FAILED });
     }
+  }
+
+  async getCommentsByLesson(lessonId: string) {
+    return this.prisma.reviewComment.findMany({
+      where: { lessonId },
+      include: {
+        author: { select: { displayName: true, fullName: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
+  async createComment(lessonId: string, userId: string, dto: CreateReviewCommentDto) {
+    if (dto.parentId) {
+      const parent = await this.prisma.reviewComment.findFirst({
+        where: { id: dto.parentId, lessonId },
+      });
+      if (!parent) {
+        throw new BadRequestException({ code: ErrorCode.REVIEW_COMMENT_NOT_FOUND });
+      }
+    }
+
+    try {
+      return await this.prisma.reviewComment.create({
+        data: {
+          lessonId,
+          userId,
+          lineRef: dto.lineRef,
+          body: dto.body,
+          parentId: dto.parentId,
+        },
+        include: {
+          author: { select: { displayName: true, fullName: true, avatarUrl: true } },
+        },
+      });
+    } catch {
+      throw new BadRequestException({ code: ErrorCode.REVIEW_COMMENT_CREATE_FAILED });
+    }
+  }
+
+  async deleteComment(commentId: string, userId: string, lessonId: string) {
+    const comment = await this.prisma.reviewComment.findFirst({
+      where: { id: commentId, lessonId },
+    });
+    if (!comment) {
+      throw new NotFoundException({ code: ErrorCode.REVIEW_COMMENT_NOT_FOUND });
+    }
+    if (comment.userId !== userId) {
+      throw new ForbiddenException({ code: ErrorCode.FORBIDDEN_NOT_COMMENT_OWNER });
+    }
+
+    try {
+      await this.prisma.reviewComment.delete({ where: { id: commentId } });
+    } catch {
+      throw new BadRequestException({ code: ErrorCode.REVIEW_COMMENT_DELETE_FAILED });
+    }
+  }
+
+  async findPublishedByGroup(groupId: string) {
+    return this.prisma.lesson.findMany({
+      where: {
+        groupId,
+        status: LESSON_STATUS.PUBLISHED,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        title: true,
+        contentMarkdown: true,
+        authorId: true,
+        createdAt: true,
+        updatedAt: true,
+        author: { select: { displayName: true, fullName: true, avatarUrl: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
   }
 }

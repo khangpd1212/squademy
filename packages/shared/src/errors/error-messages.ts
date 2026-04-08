@@ -36,6 +36,11 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.FLASHCARD_CREATE_FAILED]: "Failed to create flashcard. Please try again.",
   [ErrorCode.FLASHCARD_DELETE_FAILED]: "Failed to delete flashcard. Please try again.",
   [ErrorCode.FLASHCARD_IMPORT_FAILED]: "Failed to import Anki deck. Please try again.",
+  [ErrorCode.REVIEW_COMMENT_CREATE_FAILED]: "Failed to create comment. Please try again.",
+  [ErrorCode.REVIEW_COMMENT_NOT_FOUND]: "Comment not found.",
+  [ErrorCode.REVIEW_COMMENT_BODY_REQUIRED]: "Comment cannot be empty.",
+  [ErrorCode.REVIEW_COMMENT_DELETE_FAILED]: "Failed to delete comment. Please try again.",
+  [ErrorCode.FORBIDDEN_NOT_COMMENT_OWNER]: "You can only delete your own comments.",
 };
 
 export function getErrorMessage(code: string): string {

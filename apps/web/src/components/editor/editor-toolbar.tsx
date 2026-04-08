@@ -16,6 +16,8 @@ import {
   ImagePlus,
   Table,
   EyeOff,
+  Eye,
+  Pencil,
   FileDown,
   Download,
   ChevronDown,
@@ -68,6 +70,8 @@ type EditorToolbarProps = {
   contentMarkdown?: string;
   lessonTitle?: string;
   enableImport?: boolean;
+  isViewMode?: boolean;
+  onToggleViewMode?: () => void;
 };
 
 export function EditorToolbar({ 
@@ -76,6 +80,8 @@ export function EditorToolbar({
   contentMarkdown,
   lessonTitle,
   enableImport = true,
+  isViewMode = false,
+  onToggleViewMode,
 }: EditorToolbarProps) {
   const [showLinkPopover, setShowLinkPopover] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
@@ -431,6 +437,32 @@ export function EditorToolbar({
           Exporting {exportFormat}...
         </span>
       )}
+
+      <div className="ml-auto flex items-center gap-2">
+        {/* View/Edit Toggle */}
+        <button
+          type="button"
+          onClick={onToggleViewMode ?? (() => {})}
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+            isViewMode
+              ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              : "bg-violet-600 text-white hover:bg-violet-700 dark:bg-violet-700 dark:hover:bg-violet-600"
+          )}
+        >
+          {isViewMode ? (
+            <>
+              <Pencil className="h-4 w-4" />
+              Edit
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4" />
+              View
+            </>
+          )}
+        </button>
+      </div>
     </div>
     {exportError && (
       <p

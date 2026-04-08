@@ -20,5 +20,7 @@ export const queryKeys = {
     myLessons: ["lessons", "my"] as const,
     detail: (id: string) => ["lessons", id] as const,
     reviewQueue: ["lessons", "review"] as const,
+    comments: (lessonId: string) => ["lessons", lessonId, "comments"] as const,
+    publishedByGroup: (groupId: string) => ["lessons", "group", groupId, "published"] as const,
   },
 } as const;

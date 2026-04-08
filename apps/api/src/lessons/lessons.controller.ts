@@ -14,8 +14,10 @@ import {
 } from "../common/decorators/current-user.decorator";
 import { GroupEditorGuard } from "../common/guards/group-editor.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { LessonCommentGuard } from "../common/guards/lesson-comment.guard";
 import { ResourceOwnerGuard } from "../common/guards/resource-owner.guard";
 import { CreateLessonDto } from "./dto/create-lesson.dto";
+import { CreateReviewCommentDto } from "./dto/create-review-comment.dto";
 import { RejectLessonDto } from "./dto/reject-lesson.dto";
 import { UpdateLessonDto } from "./dto/update-lesson.dto";
 import { LessonsService } from "./lessons.service";
@@ -48,6 +50,12 @@ export class LessonsController {
   async findOne(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
     const lesson = await this.lessonsService.findOneById(id, user.userId);
     return { ok: true, data: lesson };
+  }
+
+  @Get("group/:groupId")
+  async findPublishedByGroup(@Param("groupId") groupId: string) {
+    const lessons = await this.lessonsService.findPublishedByGroup(groupId);
+    return { ok: true, data: lessons };
   }
 
   @Post()
@@ -92,5 +100,38 @@ export class LessonsController {
   async reject(@Param("id") id: string, @Body() dto: RejectLessonDto) {
     const lesson = await this.lessonsService.rejectLesson(id, dto.feedback);
     return { ok: true, data: lesson };
+  }
+
+  @Get(":lessonId/comments")
+  @UseGuards(LessonCommentGuard)
+  async findComments(@Param("lessonId") lessonId: string) {
+    const comments = await this.lessonsService.getCommentsByLesson(lessonId);
+    return { ok: true, data: comments };
+  }
+
+  @Post(":lessonId/comments")
+  @UseGuards(LessonCommentGuard)
+  async createComment(
+    @Param("lessonId") lessonId: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateReviewCommentDto,
+  ) {
+    const comment = await this.lessonsService.createComment(
+      lessonId,
+      user.userId,
+      dto,
+    );
+    return { ok: true, data: comment };
+  }
+
+  @Delete(":lessonId/comments/:commentId")
+  @UseGuards(LessonCommentGuard)
+  async deleteComment(
+    @Param("lessonId") lessonId: string,
+    @Param("commentId") commentId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    await this.lessonsService.deleteComment(commentId, user.userId, lessonId);
+    return { ok: true };
   }
 }

@@ -1,9 +1,15 @@
 /**
  * Client-side, dependency-free Markdown → Tiptap ProseMirror JSON parser.
  *
+ * Supports two modes:
+ * - "markdown" (default): parses markdown syntax (bold, italic, links, etc.)
+ * - "literal": treats all text as plain text, preserves markdown syntax as-is
+ *
  * Scope (AC 4): headings (#..###), bold, italic, unordered lists, ordered
  * lists, blockquote, links, paragraphs. Unknown syntax → paragraph fallback.
  */
+
+export type ParseMode = "markdown" | "literal";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,6 +30,8 @@ export type TiptapNode =
   | { type: "paragraph"; content?: TiptapTextNode[] }
   | { type: "heading"; attrs: { level: 1 | 2 | 3 }; content?: TiptapTextNode[] }
   | { type: "blockquote"; content?: TiptapNode[] }
+  | { type: "blockquoteCard"; content?: TiptapTextNode[] }
+  | { type: "blockquoteTitle"; content?: TiptapTextNode[] }
   | { type: "bulletList"; content?: TiptapNode[] }
   | { type: "orderedList"; attrs: { start: number }; content?: TiptapNode[] }
   | { type: "listItem"; content?: TiptapNode[] };
@@ -33,19 +41,68 @@ export type TiptapDoc = {
 };
 
 // ---------------------------------------------------------------------------
+// Literal mode preprocessing
+// ---------------------------------------------------------------------------
+
+/**
+ * Preprocesses markdown text for "literal" mode import.
+ * - Inserts zero-width spaces around ** (bold) to prevent parsing
+ * - Converts single newlines to paragraph breaks (double newlines)
+ *
+ * Note: _ is NOT escaped because we need to detect italic patterns
+ * for card-style rendering in blockquotes.
+ *
+ * This allows uploading markdown files while preserving the syntax characters
+ * as visible text in the editor.
+ */
+export function preprocessLiteralMarkdown(markdown: string): string {
+  const ZWSP = "\u200B";
+
+  const normalized = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+  const lines = normalized.split("\n");
+  const processedLines: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (trimmed === "") {
+      processedLines.push("");
+      continue;
+    }
+
+    let escaped = line;
+
+    escaped = escaped.replace(/\*\*/g, `${ZWSP}**${ZWSP}`);
+
+    processedLines.push(escaped);
+  }
+
+  return processedLines.join("\n\n");
+}
+
+// ---------------------------------------------------------------------------
 // Inline parser (bold, italic, links)
 // ---------------------------------------------------------------------------
 
 /**
  * Parses inline markdown marks within a single line of text.
  * Handles **bold**, *italic*, _italic_, [text](url), and combinations.
+ *
+ * In "literal" mode, returns the text as-is without parsing any marks.
  */
-export function parseInline(text: string): TiptapTextNode[] {
+export function parseInline(text: string, mode: ParseMode = "markdown"): TiptapTextNode[] {
+  if (mode === "literal") {
+    if (text.length === 0) return [];
+    return [{ type: "text", text }];
+  }
+
   const nodes: TiptapTextNode[] = [];
 
   // Pattern order matters: links first, then bold, then italic
+  // Using [\s\S] instead of . to match newlines for multi-line content
   const PATTERN =
-    /(\*\*(.+?)\*\*)|(\*(.+?)\*)|(_(.+?)_)|(\[([^\]]+)\]\(([^)]+)\))/g;
+    /(\*\*([\s\S]+?)\*\*)|(\*([\s\S]+?)\*)|(_([\s\S]+?)_)|(\[([^\]]+)\]\(([^)]+)\))/g;
 
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -122,12 +179,61 @@ function buildListItem(text: string): TiptapNode {
 /**
  * Convert raw Markdown string to Tiptap ProseMirror JSON (doc node).
  *
+ * @param markdown - The raw markdown content
+ * @param mode - "markdown" (default): parses markdown syntax
+ *               "literal": treats all text as plain text, preserves markdown syntax as-is
+ *               In literal mode, each line becomes a separate paragraph.
+ *
  * Performance: well under 50 ms for a 50 KB file on typical dev hardware.
  * Graceful fallback: any unrecognised syntax becomes a paragraph node, never throws.
  */
-export function parseMarkdownToTiptap(markdown: string): TiptapDoc {
-  const lines = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+export function parseMarkdownToTiptap(
+  markdown: string,
+  mode: ParseMode = "markdown",
+): TiptapDoc {
+  // In literal mode, preprocess to escape markdown syntax characters first
+  const processedMarkdown = mode === "literal" ? preprocessLiteralMarkdown(markdown) : markdown;
+
+  const lines = processedMarkdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
   const content: TiptapNode[] = [];
+
+  // In literal mode, treat everything as plain text - each non-blank line is a paragraph
+  if (mode === "literal") {
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed === "") continue;
+
+      // Detect blockquotes in literal mode
+      if (/^>\s?/.test(line)) {
+        const quoteContent = line.replace(/^>\s?/, "");
+        const hasItalic = /_\S/.test(quoteContent);
+
+        if (hasItalic) {
+          // Card style for quotes with italic text
+          content.push({
+            type: "blockquoteCard",
+            content: parseInline(quoteContent, "literal"),
+          });
+        } else {
+          // Title style for quotes without italic
+          content.push({
+            type: "blockquoteTitle",
+            content: parseInline(quoteContent, "literal"),
+          });
+        }
+        continue;
+      }
+
+      content.push({
+        type: "paragraph",
+        content: parseInline(trimmed, "literal"),
+      });
+    }
+    if (content.length === 0) {
+      content.push({ type: "paragraph" });
+    }
+    return { type: "doc", content };
+  }
 
   let i = 0;
 
@@ -215,4 +321,121 @@ export function parseMarkdownToTiptap(markdown: string): TiptapDoc {
   }
 
   return { type: "doc", content };
+}
+
+// ---------------------------------------------------------------------------
+// TiptapDoc to HTML converter (for literal mode)
+// ---------------------------------------------------------------------------
+
+function textNodeToHtml(node: TiptapTextNode): string {
+  let text = node.text ?? "";
+  text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  if (node.marks) {
+    for (const mark of node.marks) {
+      if (mark.type === "bold") {
+        text = `<strong>${text}</strong>`;
+      } else if (mark.type === "italic") {
+        text = `<em>${text}</em>`;
+      } else if (mark.type === "link" && mark.attrs?.href) {
+        const href = String(mark.attrs.href).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+        text = `<a href="${href}" target="_blank" rel="noreferrer noopener">${text}</a>`;
+      }
+    }
+  }
+
+  return text;
+}
+
+function nodeToHtml(node: TiptapNode): string {
+  switch (node.type) {
+    case "paragraph":
+      return `<p>${(node.content ?? []).map(textNodeToHtml).join("")}</p>`;
+    case "heading":
+      return `<h${node.attrs.level}>${(node.content ?? []).map(textNodeToHtml).join("")}</h${node.attrs.level}>`;
+    case "blockquote":
+      return `<blockquote>${(node.content ?? []).map(nodeToHtml).join("")}</blockquote>`;
+    case "blockquoteCard":
+      return `<div data-blockquote="card">${(node.content ?? []).map(textNodeToHtml).join("")}</div>`;
+    case "blockquoteTitle":
+      return `<h2 data-blockquote="title">${(node.content ?? []).map(textNodeToHtml).join("")}</h2>`;
+    case "bulletList":
+      return `<ul>${(node.content ?? []).map(nodeToHtml).join("")}</ul>`;
+    case "orderedList":
+      return `<ol>${(node.content ?? []).map(nodeToHtml).join("")}</ol>`;
+    case "listItem":
+      return `<li>${(node.content ?? []).map(nodeToHtml).join("")}</li>`;
+    default:
+      return "";
+  }
+}
+
+/**
+ * Converts literal markdown syntax to HTML for View mode rendering.
+ * Converts **text** to <strong>text</strong> and _text_ to <em>text</em>
+ * so Tiptap renders bold and italic correctly.
+ */
+function convertLiteralToHtml(text: string): string {
+  text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  text = text.replace(/_(.+?)_/g, "<em>$1</em>");
+  return text;
+}
+
+/**
+ * Converts TiptapDoc to HTML string for use with editor.setContent(html, 'html')
+ */
+export function tiptapDocToHtml(doc: TiptapDoc): string {
+  return doc.content.map(nodeToHtml).join("");
+}
+
+/**
+ * Converts TiptapDoc to HTML string with literal markdown converted to HTML.
+ * Use this for View mode rendering where we want proper styling.
+ */
+export function tiptapDocToViewHtml(doc: TiptapDoc): string {
+  return doc.content.map((node) => nodeToViewHtml(node)).join("");
+}
+
+function nodeToViewHtml(node: TiptapNode): string {
+  switch (node.type) {
+    case "paragraph":
+      return `<p>${(node.content ?? []).map(textNodeToViewHtml).join("")}</p>`;
+    case "heading":
+      return `<h${node.attrs.level}>${(node.content ?? []).map(textNodeToViewHtml).join("")}</h${node.attrs.level}>`;
+    case "blockquote":
+      return `<blockquote>${(node.content ?? []).map(nodeToViewHtml).join("")}</blockquote>`;
+    case "blockquoteCard":
+      return `<div data-blockquote="card">${(node.content ?? []).map(textNodeToViewHtml).join("")}</div>`;
+    case "blockquoteTitle":
+      return `<h2 data-blockquote="title">${(node.content ?? []).map(textNodeToViewHtml).join("")}</h2>`;
+    case "bulletList":
+      return `<ul>${(node.content ?? []).map(nodeToViewHtml).join("")}</ul>`;
+    case "orderedList":
+      return `<ol>${(node.content ?? []).map(nodeToViewHtml).join("")}</ol>`;
+    case "listItem":
+      return `<li>${(node.content ?? []).map(nodeToViewHtml).join("")}</li>`;
+    default:
+      return "";
+  }
+}
+
+function textNodeToViewHtml(node: TiptapTextNode): string {
+  let text = node.text ?? "";
+  text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  text = convertLiteralToHtml(text);
+
+  if (node.marks) {
+    for (const mark of node.marks) {
+      if (mark.type === "bold") {
+        text = `<strong>${text}</strong>`;
+      } else if (mark.type === "italic") {
+        text = `<em>${text}</em>`;
+      } else if (mark.type === "link" && mark.attrs?.href) {
+        const href = String(mark.attrs.href).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+        text = `<a href="${href}" target="_blank" rel="noreferrer noopener">${text}</a>`;
+      }
+    }
+  }
+
+  return text;
 }

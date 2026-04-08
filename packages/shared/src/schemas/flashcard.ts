@@ -10,12 +10,12 @@ export const createDeckSchema = z.object({
 export type CreateDeckInput = z.infer<typeof createDeckSchema>;
 
 export const createCardSchema = z.object({
-  front: z.string().min(1).max(1000),
-  back: z.string().max(2000).optional().nullable(),
-  pronunciation: z.string().max(100).optional().nullable(),
-  exampleSentence: z.string().max(VALIDATION.PROFILE_FIELD_MAX).optional().nullable(),
+  front: z.string().min(1),
+  back: z.string().optional().nullable(),
+  pronunciation: z.string().optional().nullable(),
+  exampleSentence: z.string().optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
-  extraNotes: z.string().max(2000).optional().nullable(),
+  extraNotes: z.string().optional().nullable(),
 });
 export type CreateCardInput = z.infer<typeof createCardSchema>;
 

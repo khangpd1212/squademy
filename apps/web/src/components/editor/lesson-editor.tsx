@@ -11,33 +11,34 @@ import TableRow from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "@tiptap/markdown";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./editor-styles.css";
 import { EditorToolbar } from "./editor-toolbar";
 import { AliveText } from "./extensions/alive-text";
-import { MarkdownImportDialog } from "./markdown-import-dialog";
-import { parseMarkdownToTiptap } from "./markdown-import";
 import { useState } from "react";
+import { parseMarkdownToTiptap, tiptapDocToHtml } from "./markdown-import";
 
 type LessonEditorProps = {
   content: Record<string, unknown> | null;
   contentMarkdown?: string;
   lessonTitle?: string;
   editable?: boolean;
-  onImportAction?: (content: Record<string, unknown>) => void;
+  onImportAction?: (content: Record<string, unknown>, markdown?: string) => void;
   ref?: Ref<Editor | null>;
 };
 
-export function LessonEditor({ 
-  content, 
-  contentMarkdown, 
+export function LessonEditor({
+  content,
+  contentMarkdown,
   lessonTitle,
-  editable = true, 
-  onImportAction, 
-  ref 
+  editable = true,
+  onImportAction,
+  ref,
 }: LessonEditorProps) {
-  const [showImportDialog, setShowImportDialog] = useState(false);
-  const [parsedDoc, setParsedDoc] = useState<ReturnType<typeof parseMarkdownToTiptap> | null>(null);
-  const [parseError, setParseError] = useState<string | null>(null);
+  const [isViewMode, setIsViewMode] = useState(false);
+  const [importedMarkdown, setImportedMarkdown] = useState<string | null>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -54,54 +55,64 @@ export function LessonEditor({
       TableHeader,
       Placeholder.configure({ placeholder: "Start writing your lesson..." }),
       AliveText,
+      Markdown.configure({
+        markedOptions: { gfm: true, breaks: false },
+      }),
     ],
     content: content ?? null,
-    editable,
+    contentType: "markdown",
+    editable: editable && !isViewMode,
   });
 
-  useImperativeHandle<Editor | null, Editor | null>(ref, () => editor, [editor]);
+  useImperativeHandle<Editor | null, Editor | null>(ref, () => editor, [
+    editor,
+  ]);
 
   const handleMarkdownSelected = (text: string) => {
-    try {
-      const doc = parseMarkdownToTiptap(text);
-      setParsedDoc(doc);
-      setParseError(null);
-      setShowImportDialog(true);
-    } catch (err) {
-      setParseError(err instanceof Error ? err.message : "Failed to parse markdown.");
-      setParsedDoc(null);
-      setShowImportDialog(true);
-    }
+    if (!editor) return;
+    const doc = parseMarkdownToTiptap(text, "literal");
+    const html = tiptapDocToHtml(doc);
+    editor.commands.setContent(html);
+    setImportedMarkdown(text);
+    onImportAction?.(editor.getJSON(), text);
   };
 
-  const handleImportConfirm = (doc: ReturnType<typeof parseMarkdownToTiptap>) => {
-    if (editor) {
-      editor.commands.setContent(doc);
-      onImportAction?.(editor.getJSON());
-      setShowImportDialog(false);
-      setParsedDoc(null);
-    }
+  const handleToggleViewMode = () => {
+    setIsViewMode((prev) => !prev);
   };
+
+  const getMarkdown = () => {
+    if (importedMarkdown) return importedMarkdown;
+    if (contentMarkdown) return contentMarkdown;
+    return editor?.getText() ?? "";
+  };
+
+  const markdownToView = getMarkdown();
 
   return (
     <div className="flex flex-col relative">
       {editor && (
         <EditorToolbar
           editor={editor}
-          onMarkdownSelected={editable ? handleMarkdownSelected : undefined}
+          onMarkdownSelected={editable && !isViewMode ? handleMarkdownSelected : undefined}
           contentMarkdown={contentMarkdown}
           lessonTitle={lessonTitle}
-          enableImport={editable}
+          enableImport={editable && !isViewMode}
+          isViewMode={isViewMode}
+          onToggleViewMode={handleToggleViewMode}
         />
       )}
-      <EditorContent editor={editor} className="flex-1" />
 
-      {showImportDialog && (
-        <MarkdownImportDialog
-          parsedDoc={parsedDoc}
-          parseError={parseError}
-          onCancel={() => setShowImportDialog(false)}
-          onConfirm={handleImportConfirm}
+      {isViewMode ? (
+        <div className="editor-content view-mode flex-1 p-4">
+          <div className="markdown-content">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdownToView}</ReactMarkdown>
+          </div>
+        </div>
+      ) : (
+        <EditorContent
+          editor={editor}
+          className="editor-content flex-1"
         />
       )}
     </div>

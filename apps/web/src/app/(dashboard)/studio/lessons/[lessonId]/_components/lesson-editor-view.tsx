@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { type Editor } from "@tiptap/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { LESSON_STATUS } from "@squademy/shared";
 import {
   useLesson,
+  useLessonComments,
   useUpdateLesson,
   useSubmitLesson,
   LessonDetail,
@@ -15,7 +16,10 @@ import { STATUS_STYLES } from "@/lib/status-styles";
 import { LessonEditor } from "@/components/editor/lesson-editor";
 import { OutlinePanel } from "@/components/editor/outline-panel";
 import { SaveIndicator } from "./save-indicator";
+import { ParagraphCommentTrigger } from "@/components/lessons/paragraph-comment-trigger";
 import { cn } from "@/lib/utils";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
+import "@/components/editor/editor-styles.css";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 const SUBMIT_UI = {
@@ -32,6 +36,7 @@ type LessonEditorViewProps = {
 
 export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   const { data: lesson, isLoading, isError } = useLesson(lessonId);
+  const { data: comments = [] } = useLessonComments(lessonId);
   const updateLesson = useUpdateLesson();
   const submitLesson = useSubmitLesson();
   const queryClient = useQueryClient();
@@ -39,6 +44,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
+  const [rawMarkdown, setRawMarkdown] = useState<string>("");
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef = useRef(title);
@@ -58,8 +64,10 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
     if (lesson && !initializedRef.current) {
       initializedRef.current = true;
       const lessonTitle = lesson.title;
+      const lessonMarkdown = lesson.contentMarkdown ?? "";
       queueMicrotask(() => {
         setTitle(lessonTitle);
+        setRawMarkdown(lessonMarkdown);
         titleRef.current = lessonTitle;
       });
     }
@@ -76,26 +84,31 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
     };
   }, [queryClient]);
 
-  const triggerSave = (editor: Editor) => {
-    setSaveStatus("saving");
-    updateLessonRef.current.mutate(
-      {
-        lessonId: lessonIdRef.current,
-        data: {
-          content: editor.getJSON(),
-          contentMarkdown: editor.getText(),
-          title: titleRef.current,
+  const triggerSave = useCallback(
+    (editor: Editor, markdown?: string) => {
+      const markdownToSave = markdown ?? rawMarkdown;
+      if (!markdownToSave) return;
+      setSaveStatus("saving");
+      updateLessonRef.current.mutate(
+        {
+          lessonId: lessonIdRef.current,
+          data: {
+            content: editor.getJSON(),
+            contentMarkdown: markdownToSave,
+            title: titleRef.current,
+          },
         },
-      },
-      {
-        onSuccess: () => {
-          setSaveStatus("saved");
-          setTimeout(() => setSaveStatus("idle"), EDITOR_DEBOUNCE_MS);
+        {
+          onSuccess: () => {
+            setSaveStatus("saved");
+            setTimeout(() => setSaveStatus("idle"), EDITOR_DEBOUNCE_MS);
+          },
+          onError: () => setSaveStatus("error"),
         },
-        onError: () => setSaveStatus("error"),
-      },
-    );
-  };
+      );
+    },
+    [rawMarkdown],
+  );
 
   useEffect(() => {
     if (!editorInstance) return;
@@ -107,7 +120,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
     return () => {
       editorInstance.off("update", handler);
     };
-  }, [editorInstance]);
+  }, [editorInstance, rawMarkdown, triggerSave]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -121,7 +134,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editorInstance]);
+  }, [editorInstance, triggerSave]);
 
   const handleTitleBlur = () => {
     if (!editorInstance || !lesson) return;
@@ -154,6 +167,61 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   const canSubmit = lesson?.status === LESSON_STATUS.DRAFT;
   const canResubmit = lesson?.status === LESSON_STATUS.REJECTED;
   const statusStyle = lesson ? STATUS_STYLES[lesson.status] : null;
+
+  const contentRef = useMemo(() => {
+    if (!lesson?.contentMarkdown) return null;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(lesson?.contentMarkdown, "text/html");
+    const elements = doc.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li, blockquote, pre");
+    return Array.from(elements).map((el, idx) => {
+      el.setAttribute("data-line-ref", `paragraph-${idx}`);
+      return {
+        lineRef: `paragraph-${idx}`,
+        html: el.outerHTML,
+      };
+    });
+  }, [lesson?.contentMarkdown]);
+
+  const getCommentsForLine = (lineRef: string) =>
+    comments.filter((c) => c.lineRef === lineRef);
+
+  const renderContent = () => {
+    if (isReadOnly && contentRef && contentRef.length > 0) {
+      return (
+        <div id="lesson-content-container" className="prose prose-sm max-w-none dark:prose-invert">
+          {contentRef.map(({ lineRef, html }) => {
+            const lineComments = getCommentsForLine(lineRef);
+            return (
+              <ParagraphCommentTrigger
+                key={lineRef}
+                lineRef={lineRef}
+                lessonId={lessonId}
+                comments={lineComments}
+              >
+                <div dangerouslySetInnerHTML={{ __html: html }} />
+              </ParagraphCommentTrigger>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (lesson?.contentMarkdown) {
+      return (
+        <div id="lesson-content-container">
+          <MarkdownRenderer content={lesson.contentMarkdown} />
+        </div>
+      );
+    }
+
+    if (lesson?.content) {
+      return (
+        <pre className="whitespace-pre-wrap">{JSON.stringify(lesson?.content, null, 2)}</pre>
+      );
+    }
+
+    return <p className="text-muted-foreground">No content available.</p>;
+  };
 
   if (isLoading) {
     return (
@@ -230,19 +298,24 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
           </div>
         </div>
 
-        {/* Editor */}
+        {/* Editor / Content */}
         <div className="flex-1 px-6 py-4">
-          <LessonEditor
-            content={lesson.content}
-            contentMarkdown={lesson.contentMarkdown ?? undefined}
-            lessonTitle={lesson.title}
-            editable={!isReadOnly}
-            onImportAction={(_content: Record<string, unknown>) => {
-              if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-              if (editorInstance) triggerSave(editorInstance);
-            }}
-            ref={handleSetEditor}
-          />
+          {isReadOnly ? (
+            renderContent()
+          ) : (
+            <LessonEditor
+              content={lesson.content}
+              contentMarkdown={lesson.contentMarkdown ?? undefined}
+              lessonTitle={lesson.title}
+              editable={!isReadOnly}
+              onImportAction={(_content: Record<string, unknown>, markdown?: string) => {
+                if (markdown) setRawMarkdown(markdown);
+                if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+                if (editorInstance) triggerSave(editorInstance, markdown);
+              }}
+              ref={handleSetEditor}
+            />
+          )}
         </div>
       </div>
 

@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useApproveLesson, useRejectLesson, useReviewLesson } from "@/hooks/api";
+import { ParagraphCommentTrigger } from "@/components/lessons/paragraph-comment-trigger";
+import { useApproveLesson, useLessonComments, useRejectLesson, useReviewLesson } from "@/hooks/api";
 import { ArrowLeft, Calendar, Check, User, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use, useMemo, useState } from "react";
 import { toast } from "sonner";
-import DOMPurify from "dompurify";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
+import "@/components/editor/editor-styles.css";
 
 type PageProps = {
   params: Promise<{ lessonId: string }>;
@@ -25,11 +27,67 @@ type PageProps = {
 export default function LessonReviewDetailPage({ params }: PageProps) {
   const { lessonId } = use(params);
   const { data: lesson, isLoading, error } = useReviewLesson(lessonId);
+  const { data: comments = [] } = useLessonComments(lessonId);
   const approveLesson = useApproveLesson();
   const rejectLesson = useRejectLesson();
   const router = useRouter();
   const [feedback, setFeedback] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+
+  const contentRef = useMemo(() => {
+    if (!lesson?.contentMarkdown) return null;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(lesson?.contentMarkdown, "text/html");
+    const elements = doc.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li, blockquote, pre");
+    return Array.from(elements).map((el, idx) => {
+      el.setAttribute("data-line-ref", `paragraph-${idx}`);
+      return {
+        lineRef: `paragraph-${idx}`,
+        html: el.outerHTML,
+      };
+    });
+  }, [lesson?.contentMarkdown]);
+
+  const getCommentsForLine = (lineRef: string) =>
+    comments.filter((c) => c.lineRef === lineRef);
+
+  const renderContent = () => {
+    if (contentRef && contentRef.length > 0) {
+      return (
+        <div id="lesson-content-container" className="prose prose-sm max-w-none dark:prose-invert">
+          {contentRef.map(({ lineRef, html }) => {
+            const lineComments = getCommentsForLine(lineRef);
+            return (
+              <ParagraphCommentTrigger
+                key={lineRef}
+                lineRef={lineRef}
+                lessonId={lessonId}
+                comments={lineComments}
+              >
+                <div dangerouslySetInnerHTML={{ __html: html }} />
+              </ParagraphCommentTrigger>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (lesson?.contentMarkdown) {
+      return (
+        <div id="lesson-content-container">
+          <MarkdownRenderer content={lesson.contentMarkdown} />
+        </div>
+      );
+    }
+
+    if (lesson?.content) {
+      return (
+        <pre className="whitespace-pre-wrap">{JSON.stringify(lesson?.content, null, 2)}</pre>
+      );
+    }
+
+    return <p className="text-muted-foreground">No content available.</p>;
+  };
 
   const handleApprove = async () => {
     try {
@@ -88,15 +146,15 @@ export default function LessonReviewDetailPage({ params }: PageProps) {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{lesson.title}</h1>
+          <h1 className="text-2xl font-bold">{lesson?.title}</h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <User className="h-4 w-4" />
-              {lesson.author?.displayName || lesson.author?.fullName || "Unknown"}
+              {lesson?.author?.displayName || lesson?.author?.fullName || "Unknown"}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              {new Date(lesson.updatedAt).toLocaleDateString()}
+              {lesson?.updatedAt ? new Date(lesson.updatedAt).toLocaleDateString() : ""}
             </span>
           </div>
         </div>
@@ -121,15 +179,7 @@ export default function LessonReviewDetailPage({ params }: PageProps) {
       </div>
 
       <div className="rounded-lg border bg-card p-6">
-        <div className="prose prose-sm max-w-none dark:prose-invert">
-          {lesson.contentMarkdown ? (
-            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lesson.contentMarkdown) }} />
-          ) : lesson.content ? (
-            <pre className="whitespace-pre-wrap">{JSON.stringify(lesson.content, null, 2)}</pre>
-          ) : (
-            <p className="text-muted-foreground">No content available.</p>
-          )}
-        </div>
+        {renderContent()}
       </div>
 
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>

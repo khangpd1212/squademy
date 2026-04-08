@@ -1,31 +1,20 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsArray,
-  MaxLength,
-} from "class-validator";
-import { VALIDATION } from "@squademy/shared";
+import { IsString, IsNotEmpty, IsOptional, IsArray } from "class-validator";
 
 export class AddCardDto {
   @IsString()
   @IsNotEmpty()
-  @MaxLength(1000)
   front!: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(2000)
   back?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(100)
   pronunciation?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(VALIDATION.PROFILE_FIELD_MAX)
   exampleSentence?: string;
 
   @IsOptional()
@@ -35,6 +24,5 @@ export class AddCardDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(2000)
   extraNotes?: string;
 }

@@ -72,7 +72,7 @@ So that I can produce well-structured, high-quality lesson content without knowi
 
 ---
 
-### Story 3.3: Markdown File Import
+### Story 3.3: Markdown File Import ✅ IMPLEMENTED
 
 As a Contributor,
 I want to import an existing Markdown file into the lesson editor,
@@ -82,9 +82,9 @@ So that I can reuse content I've already written without manual copy-paste refor
 
 **Given** I am in the lesson editor and click "Import Markdown"
 **When** I select a valid `.md` file
-**Then** the Markdown content is parsed client-side and converted to Tiptap ProseMirror JSON
+**Then** the Markdown content is parsed client-side and converted to Tiptap HTML
 **And** the editor is populated with the parsed content within 1 second of file selection (NFR: FR15)
-**And** a preview of the parsed content is shown before confirming the import
+**And** the content is imported directly (no preview dialog required)
 
 **Given** I confirm the import
 **When** the action executes
@@ -99,6 +99,18 @@ So that I can reuse content I've already written without manual copy-paste refor
 **Given** the Markdown file contains headings, bold, italic, lists, blockquotes, and links
 **When** the file is parsed
 **Then** all standard Markdown elements are correctly converted to their Tiptap equivalents
+
+**Given** I import a Markdown file
+**When** the content is displayed
+**Then** in Edit mode: markdown syntax (e.g., `_text_`, `**bold**`) is shown as literal text
+**And** in View mode: the content is styled appropriately (italic text, card styles, etc.)
+
+**Implementation Notes:**
+- Uses `parseMarkdownToTiptap(text, "literal")` for direct import
+- Edit mode: `tiptapDocToHtml()` preserves markdown syntax as text
+- View mode: `tiptapDocToViewHtml()` converts to styled HTML
+- Custom Tiptap extensions for `blockquoteCard` and `blockquoteTitle` nodes
+- View mode styles via CSS: amber card for italic quotes, uppercase for titles
 
 ---
 

@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LessonEditor } from "./lesson-editor";
-import { type TiptapDoc } from "./markdown-import";
 
 const mockEditor = {
   isActive: jest.fn(() => false),
@@ -27,6 +26,10 @@ jest.mock("@tiptap/react", () => ({
   useEditor: jest.fn(() => mockEditor),
   EditorContent: ({ editor }: { editor: unknown }) =>
     editor ? <div data-testid="editor-content" /> : null,
+}));
+
+jest.mock("@tiptap/markdown", () => ({
+  Markdown: { configure: jest.fn(() => ({})) },
 }));
 
 jest.mock("@tiptap/starter-kit", () => ({
@@ -65,18 +68,19 @@ jest.mock("./editor-toolbar", () => ({
   ),
 }));
 
-jest.mock("./markdown-import-dialog", () => ({
-  MarkdownImportDialog: ({ onConfirm, onCancel, parsedDoc }: { onConfirm: (doc: TiptapDoc) => void; onCancel: () => void; parsedDoc: TiptapDoc | null }) => (
-    <div data-testid="import-dialog">
-      <div data-testid="preview-content">{JSON.stringify(parsedDoc)}</div>
-      <button data-testid="confirm-btn" onClick={() => onConfirm(parsedDoc!)}>Confirm</button>
-      <button data-testid="cancel-btn" onClick={onCancel}>Cancel</button>
-    </div>
-  ),
-}));
-
 jest.mock("./markdown-import", () => ({
   parseMarkdownToTiptap: jest.fn((text) => ({ type: "doc", content: [{ type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: text.replace("## ", "") }] }] })),
+  tiptapDocToHtml: jest.fn((doc) => `<h2>${doc.content[0]?.content?.[0]?.text || ""}</h2>`),
+}));
+
+jest.mock("react-markdown", () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => <div data-testid="react-markdown">{children}</div>,
+}));
+
+jest.mock("remark-gfm", () => ({
+  __esModule: true,
+  default: jest.fn(),
 }));
 
 describe("LessonEditor", () => {
@@ -105,39 +109,14 @@ describe("LessonEditor", () => {
     expect(ref.current).toBe(mockEditor);
   });
 
-  it("opens import dialog when markdown is selected from toolbar", async () => {
+  it("imports markdown directly when selected from toolbar", async () => {
     render(<LessonEditor content={null} />);
 
     const importBtn = screen.getByTestId("mock-import-btn");
     await userEvent.click(importBtn);
 
-    expect(screen.getByTestId("import-dialog")).toBeInTheDocument();
-    expect(screen.getByTestId("preview-content")).toHaveTextContent("Imported Content");
-  });
-
-  it("updates editor content and closes dialog on confirm", async () => {
-    render(<LessonEditor content={null} />);
-
-    await userEvent.click(screen.getByTestId("mock-import-btn"));
-    await userEvent.click(screen.getByTestId("confirm-btn"));
-
-    expect(mockEditor.commands.setContent).toHaveBeenCalledWith(expect.objectContaining({
-      type: "doc",
-      content: expect.arrayContaining([
-        expect.objectContaining({ type: "heading" })
-      ])
-    }));
-    expect(screen.queryByTestId("import-dialog")).not.toBeInTheDocument();
-  });
-
-  it("closes dialog on cancel without updating editor", async () => {
-    render(<LessonEditor content={null} />);
-
-    await userEvent.click(screen.getByTestId("mock-import-btn"));
-    await userEvent.click(screen.getByTestId("cancel-btn"));
-
-    expect(mockEditor.commands.setContent).not.toHaveBeenCalled();
-    expect(screen.queryByTestId("import-dialog")).not.toBeInTheDocument();
+    expect(mockEditor.commands.setContent).toHaveBeenCalled();
+    expect(mockEditor.commands.setContent.mock.calls[0][0]).toContain("<h2>");
   });
 });
   

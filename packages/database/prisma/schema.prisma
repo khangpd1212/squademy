@@ -28,6 +28,7 @@ model User {
   receivedInvitations GroupInvitation[]   @relation("Invitee")
   lessons             Lesson[]
   flashcardDecks      FlashcardDeck[]
+  reviewComments      ReviewComment[]
 
   @@map("users")
 }
@@ -98,8 +99,28 @@ model Lesson {
   group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
   author    User       @relation(fields: [authorId], references: [id])
   exercises Exercise[]
+  reviewComments ReviewComment[]
 
   @@map("lessons")
+}
+
+model ReviewComment {
+  id        String   @id @default(uuid())
+  lessonId  String   @map("lesson_id")
+  userId    String   @map("user_id")
+  lineRef   String   @map("line_ref")
+  body      String
+  parentId  String?  @map("parent_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  lesson   Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  author   User          @relation(fields: [userId], references: [id])
+  parent   ReviewComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  ReviewComment[] @relation("CommentReplies")
+
+  @@map("review_comments")
+  @@index([lessonId, lineRef])
+  @@index([parentId])
 }
 
 model Exercise {

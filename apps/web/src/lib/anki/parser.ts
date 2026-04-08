@@ -1,5 +1,18 @@
 import JSZip from "jszip";
-import initSqlJs from "sql.js";
+import initSqlJs, { type SqlJsStatic } from "sql.js";
+
+let SQL: SqlJsStatic | null = null;
+
+async function getSqlJs(): Promise<SqlJsStatic> {
+  if (!SQL) {
+    const wasmResponse = await fetch("/sql-wasm/sql-wasm.wasm");
+    const wasmBinary = await wasmResponse.arrayBuffer();
+    SQL = await initSqlJs({
+      wasmBinary,
+    });
+  }
+  return SQL;
+}
 
 export interface AnkiParsedCard {
   front: string;
@@ -13,15 +26,26 @@ export interface AnkiParsedCard {
 export async function parseAnkiDeck(file: File): Promise<AnkiParsedCard[]> {
   const zip = await JSZip.loadAsync(file);
 
-  const dbFiles = zip.file(/collection\.anki2[0-9]$/);
-  const dbFile = dbFiles?.length ? dbFiles[0] : zip.file("collection.db");
+  const allDbFiles = Object.keys(zip.files).filter((name) => 
+    name.includes("collection") || name.includes(".db")
+  );
+  console.log("Files in APK:", allDbFiles);
+
+  const dbFiles = zip.file(/collection\.anki2[0-9]?$/);
+  const dbFile = dbFiles?.length 
+    ? dbFiles[0] 
+    : zip.file("collection.db") 
+    || zip.file("collection.anki2")
+    || zip.file(/collection\.anki21?$/)[0];
+  
   if (!dbFile) {
+    console.log("Available files:", allDbFiles);
     throw new Error("Could not find database in Anki package");
   }
 
   const dbData = await dbFile.async("uint8array");
-  const SQL = await initSqlJs();
-  const db = new SQL.Database(dbData);
+  const sqljs = await getSqlJs();
+  const db = new sqljs.Database(dbData);
 
   try {
     const results = db.exec("SELECT flds, tags FROM notes");

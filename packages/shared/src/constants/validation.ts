@@ -28,4 +28,7 @@ export const VALIDATION = {
 
   AVATAR_MAX_SIZE_BYTES: 2 * 1024 * 1024,
   AVATAR_ALLOWED_MIME_TYPES: ["image/jpeg", "image/png"],
+
+  REVIEW_COMMENT_BODY_MAX: 1000,
+  REVIEW_COMMENT_LINE_REF_MAX: 100,
 } as const;
