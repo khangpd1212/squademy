@@ -3,6 +3,7 @@ import { GroupAdminGuard } from "../common/guards/group-admin.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { GroupsController } from "./groups.controller";
 import type { GroupsService } from "./groups.service";
+import type { FlashcardsService } from "../flashcards/flashcards.service";
 import { GROUP_ROLES } from "@squademy/shared";
 
 describe("GroupsController", () => {
@@ -24,6 +25,7 @@ describe("GroupsController", () => {
 
   let controller: GroupsController;
   let groupsService: jest.Mocked<GroupsService>;
+  let flashcardsService: jest.Mocked<FlashcardsService>;
 
   beforeEach(() => {
     groupsService = {
@@ -36,7 +38,12 @@ describe("GroupsController", () => {
       regenerateInviteCode: jest.fn(),
     } as unknown as jest.Mocked<GroupsService>;
 
-    controller = new GroupsController(groupsService);
+    flashcardsService = {
+      findAllByAuthor: jest.fn(),
+      findAllByGroup: jest.fn(),
+    } as unknown as jest.Mocked<FlashcardsService>;
+
+    controller = new GroupsController(groupsService, flashcardsService);
   });
 
   it("returns my groups for authenticated user", async () => {

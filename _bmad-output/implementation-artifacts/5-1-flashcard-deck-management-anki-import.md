@@ -1,6 +1,6 @@
 # Story 5.1: Flashcard Deck Management & Anki Import
 
-> **Status:** in-progress
+> **Status:** done
 > **Created:** 2026-04-05
 
 ---

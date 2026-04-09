@@ -30,10 +30,50 @@ export class FlashcardsService {
     }));
   }
 
-  async create(authorId: string, data: { title: string }) {
+  async findAllByGroup(groupId: string) {
+    const decks = await this.prisma.flashcardDeck.findMany({
+      where: {
+        learningPathItems: {
+          some: {
+            groupId,
+          },
+        },
+        status: "published",
+      },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        cardCount: true,
+        updatedAt: true,
+        author: {
+          select: {
+            id: true,
+            displayName: true,
+          },
+        },
+      },
+    });
+
+    return decks.map((deck) => ({
+      id: deck.id,
+      title: deck.title,
+      description: deck.description,
+      cardCount: deck.cardCount,
+      updatedAt: deck.updatedAt.toISOString(),
+      author: {
+        id: deck.author.id,
+        displayName: deck.author.displayName,
+      },
+    }));
+  }
+
+  async create(authorId: string, data: { title: string; description?: string; groupIds?: string[] }) {
     const deck = await this.prisma.flashcardDeck.create({
       data: {
         title: data.title,
+        description: data.description ?? null,
         authorId,
         status: "draft",
         cardCount: 0,
@@ -41,6 +81,7 @@ export class FlashcardsService {
       select: {
         id: true,
         title: true,
+        description: true,
         status: true,
         cardCount: true,
         createdAt: true,
@@ -48,9 +89,26 @@ export class FlashcardsService {
       },
     });
 
+    if (data.groupIds && data.groupIds.length > 0) {
+      const maxSortOrder = await this.prisma.learningPathItem.findFirst({
+        where: { groupId: { in: data.groupIds } },
+        orderBy: { sortOrder: "desc" },
+      });
+      let sortOrder = (maxSortOrder?.sortOrder ?? -1) + 1;
+
+      await this.prisma.learningPathItem.createMany({
+        data: data.groupIds.map((groupId) => ({
+          groupId,
+          deckId: deck.id,
+          sortOrder: sortOrder++,
+        })),
+      });
+    }
+
     return {
       id: deck.id,
       title: deck.title,
+      description: deck.description,
       status: deck.status,
       cardCount: deck.cardCount,
       createdAt: deck.createdAt.toISOString(),
@@ -122,6 +180,72 @@ export class FlashcardsService {
     });
 
     return { success: true };
+  }
+
+  async publishDeck(deckId: string, authorId: string) {
+    const deck = await this.prisma.flashcardDeck.findFirst({
+      where: { id: deckId, authorId },
+    });
+
+    if (!deck) {
+      throw new NotFoundException({ code: ErrorCode.FLASHCARD_DECK_NOT_FOUND });
+    }
+
+    if (deck.cardCount === 0) {
+      throw new BadRequestException({
+        code: ErrorCode.FLASHCARD_EMPTY_DECK,
+        message: "Cannot publish an empty deck.",
+      });
+    }
+
+    const updated = await this.prisma.flashcardDeck.update({
+      where: { id: deckId },
+      data: { status: "published" },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        cardCount: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      id: updated.id,
+      title: updated.title,
+      status: updated.status,
+      cardCount: updated.cardCount,
+      updatedAt: updated.updatedAt.toISOString(),
+    };
+  }
+
+  async addToGroup(deckId: string, groupId: string, authorId: string) {
+    const deck = await this.prisma.flashcardDeck.findFirst({
+      where: { id: deckId, authorId },
+    });
+
+    if (!deck) {
+      throw new NotFoundException({ code: ErrorCode.FLASHCARD_DECK_NOT_FOUND });
+    }
+
+    const lastItem = await this.prisma.learningPathItem.findFirst({
+      where: { groupId },
+      orderBy: { sortOrder: "desc" },
+    });
+    const nextSortOrder = (lastItem?.sortOrder ?? -1) + 1;
+
+    const item = await this.prisma.learningPathItem.create({
+      data: {
+        groupId,
+        deckId,
+        sortOrder: nextSortOrder,
+      },
+      include: {
+        deck: { select: { id: true, title: true, status: true } },
+      },
+    });
+
+    return item;
   }
 
   async addCard(
@@ -208,6 +332,7 @@ export class FlashcardsService {
         tags?: string[];
         extraNotes?: string;
       }[];
+      groupIds?: string[];
     },
   ) {
     if (!data.cards || data.cards.length === 0) {
@@ -239,6 +364,7 @@ export class FlashcardsService {
       select: {
         id: true,
         title: true,
+        description: true,
         status: true,
         cardCount: true,
         createdAt: true,
@@ -246,9 +372,26 @@ export class FlashcardsService {
       },
     });
 
+    if (data.groupIds && data.groupIds.length > 0) {
+      const maxSortOrder = await this.prisma.learningPathItem.findFirst({
+        where: { groupId: { in: data.groupIds } },
+        orderBy: { sortOrder: "desc" },
+      });
+      let sortOrder = (maxSortOrder?.sortOrder ?? -1) + 1;
+
+      await this.prisma.learningPathItem.createMany({
+        data: data.groupIds.map((groupId) => ({
+          groupId,
+          deckId: deck.id,
+          sortOrder: sortOrder++,
+        })),
+      });
+    }
+
     return {
       id: deck.id,
       title: deck.title,
+      description: deck.description,
       status: deck.status,
       cardCount: deck.cardCount,
       createdAt: deck.createdAt.toISOString(),

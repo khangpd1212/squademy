@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const tabs = [
   { label: "Overview", suffix: "" },
   { label: "Lessons", suffix: "/lessons" },
+  { label: "Flashcards", suffix: "/flashcards" },
   { label: "Exercises", suffix: "/exercises" },
   { label: "Leaderboard", suffix: "/leaderboard" },
   { label: "Members", suffix: "/members" },

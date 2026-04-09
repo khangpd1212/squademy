@@ -3,10 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/api-error";
 import { apiRequest } from "@/lib/api/browser-client";
+import { queryKeys } from "@/lib/api/query-keys";
 
 export type FlashcardDeckItem = {
   id: string;
   title: string;
+  description?: string;
   status: string;
   cardCount: number;
   createdAt: string;
@@ -79,7 +81,7 @@ export function useCreateDeck() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { title: string }) => {
+    mutationFn: async (data: { title: string; description?: string; groupIds?: string[] }) => {
       const result = await apiRequest<FlashcardDeckItem>("/flashcard-decks", {
         method: "POST",
         body: JSON.stringify(data),
@@ -93,8 +95,9 @@ export function useCreateDeck() {
       }
       return result.data;
     },
-    onSuccess: () => {
+onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 }
@@ -118,6 +121,7 @@ export function useDeleteDeck() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 }
@@ -143,6 +147,7 @@ export function useAddCard() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks", variables.deckId] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 }
@@ -151,7 +156,7 @@ export function useImportAnkiDeck() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { title: string; cards: CreateCardInput[] }) => {
+    mutationFn: async (data: { title: string; cards: CreateCardInput[]; groupIds?: string[] }) => {
       const result = await apiRequest<FlashcardDeckItem>("/flashcard-decks/import", {
         method: "POST",
         body: JSON.stringify(data),
@@ -167,6 +172,90 @@ export function useImportAnkiDeck() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+    },
+  });
+}
+
+export type GroupFlashcardDeck = {
+  id: string;
+  title: string;
+  description?: string;
+  cardCount: number;
+  updatedAt: string;
+  author: { id: string; displayName: string };
+};
+
+export function useGroupFlashcardDecks(groupId: string) {
+  return useQuery({
+    queryKey: queryKeys.groups.groupFlashcardDecks(groupId),
+    queryFn: async () => {
+      const result = await apiRequest<GroupFlashcardDeck[]>(
+        `/groups/${groupId}/flashcard-decks`,
+      );
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to fetch group flashcard decks",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    staleTime: 60_000,
+    enabled: !!groupId,
+  });
+}
+
+export type DeckWithStatus = FlashcardDeckItem & { status: string };
+
+export function usePublishDeck() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (deckId: string) => {
+      const result = await apiRequest<DeckWithStatus>(`/flashcard-decks/${deckId}/publish`, {
+        method: "PATCH",
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to publish deck",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+    },
+  });
+}
+
+export function useAddDeckToGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ deckId, groupId }: { deckId: string; groupId: string }) => {
+      const result = await apiRequest<{ groupId: string; deckId: string; sortOrder: number }>(
+        `/flashcard-decks/${deckId}/add-to-group`,
+        {
+          method: "POST",
+          body: JSON.stringify({ groupId }),
+        },
+      );
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to add deck to group",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 }

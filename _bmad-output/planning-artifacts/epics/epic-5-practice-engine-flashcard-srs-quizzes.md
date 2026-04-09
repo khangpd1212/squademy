@@ -42,7 +42,30 @@ So that my group has rich flashcard content to study from.
 
 ---
 
-### Story 5.2: Flashcard Practice Session (Swipe UI + Offline-First)
+### Story 5.2: Group Flashcard Browser
+
+As a Group Member,
+I want to view available flashcard decks in my group,
+So that I can see what study materials the group has prepared.
+
+**Acceptance Criteria:**
+
+**Given** I navigate to `/group/[groupId]/flashcards`
+**When** the page loads
+**Then** `GET /groups/:groupId/flashcard-decks` (GroupMemberGuard) returns all published flashcard decks in this group
+**And** each deck shows: title, card count, description (if any), and a "Practice" button
+**And** only decks with `status = 'published'` are displayed
+
+**Given** no flashcard decks exist in the group
+**Then** an empty state is shown: "No flashcards yet. Check back later!"
+
+**Given** I click "Practice" on an empty deck (0 cards)
+**When** clicked
+**Then** a toast message shows "This deck has no cards to practice"
+
+---
+
+### Story 5.3: Flashcard Practice Session (Swipe UI + Offline-First)
 
 As a Learner,
 I want to study flashcards with a Tinder-style swipe interface that works offline,
@@ -88,7 +111,7 @@ So that I can practice anywhere, even without an internet connection.
 
 ---
 
-### Story 5.3: Spaced Repetition Scheduling (SM-2)
+### Story 5.4: Spaced Repetition Scheduling (SM-2)
 
 As a Learner,
 I want the system to schedule which cards I should review each day based on my past performance,
@@ -123,7 +146,7 @@ So that I study efficiently and review cards just before I forget them.
 
 ---
 
-### Story 5.4: Quiz Completion
+### Story 5.5: Quiz Completion
 
 As a Learner,
 I want to complete quizzes attached to lessons or personal practice tests,
@@ -158,7 +181,7 @@ So that I can test my knowledge and get immediate feedback on my answers.
 
 ---
 
-### Story 5.5: Inline Flashcard Editing During Study
+### Story 5.6: Inline Flashcard Editing During Study
 
 As a Learner,
 I want to edit a flashcard's content directly while studying it,
@@ -187,7 +210,7 @@ So that I can fix errors or add personal context without interrupting my study f
 
 ---
 
-### Story 5.6: Audio Micro-Feedback & Haptic (FR30b)
+### Story 5.7: Audio Micro-Feedback & Haptic (FR30b)
 
 As a Learner,
 I want to hear satisfying audio feedback and feel haptic vibrations when interacting with flashcards,

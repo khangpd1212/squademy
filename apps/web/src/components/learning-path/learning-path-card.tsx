@@ -14,10 +14,8 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
   const hasLesson = item.lesson !== null;
   const hasDeck = item.deck !== null;
 
-  const title = hasLesson ? item.lesson!.title : item.deck!.title;
-  const contributor = hasLesson ? item.lesson!.author.displayName : null;
-
   if (hasLesson) {
+    const contributor = hasLesson ? item.lesson!.author.displayName : null;
     return (
       <div className="group flex items-center justify-between gap-4 rounded-lg border border-border p-3 transition-colors hover:bg-muted/50">
         <div className="flex items-center gap-3 min-w-0">
@@ -25,7 +23,7 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
             <BookOpen className="h-4 w-4 text-primary" />
           </div>
           <div className="min-w-0">
-            <p className="truncate font-medium text-sm">{title}</p>
+            <p className="truncate font-medium text-sm">{item.lesson!.title}</p>
             {contributor && (
               <p className="text-xs text-muted-foreground truncate">
                 by {contributor}
@@ -50,7 +48,7 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
             <FileText className="h-4 w-4 text-secondary-foreground" />
           </div>
           <div className="min-w-0">
-            <p className="truncate font-medium text-sm">{title}</p>
+            <p className="truncate font-medium text-sm">{item.deck!.title}</p>
             <p className="text-xs text-muted-foreground">Flashcard deck</p>
           </div>
         </div>

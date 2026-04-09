@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -13,6 +14,7 @@ import {
 } from "../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { AddCardDto } from "./dto/add-card.dto";
+import { AddToGroupDto } from "./dto/add-to-group.dto";
 import { CreateDeckDto } from "./dto/create-deck.dto";
 import { ImportAnkiDeckDto } from "./dto/import-anki-deck.dto";
 import { FlashcardsService } from "./flashcards.service";
@@ -60,6 +62,25 @@ export class FlashcardsController {
   ) {
     const deck = await this.flashcardsService.findOne(deckId, user.userId);
     return { ok: true, data: deck };
+  }
+
+  @Patch(":deckId/publish")
+  async publish(
+    @Param("deckId") deckId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const deck = await this.flashcardsService.publishDeck(deckId, user.userId);
+    return { ok: true, data: deck };
+  }
+
+  @Post(":deckId/add-to-group")
+  async addToGroup(
+    @Param("deckId") deckId: string,
+    @Body() dto: AddToGroupDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const item = await this.flashcardsService.addToGroup(deckId, dto.groupId, user.userId);
+    return { ok: true, data: item };
   }
 
   @Delete(":deckId")

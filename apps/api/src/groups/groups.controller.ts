@@ -19,11 +19,15 @@ import { GroupsService } from "./groups.service";
 import { CreateGroupDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { JoinGroupDto } from "./dto/join-group.dto";
+import { FlashcardsService } from "../flashcards/flashcards.service";
 
 @Controller("groups")
 @UseGuards(JwtAuthGuard)
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(
+    private readonly groupsService: GroupsService,
+    private readonly flashcardsService: FlashcardsService,
+  ) {}
 
   @Post()
   async create(@CurrentUser() user: JwtPayload, @Body() dto: CreateGroupDto) {
@@ -65,6 +69,13 @@ export class GroupsController {
   ) {
     const item = await this.groupsService.addLearningPathItem(id, dto);
     return { ok: true, data: item };
+  }
+
+  @Get(":id/flashcard-decks")
+  @UseGuards(GroupMemberGuard)
+  async getFlashcardDecks(@Param("id") id: string) {
+    const decks = await this.flashcardsService.findAllByGroup(id);
+    return { ok: true, data: decks };
   }
 
   @Patch(":id")

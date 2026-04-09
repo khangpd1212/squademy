@@ -151,6 +151,7 @@ model Exercise {
 model FlashcardDeck {
   id          String   @id @default(cuid())
   title       String
+  description String?
   authorId    String   @map("author_id")
   status      String   @default("draft")
   cardCount   Int      @default(0) @map("card_count")
