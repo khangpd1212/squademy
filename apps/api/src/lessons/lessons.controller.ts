@@ -21,6 +21,7 @@ import { CreateReviewCommentDto } from "./dto/create-review-comment.dto";
 import { RejectLessonDto } from "./dto/reject-lesson.dto";
 import { UpdateLessonDto } from "./dto/update-lesson.dto";
 import { LessonsService } from "./lessons.service";
+import { CreateReactionDto, CreateAliveTextInteractionDto, UpdateProgressDto } from "./dto/learning-path.dto";
 
 @Controller("lessons")
 @UseGuards(JwtAuthGuard)
@@ -133,5 +134,52 @@ export class LessonsController {
   ) {
     await this.lessonsService.deleteComment(commentId, user.userId, lessonId);
     return { ok: true };
+  }
+
+  @Get(":lessonId/reactions")
+  @UseGuards(LessonCommentGuard)
+  async getReactions(@Param("lessonId") lessonId: string, @CurrentUser() user: JwtPayload) {
+    const reactions = await this.lessonsService.getReactions(lessonId, user.userId);
+    return { ok: true, data: reactions };
+  }
+
+  @Post(":lessonId/reactions")
+  @UseGuards(LessonCommentGuard)
+  async toggleReaction(
+    @Param("lessonId") lessonId: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateReactionDto,
+  ) {
+    const result = await this.lessonsService.toggleReaction(lessonId, user.userId, dto);
+    return { ok: true, data: result };
+  }
+
+  @Post(":lessonId/interactions")
+  @UseGuards(LessonCommentGuard)
+  async recordInteraction(
+    @Param("lessonId") lessonId: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateAliveTextInteractionDto,
+  ) {
+    const result = await this.lessonsService.recordInteraction(lessonId, user.userId, dto);
+    return { ok: true, data: result };
+  }
+
+  @Post(":lessonId/progress")
+  @UseGuards(LessonCommentGuard)
+  async updateProgress(
+    @Param("lessonId") lessonId: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateProgressDto,
+  ) {
+    const result = await this.lessonsService.updateProgress(lessonId, user.userId, dto);
+    return { ok: true, data: result };
+  }
+
+  @Get(":lessonId/progress")
+  @UseGuards(LessonCommentGuard)
+  async getProgress(@Param("lessonId") lessonId: string, @CurrentUser() user: JwtPayload) {
+    const progress = await this.lessonsService.getProgress(lessonId, user.userId);
+    return { ok: true, data: progress };
   }
 }

@@ -12,6 +12,7 @@ export const queryKeys = {
     detail: (id: string) => ["groups", id] as const,
     members: (groupId: string) => ["groups", groupId, "members"] as const,
     inviteLink: (groupId: string) => ["groups", groupId, "invite-link"] as const,
+    learningPath: (groupId: string) => ["groups", groupId, "learning-path"] as const,
   },
   invitations: {
     list: () => ["invitations"] as const,
@@ -22,5 +23,7 @@ export const queryKeys = {
     reviewQueue: ["lessons", "review"] as const,
     comments: (lessonId: string) => ["lessons", lessonId, "comments"] as const,
     publishedByGroup: (groupId: string) => ["lessons", "group", groupId, "published"] as const,
+    reactions: (lessonId: string) => ["lessons", lessonId, "reactions"] as const,
+    progress: (lessonId: string) => ["lessons", lessonId, "progress"] as const,
   },
 } as const;

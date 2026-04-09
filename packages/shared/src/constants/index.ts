@@ -56,6 +56,9 @@ export const ErrorCode = {
   REVIEW_COMMENT_BODY_REQUIRED: "REVIEW_COMMENT_BODY_REQUIRED",
   REVIEW_COMMENT_DELETE_FAILED: "REVIEW_COMMENT_DELETE_FAILED",
   FORBIDDEN_NOT_COMMENT_OWNER: "FORBIDDEN_NOT_COMMENT_OWNER",
+  LEARNING_PATH_ITEM_NOT_FOUND: "LEARNING_PATH_ITEM_NOT_FOUND",
+  REACTION_FAILED: "REACTION_FAILED",
+  PROGRESS_UPDATE_FAILED: "PROGRESS_UPDATE_FAILED",
 } as const;
 
 export const GROUP_ROLES = {
@@ -87,3 +90,18 @@ export const FLASHCARD_DECK_STATUS = {
 } as const;
 
 export type FlashcardDeckStatus = (typeof FLASHCARD_DECK_STATUS)[keyof typeof FLASHCARD_DECK_STATUS];
+
+export const ReactionType = {
+  THUMBS_UP: "thumbs_up",
+  THUMBS_DOWN: "thumbs_down",
+  HEART: "heart",
+  LIGHTBULB: "lightbulb",
+} as const;
+
+export type ReactionType = (typeof ReactionType)[keyof typeof ReactionType];
+
+export const AliveTextInteractionType = {
+  REVEAL: "reveal",
+} as const;
+
+export type AliveTextInteractionType = (typeof AliveTextInteractionType)[keyof typeof AliveTextInteractionType];

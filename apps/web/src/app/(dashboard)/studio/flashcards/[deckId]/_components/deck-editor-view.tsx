@@ -12,6 +12,7 @@ import {
 import { AddCardDialog } from "./add-card-dialog";
 import { DeleteDeckDialog } from "./delete-deck-dialog";
 import { Card, CardContent } from "@/components/ui/card";
+import DOMPurify from "dompurify";
 
 interface DeckEditorViewProps {
   deckId: string;
@@ -50,7 +51,9 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
   if (isError || !deck) {
     return (
       <div className="flex flex-col gap-4">
-        <Button variant="ghost" onClick={() => router.push("/studio/flashcards")}>
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/studio/flashcards")}>
           ← Back to Decks
         </Button>
         <p className="text-destructive">
@@ -64,7 +67,9 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push("/studio/flashcards")}>
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/studio/flashcards")}>
             ← Back
           </Button>
           <div>
@@ -75,7 +80,9 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+          <Button
+            variant="destructive"
+            onClick={() => setDeleteDialogOpen(true)}>
             Delete Deck
           </Button>
           <Button onClick={() => setAddCardOpen(true)}>Add Card</Button>
@@ -98,12 +105,21 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
                 <div className="space-y-2">
                   <div>
                     <p className="text-xs text-muted-foreground">Front</p>
-                    <p className="font-medium">{card.front}</p>
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(card.front),
+                      }}
+                    />
                   </div>
                   {card.back && (
                     <div>
                       <p className="text-xs text-muted-foreground">Back</p>
-                      <p className="text-sm">{card.back}</p>
+                      <div
+                        className="text-sm"
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(card.back),
+                        }}>
+                      </div>
                     </div>
                   )}
                   {card.pronunciation && (
@@ -116,8 +132,7 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
                       {card.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="rounded bg-secondary px-1.5 py-0.5 text-xs"
-                        >
+                          className="rounded bg-secondary px-1.5 py-0.5 text-xs">
                           {tag}
                         </span>
                       ))}
@@ -130,7 +145,11 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
         </div>
       )}
 
-      <AddCardDialog deckId={deckId} open={addCardOpen} onOpenChange={setAddCardOpen} />
+      <AddCardDialog
+        deckId={deckId}
+        open={addCardOpen}
+        onOpenChange={setAddCardOpen}
+      />
       <DeleteDeckDialog
         deckId={deckId}
         deckTitle={deck.title}

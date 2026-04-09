@@ -41,6 +41,9 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.REVIEW_COMMENT_BODY_REQUIRED]: "Comment cannot be empty.",
   [ErrorCode.REVIEW_COMMENT_DELETE_FAILED]: "Failed to delete comment. Please try again.",
   [ErrorCode.FORBIDDEN_NOT_COMMENT_OWNER]: "You can only delete your own comments.",
+  [ErrorCode.LEARNING_PATH_ITEM_NOT_FOUND]: "Learning path item not found.",
+  [ErrorCode.REACTION_FAILED]: "Failed to update reaction. Please try again.",
+  [ErrorCode.PROGRESS_UPDATE_FAILED]: "Failed to update progress. Please try again.",
 };
 
 export function getErrorMessage(code: string): string {

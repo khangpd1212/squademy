@@ -29,6 +29,9 @@ model User {
   lessons             Lesson[]
   flashcardDecks      FlashcardDeck[]
   reviewComments      ReviewComment[]
+  lessonReactions    LessonReaction[]
+  lessonProgresses   LessonProgress[]
+  aliveTextInteractions AliveTextInteraction[]
 
   @@map("users")
 }
@@ -49,6 +52,7 @@ model Group {
   invitations GroupInvitation[]
   lessons     Lesson[]
   exercises   Exercise[]
+  learningPathItems LearningPathItem[]
 
   @@map("groups")
 }
@@ -100,6 +104,10 @@ model Lesson {
   author    User       @relation(fields: [authorId], references: [id])
   exercises Exercise[]
   reviewComments ReviewComment[]
+  reactions LessonReaction[]
+  progress  LessonProgress[]
+  aliveTextInteractions AliveTextInteraction[]
+  learningPathItems LearningPathItem[]
 
   @@map("lessons")
 }
@@ -151,6 +159,7 @@ model FlashcardDeck {
 
   author User           @relation(fields: [authorId], references: [id])
   cards  FlashcardCard[]
+  learningPathItems LearningPathItem[]
 
   @@map("flashcard_decks")
 }
@@ -172,4 +181,69 @@ model FlashcardCard {
   deck FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@map("flashcard_cards")
+}
+
+model LearningPathItem {
+  id        String   @id @default(uuid())
+  groupId   String   @map("group_id")
+  lessonId  String?  @map("lesson_id")
+  deckId    String?  @map("deck_id")
+  sortOrder Int      @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  group  Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  lesson Lesson? @relation(fields: [lessonId], references: [id])
+  deck   FlashcardDeck? @relation(fields: [deckId], references: [id])
+
+  @@map("learning_path_items")
+  @@index([groupId, sortOrder])
+}
+
+model LessonReaction {
+  id           String   @id @default(uuid())
+  lessonId     String   @map("lesson_id")
+  userId       String   @map("user_id")
+  lineRef      String   @map("line_ref")
+  reactionType String   @map("reaction_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("lesson_reactions")
+  @@unique([lessonId, userId, lineRef, reactionType])
+  @@index([lessonId, lineRef])
+}
+
+model LessonProgress {
+  id        String   @id @default(uuid())
+  lessonId  String   @map("lesson_id")
+  userId    String   @map("user_id")
+  isRead    Boolean  @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("lesson_progress")
+  @@unique([lessonId, userId])
+}
+
+model AliveTextInteraction {
+  id             String   @id @default(uuid())
+  lessonId       String   @map("lesson_id")
+  userId         String   @map("user_id")
+  blockId        String   @map("block_id")
+  interactionType String  @map("interaction_type")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("alive_text_interactions")
+  @@unique([lessonId, userId, blockId])
+  @@index([lessonId])
 }

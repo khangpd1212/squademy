@@ -5,3 +5,4 @@ export * from "./use-member-queries";
 export * from "./use-invitation-queries";
 export * from "./use-lesson-queries";
 export * from "./use-flashcard-queries";
+export * from "./use-group-learning-path";

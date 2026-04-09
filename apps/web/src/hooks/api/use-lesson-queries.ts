@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type LessonStatus } from "@squademy/shared";
+import { type LessonStatus, type ReactionType } from "@squademy/shared";
 import { ApiError } from "@/lib/api/api-error";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -383,5 +383,95 @@ export function useGroupPublishedLessons(groupId: string) {
     },
     staleTime: 60_000,
     enabled: !!groupId,
+  });
+}
+
+export type LessonReaction = {
+  lineRef: string;
+  type: ReactionType;
+  count: number;
+  userReacted: boolean;
+};
+
+export function useLessonReactions(lessonId: string) {
+  return useQuery({
+    queryKey: queryKeys.lessons.reactions(lessonId),
+    queryFn: async () => {
+      const result = await apiRequest<{ reactions: LessonReaction[] }>(`/lessons/${lessonId}/reactions`);
+      return result.data?.reactions ?? [];
+    },
+    staleTime: 30_000,
+    enabled: !!lessonId,
+  });
+}
+
+export function useToggleReaction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lessonId, lineRef, reactionType }: { lessonId: string; lineRef: string; reactionType: ReactionType }) => {
+      const result = await apiRequest<{ reaction: LessonReaction }>(`/lessons/${lessonId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lineRef, reactionType }),
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to toggle reaction",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data.reaction;
+    },
+    onSuccess: (_data, { lessonId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.reactions(lessonId) });
+    },
+  });
+}
+
+export type LessonProgress = {
+  id: string;
+  lessonId: string;
+  userId: string;
+  isRead: boolean;
+  readAt: string | null;
+};
+
+export function useLessonProgress(lessonId: string) {
+  return useQuery({
+    queryKey: queryKeys.lessons.progress(lessonId),
+    queryFn: async () => {
+      const result = await apiRequest<LessonProgress>(`/lessons/${lessonId}/progress`);
+      if (!result.data) {
+        return null;
+      }
+      return result.data;
+    },
+    staleTime: 60_000,
+    enabled: !!lessonId,
+  });
+}
+
+export function useMarkLessonRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lessonId, isRead = true }: { lessonId: string; isRead?: boolean }) => {
+      const result = await apiRequest(`/lessons/${lessonId}/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isRead }),
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to update progress",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result;
+    },
+    onSuccess: (_data, { lessonId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.progress(lessonId) });
+    },
   });
 }

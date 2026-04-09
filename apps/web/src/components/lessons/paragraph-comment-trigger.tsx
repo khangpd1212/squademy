@@ -10,7 +10,7 @@ type ParagraphCommentTriggerProps = {
   lineRef: string;
   lessonId: string;
   comments: ReviewComment[];
-  children: React.ReactNode;
+  children?: React.ReactNode;
 };
 
 export function ParagraphCommentTrigger({
@@ -26,15 +26,14 @@ export function ParagraphCommentTrigger({
 
   return (
     <div className="group/paragraph relative">
-      <div className="absolute left-0 top-0 -translate-x-full mr-1 opacity-0 group-hover/paragraph:opacity-100 transition-opacity">
+      <div className="absolute left-0 top-1/2 -translate-x-full mr-1 -translate-y-1/2 opacity-0 group-hover/paragraph:opacity-100 transition-opacity">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
             "flex items-center justify-center w-6 h-6 rounded hover:bg-accent transition-colors",
-            hasComments && "text-primary"
+            hasComments && "text-primary",
           )}
-          aria-label={hasComments ? `${commentCount} comments` : "Add comment"}
-        >
+          aria-label={hasComments ? `${commentCount} comments` : "Add comment"}>
           {hasComments ? (
             <div className="relative">
               <MessageSquare className="w-4 h-4" />

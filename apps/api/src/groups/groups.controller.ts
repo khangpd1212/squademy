@@ -50,6 +50,23 @@ export class GroupsController {
     return { ok: true, data: group };
   }
 
+  @Get(":id/learning-path")
+  @UseGuards(GroupMemberGuard)
+  async getLearningPath(@Param("id") id: string) {
+    const items = await this.groupsService.getLearningPath(id);
+    return { ok: true, data: items };
+  }
+
+  @Post(":id/learning-path")
+  @UseGuards(GroupMemberGuard)
+  async addLearningPathItem(
+    @Param("id") id: string,
+    @Body() dto: { lessonId?: string; deckId?: string },
+  ) {
+    const item = await this.groupsService.addLearningPathItem(id, dto);
+    return { ok: true, data: item };
+  }
+
   @Patch(":id")
   @UseGuards(GroupAdminGuard)
   async update(@Param("id") id: string, @Body() dto: UpdateGroupDto) {

@@ -8,6 +8,7 @@ import { ErrorCode, GROUP_ROLES, LESSON_STATUS } from "@squademy/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateLessonDto } from "./dto/update-lesson.dto";
 import { CreateReviewCommentDto } from "./dto/create-review-comment.dto";
+import { CreateReactionDto, CreateAliveTextInteractionDto, UpdateProgressDto } from "./dto/learning-path.dto";
 
 @Injectable()
 export class LessonsService {
@@ -371,6 +372,155 @@ export class LessonsService {
         author: { select: { displayName: true, fullName: true, avatarUrl: true } },
       },
       orderBy: { updatedAt: "desc" },
+    });
+  }
+
+  async getReactions(lessonId: string, userId: string) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id: lessonId, isDeleted: false },
+    });
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+
+    const reactions = await this.prisma.lessonReaction.findMany({
+      where: { lessonId },
+    });
+
+    const userReactions = await this.prisma.lessonReaction.findMany({
+      where: { lessonId, userId },
+    });
+
+    const userReactionSet = new Set(
+      userReactions.map((ur) => `${ur.lineRef}:${ur.reactionType}`),
+    );
+
+    const grouped = reactions.reduce((acc, r) => {
+      const key = `${r.lineRef}:${r.reactionType}`;
+      if (!acc[key]) {
+        acc[key] = { lineRef: r.lineRef, type: r.reactionType, count: 0, userReacted: false };
+      }
+      acc[key].count++;
+      return acc;
+    }, {} as Record<string, { lineRef: string; type: string; count: number; userReacted: boolean }>);
+
+    const result = Object.values(grouped).map((r) => ({
+      ...r,
+      userReacted: userReactionSet.has(`${r.lineRef}:${r.type}`),
+    }));
+
+    return result;
+  }
+
+  async toggleReaction(lessonId: string, userId: string, dto: CreateReactionDto) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id: lessonId, isDeleted: false },
+    });
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+
+    const existing = await this.prisma.lessonReaction.findFirst({
+      where: {
+        lessonId,
+        userId,
+        lineRef: dto.lineRef,
+        reactionType: dto.reactionType,
+      },
+    });
+
+    if (existing) {
+      await this.prisma.lessonReaction.delete({ where: { id: existing.id } });
+      return { toggled: false };
+    }
+
+    try {
+      await this.prisma.lessonReaction.create({
+        data: {
+          lessonId,
+          userId,
+          lineRef: dto.lineRef,
+          reactionType: dto.reactionType,
+        },
+      });
+      return { toggled: true };
+    } catch (err) {
+      if (err instanceof Error && "code" in err && (err as { code: string }).code === "P2002") {
+        return { toggled: false };
+      }
+      throw new BadRequestException({ code: ErrorCode.REACTION_FAILED });
+    }
+  }
+
+  async recordInteraction(lessonId: string, userId: string, dto: CreateAliveTextInteractionDto) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id: lessonId, isDeleted: false },
+    });
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+
+    try {
+      const interaction = await this.prisma.aliveTextInteraction.upsert({
+        where: {
+          lessonId_userId_blockId: {
+            lessonId,
+            userId,
+            blockId: dto.blockId,
+          },
+        },
+        update: { interactionType: dto.interactionType },
+        create: {
+          lessonId,
+          userId,
+          blockId: dto.blockId,
+          interactionType: dto.interactionType,
+        },
+      });
+      return interaction;
+    } catch {
+      throw new BadRequestException({ code: ErrorCode.REACTION_FAILED });
+    }
+  }
+
+  async updateProgress(lessonId: string, userId: string, dto: UpdateProgressDto) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id: lessonId, isDeleted: false },
+    });
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+
+    try {
+      const progress = await this.prisma.lessonProgress.upsert({
+        where: { lessonId_userId: { lessonId, userId } },
+        update: {
+          isRead: dto.isRead,
+          readAt: dto.isRead ? new Date() : null,
+        },
+        create: {
+          lessonId,
+          userId,
+          isRead: dto.isRead,
+          readAt: dto.isRead ? new Date() : null,
+        },
+      });
+      return progress;
+    } catch {
+      throw new BadRequestException({ code: ErrorCode.PROGRESS_UPDATE_FAILED });
+    }
+  }
+
+  async getProgress(lessonId: string, userId: string) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id: lessonId, isDeleted: false },
+    });
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+
+    return this.prisma.lessonProgress.findUnique({
+      where: { lessonId_userId: { lessonId, userId } },
     });
   }
 }

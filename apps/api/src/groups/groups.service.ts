@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { ErrorCode, GROUP_ROLES, VALIDATION } from "@squademy/shared";
+import { ErrorCode, GROUP_ROLES, LESSON_STATUS, VALIDATION } from "@squademy/shared";
 import { customAlphabet } from "nanoid";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateGroupDto } from "./dto/create-group.dto";
@@ -255,5 +255,58 @@ export class GroupsService {
     }
 
     throw new BadRequestException("Could not generate unique invite code.");
+  }
+
+  async getLearningPath(groupId: string) {
+    const group = await this.prisma.group.findFirst({
+      where: { id: groupId, isDeleted: false },
+    });
+    if (!group) {
+      throw new NotFoundException({ code: ErrorCode.GROUP_NOT_FOUND });
+    }
+
+    return this.prisma.learningPathItem.findMany({
+      where: { groupId },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        lesson: {
+          where: { isDeleted: false, status: LESSON_STATUS.PUBLISHED },
+          select: { id: true, title: true, status: true },
+        },
+        deck: { select: { id: true, title: true } },
+      },
+    });
+  }
+
+  async addLearningPathItem(groupId: string, dto: { lessonId?: string; deckId?: string }) {
+    const group = await this.prisma.group.findFirst({
+      where: { id: groupId, isDeleted: false },
+    });
+    if (!group) {
+      throw new NotFoundException({ code: ErrorCode.GROUP_NOT_FOUND });
+    }
+
+    if (!dto.lessonId && !dto.deckId) {
+      throw new BadRequestException("Either lessonId or deckId is required.");
+    }
+
+    const lastItem = await this.prisma.learningPathItem.findFirst({
+      where: { groupId },
+      orderBy: { sortOrder: "desc" },
+    });
+    const nextSortOrder = (lastItem?.sortOrder ?? -1) + 1;
+
+    return this.prisma.learningPathItem.create({
+      data: {
+        groupId,
+        lessonId: dto.lessonId ?? null,
+        deckId: dto.deckId ?? null,
+        sortOrder: nextSortOrder,
+      },
+      include: {
+        lesson: { select: { id: true, title: true, status: true } },
+        deck: { select: { id: true, title: true } },
+      },
+    });
   }
 }

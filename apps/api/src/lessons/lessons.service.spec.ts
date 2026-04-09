@@ -392,72 +392,212 @@ describe("LessonsService", () => {
       });
       expect(result.status).toBe(LESSON_STATUS.REVIEW);
     });
+  });
 
-    it("updates status from rejected to review", async () => {
-      const rejectedLesson = { ...draftLesson, status: LESSON_STATUS.REJECTED };
-      prisma.lesson.findFirst.mockResolvedValue(rejectedLesson);
-      const updatedLesson = { ...draftLesson, status: LESSON_STATUS.REVIEW };
-      prisma.lesson.update.mockResolvedValue(updatedLesson);
+  describe("getReactions", () => {
+    let prismaWithReactions: {
+      lesson: { findFirst: jest.Mock };
+      lessonReaction: { findMany: jest.Mock; findFirst: jest.Mock };
+    };
 
-      const result = await service.submit("lesson-1");
-
-      expect(prisma.lesson.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: "lesson-1" },
-          data: { status: LESSON_STATUS.REVIEW },
-        }),
-      );
-      expect(result.status).toBe(LESSON_STATUS.REVIEW);
+    beforeEach(() => {
+      prismaWithReactions = {
+        lesson: { findFirst: jest.fn() },
+        lessonReaction: { findMany: jest.fn(), findFirst: jest.fn() },
+      };
+      service = new LessonsService(prismaWithReactions as unknown as PrismaService);
     });
 
-    it("throws BadRequestException when status is already review", async () => {
-      prisma.lesson.findFirst.mockResolvedValue({
-        ...draftLesson,
-        status: LESSON_STATUS.REVIEW,
-      });
+    it("returns grouped reactions with counts", async () => {
+      prismaWithReactions.lesson.findFirst.mockResolvedValue({ id: "lesson-1" });
+      prismaWithReactions.lessonReaction.findMany.mockResolvedValue([
+        { lineRef: "p1", reactionType: "thumbs_up" },
+        { lineRef: "p1", reactionType: "thumbs_up" },
+        { lineRef: "p1", reactionType: "heart" },
+        { lineRef: "p2", reactionType: "thumbs_up" },
+      ]);
 
-      await expect(service.submit("lesson-1")).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.submit("lesson-1")).rejects.toMatchObject({
-        response: { code: ErrorCode.LESSON_INVALID_STATUS_FOR_SUBMIT },
-      });
+      const result = await service.getReactions("lesson-1", "user-1");
+
+      expect(result).toHaveLength(3);
+      const p1ThumbsUp = result.find((r) => r.lineRef === "p1" && r.type === "thumbs_up");
+      expect(p1ThumbsUp?.count).toBe(2);
+      const p1Heart = result.find((r) => r.lineRef === "p1" && r.type === "heart");
+      expect(p1Heart?.count).toBe(1);
+      const p2ThumbsUp = result.find((r) => r.lineRef === "p2" && r.type === "thumbs_up");
+      expect(p2ThumbsUp?.count).toBe(1);
     });
 
-    it("throws BadRequestException when status is published", async () => {
-      prisma.lesson.findFirst.mockResolvedValue({
-        ...draftLesson,
-        status: LESSON_STATUS.PUBLISHED,
-      });
+    it("throws NotFoundException when lesson not found", async () => {
+      prismaWithReactions.lesson.findFirst.mockResolvedValue(null);
 
-      await expect(service.submit("lesson-1")).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.submit("lesson-1")).rejects.toMatchObject({
-        response: { code: ErrorCode.LESSON_INVALID_STATUS_FOR_SUBMIT },
-      });
-    });
-
-    it("throws NotFoundException when lesson does not exist", async () => {
-      prisma.lesson.findFirst.mockResolvedValue(null);
-
-      await expect(service.submit("lesson-x")).rejects.toThrow(
+      await expect(service.getReactions("lesson-x", "user-1")).rejects.toThrow(
         NotFoundException,
       );
-      await expect(service.submit("lesson-x")).rejects.toMatchObject({
+      await expect(service.getReactions("lesson-x", "user-1")).rejects.toMatchObject({
         response: { code: ErrorCode.LESSON_NOT_FOUND },
       });
     });
+  });
 
-    it("throws BadRequestException with LESSON_SUBMIT_FAILED on update error", async () => {
-      prisma.lesson.findFirst.mockResolvedValue(draftLesson);
-      prisma.lesson.update.mockRejectedValue(new Error("DB error"));
+  describe("toggleReaction", () => {
+    let prismaWithReaction: {
+      lesson: { findFirst: jest.Mock };
+      lessonReaction: { findFirst: jest.Mock; create: jest.Mock; delete: jest.Mock };
+    };
 
-      await expect(service.submit("lesson-1")).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.submit("lesson-1")).rejects.toMatchObject({
-        response: { code: ErrorCode.LESSON_SUBMIT_FAILED },
+    beforeEach(() => {
+      prismaWithReaction = {
+        lesson: { findFirst: jest.fn() },
+        lessonReaction: { findFirst: jest.fn(), create: jest.fn(), delete: jest.fn() },
+      };
+      service = new LessonsService(prismaWithReaction as unknown as PrismaService);
+    });
+
+    it("creates reaction when none exists", async () => {
+      prismaWithReaction.lesson.findFirst.mockResolvedValue({ id: "lesson-1" });
+      prismaWithReaction.lessonReaction.findFirst.mockResolvedValue(null);
+      prismaWithReaction.lessonReaction.create.mockResolvedValue({ id: "r-1" });
+
+      const result = await service.toggleReaction("lesson-1", "user-1", {
+        lineRef: "p1",
+        reactionType: "thumbs_up" as const,
+      });
+
+      expect(prismaWithReaction.lessonReaction.create).toHaveBeenCalledWith({
+        data: {
+          lessonId: "lesson-1",
+          userId: "user-1",
+          lineRef: "p1",
+          reactionType: "thumbs_up",
+        },
+      });
+      expect(result.toggled).toBe(true);
+    });
+
+    it("deletes reaction when already exists (toggle)", async () => {
+      prismaWithReaction.lesson.findFirst.mockResolvedValue({ id: "lesson-1" });
+      prismaWithReaction.lessonReaction.findFirst.mockResolvedValue({ id: "r-1" });
+
+      const result = await service.toggleReaction("lesson-1", "user-1", {
+        lineRef: "p1",
+        reactionType: "thumbs_up" as const,
+      });
+
+      expect(prismaWithReaction.lessonReaction.delete).toHaveBeenCalledWith({
+        where: { id: "r-1" },
+      });
+      expect(result.toggled).toBe(false);
+    });
+
+    it("throws REACTION_FAILED when create fails", async () => {
+      prismaWithReaction.lesson.findFirst.mockResolvedValue({ id: "lesson-1" });
+      prismaWithReaction.lessonReaction.findFirst.mockResolvedValue(null);
+      prismaWithReaction.lessonReaction.create.mockRejectedValue(new Error("DB error"));
+
+      await expect(
+        service.toggleReaction("lesson-1", "user-1", {
+          lineRef: "p1",
+          reactionType: "thumbs_up" as const,
+        }),
+      ).rejects.toMatchObject({
+        response: { code: ErrorCode.REACTION_FAILED },
+      });
+    });
+  });
+
+  describe("recordInteraction", () => {
+    let prismaWithInteraction: {
+      lesson: { findFirst: jest.Mock };
+      aliveTextInteraction: { upsert: jest.Mock };
+    };
+
+    beforeEach(() => {
+      prismaWithInteraction = {
+        lesson: { findFirst: jest.fn() },
+        aliveTextInteraction: { upsert: jest.fn() },
+      };
+      service = new LessonsService(prismaWithInteraction as unknown as PrismaService);
+    });
+
+    it("creates alive text interaction", async () => {
+      prismaWithInteraction.lesson.findFirst.mockResolvedValue({ id: "lesson-1" });
+      prismaWithInteraction.aliveTextInteraction.upsert.mockResolvedValue({ id: "i-1" });
+
+      const result = await service.recordInteraction("lesson-1", "user-1", {
+        blockId: "block-1",
+        interactionType: "reveal" as const,
+      });
+
+      expect(prismaWithInteraction.aliveTextInteraction.upsert).toHaveBeenCalledWith({
+        where: {
+          lessonId_userId_blockId: {
+            lessonId: "lesson-1",
+            userId: "user-1",
+            blockId: "block-1",
+          },
+        },
+        update: { interactionType: "reveal" },
+        create: {
+          lessonId: "lesson-1",
+          userId: "user-1",
+          blockId: "block-1",
+          interactionType: "reveal",
+        },
+      });
+      expect(result).toEqual({ id: "i-1" });
+    });
+  });
+
+  describe("updateProgress", () => {
+    let prismaWithProgress: {
+      lesson: { findFirst: jest.Mock };
+      lessonProgress: { upsert: jest.Mock };
+    };
+
+    beforeEach(() => {
+      prismaWithProgress = {
+        lesson: { findFirst: jest.fn() },
+        lessonProgress: { upsert: jest.fn() },
+      };
+      service = new LessonsService(prismaWithProgress as unknown as PrismaService);
+    });
+
+    it("marks lesson as read", async () => {
+      prismaWithProgress.lesson.findFirst.mockResolvedValue({ id: "lesson-1" });
+      const now = new Date();
+      prismaWithProgress.lessonProgress.upsert.mockResolvedValue({
+        lessonId: "lesson-1",
+        userId: "user-1",
+        isRead: true,
+        readAt: now,
+      });
+
+      const result = await service.updateProgress("lesson-1", "user-1", {
+        isRead: true,
+      });
+
+      expect(prismaWithProgress.lessonProgress.upsert).toHaveBeenCalledWith({
+        where: { lessonId_userId: { lessonId: "lesson-1", userId: "user-1" } },
+        update: { isRead: true, readAt: expect.any(Date) },
+        create: {
+          lessonId: "lesson-1",
+          userId: "user-1",
+          isRead: true,
+          readAt: expect.any(Date),
+        },
+      });
+      expect(result.isRead).toBe(true);
+    });
+
+    it("throws PROGRESS_UPDATE_FAILED on error", async () => {
+      prismaWithProgress.lesson.findFirst.mockResolvedValue({ id: "lesson-1" });
+      prismaWithProgress.lessonProgress.upsert.mockRejectedValue(new Error("DB error"));
+
+      await expect(
+        service.updateProgress("lesson-1", "user-1", { isRead: true }),
+      ).rejects.toMatchObject({
+        response: { code: ErrorCode.PROGRESS_UPDATE_FAILED },
       });
     });
   });

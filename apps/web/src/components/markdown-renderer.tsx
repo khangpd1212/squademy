@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReviewComment } from "@/hooks/api/use-lesson-queries";
 import { ParagraphCommentTrigger } from "./lessons/paragraph-comment-trigger";
+import { AliveTextReveal } from "./lessons/alive-text-reveal";
 
 interface MarkdownRendererProps {
   content: string;
@@ -21,7 +22,41 @@ export default function MarkdownRenderer({
   lessonId,
   enableComments = false,
 }: MarkdownRendererProps) {
-  if (!enableComments || !lessonId) {
+  let aliveBlockIndex = 0;
+  const createSpanComponent = () => {
+    return function SpanComponent({
+      className,
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLSpanElement> & {
+      children?: React.ReactNode;
+      "data-block-id"?: string;
+    }) {
+      if (className?.includes("alive-text")) {
+        const blockId =
+          ((props as Record<string, unknown>)["data-block-id"] as
+            | string
+            | undefined) || `alive-${++aliveBlockIndex}`;
+        if (!lessonId) {
+          return <span className={className}>{children}</span>;
+        }
+        return (
+          <AliveTextReveal blockId={blockId} lessonId={lessonId}>
+            {children}
+          </AliveTextReveal>
+        );
+      }
+      return (
+        <span className={className} {...props}>
+          {children}
+        </span>
+      );
+    };
+  };
+
+  const shouldEnableFeatures = enableComments && lessonId;
+
+  if (!shouldEnableFeatures) {
     return (
       <div className={`markdown-content ${className}`}>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
@@ -45,16 +80,17 @@ export default function MarkdownRenderer({
     return ref;
   };
 
-  const createCommentableComponent = (defaultTag: string) => {
-    return function CommentableComponent({
+  const createParagraphComponent = (defaultTag: string) => {
+    return function ParagraphComponent({
       children,
     }: {
       children?: React.ReactNode;
     }) {
       const lineRef = getLineRef();
       const lineComments = commentsByLineRef[lineRef] || [];
+
       return (
-        <ParagraphCommentTrigger
+         <ParagraphCommentTrigger
           lineRef={lineRef}
           lessonId={lessonId}
           comments={lineComments}>
@@ -65,16 +101,17 @@ export default function MarkdownRenderer({
   };
 
   const components = {
-    p: createCommentableComponent("p"),
-    h1: createCommentableComponent("h1"),
-    h2: createCommentableComponent("h2"),
-    h3: createCommentableComponent("h3"),
-    h4: createCommentableComponent("h4"),
-    h5: createCommentableComponent("h5"),
-    h6: createCommentableComponent("h6"),
-    li: createCommentableComponent("li"),
-    blockquote: createCommentableComponent("blockquote"),
-    pre: createCommentableComponent("pre"),
+    p: createParagraphComponent("p"),
+    h1: createParagraphComponent("h1"),
+    h2: createParagraphComponent("h2"),
+    h3: createParagraphComponent("h3"),
+    h4: createParagraphComponent("h4"),
+    h5: createParagraphComponent("h5"),
+    h6: createParagraphComponent("h6"),
+    li: createParagraphComponent("li"),
+    blockquote: createParagraphComponent("blockquote"),
+    pre: createParagraphComponent("pre"),
+    span: createSpanComponent(),
   };
 
   return (

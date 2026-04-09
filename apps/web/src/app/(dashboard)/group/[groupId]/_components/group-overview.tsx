@@ -11,9 +11,12 @@ import {
 import { DAY_NAMES } from "@squademy/shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGroup } from "@/hooks/api/use-group-queries";
+import { useGroupLearningPath } from "@/hooks/api/use-group-learning-path";
+import { LearningPathCard } from "@/components/learning-path/learning-path-card";
 
 export function GroupOverview({ groupId }: { groupId: string }) {
   const { data: group, isLoading } = useGroup(groupId);
+  const { data: learningPathItems, isLoading: isLoadingPath } = useGroupLearningPath(groupId);
 
   if (isLoading) {
     return (
@@ -75,6 +78,26 @@ export function GroupOverview({ groupId }: { groupId: string }) {
           Group activity will appear here as members start contributing.
         </p>
       ) : null}
+
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-4">Learning Path</h3>
+        {isLoadingPath ? (
+          <div className="space-y-2">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        ) : !learningPathItems || learningPathItems.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No lessons in this group&apos;s learning path yet
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {learningPathItems.map((item) => (
+              <LearningPathCard key={item.id} item={item} groupId={groupId} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

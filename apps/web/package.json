@@ -34,6 +34,7 @@
     "docx": "^9.6.1",
     "dompurify": "^3.3.3",
     "file-saver": "^2.0.5",
+    "framer-motion": "^12.0.0",
     "html2canvas": "^1.4.1",
     "jose": "^6",
     "jspdf": "^4.2.1",
