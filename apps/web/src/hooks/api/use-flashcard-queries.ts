@@ -63,7 +63,9 @@ export function useFlashcardDeck(deckId: string) {
   return useQuery({
     queryKey: ["flashcard-decks", deckId] as const,
     queryFn: async () => {
-      const result = await apiRequest<FlashcardDeckDetail>(`/flashcard-decks/${deckId}`);
+      const result = await apiRequest<FlashcardDeckDetail>(
+        `/flashcard-decks/${deckId}`,
+      );
       if (!result.data) {
         throw new ApiError({
           message: result.message ?? "Failed to fetch deck",
@@ -81,7 +83,7 @@ export function useCreateDeck() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { title: string; description?: string; groupIds?: string[] }) => {
+    mutationFn: async (data: { title: string; description?: string }) => {
       const result = await apiRequest<FlashcardDeckItem>("/flashcard-decks", {
         method: "POST",
         body: JSON.stringify(data),
@@ -95,9 +97,8 @@ export function useCreateDeck() {
       }
       return result.data;
     },
-onSuccess: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 }
@@ -107,9 +108,12 @@ export function useDeleteDeck() {
 
   return useMutation({
     mutationFn: async (deckId: string) => {
-      const result = await apiRequest<{ success: boolean }>(`/flashcard-decks/${deckId}`, {
-        method: "DELETE",
-      });
+      const result = await apiRequest<{ success: boolean }>(
+        `/flashcard-decks/${deckId}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!result.data) {
         throw new ApiError({
           message: result.message ?? "Failed to delete deck",
@@ -121,7 +125,6 @@ export function useDeleteDeck() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 }
@@ -130,11 +133,20 @@ export function useAddCard() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ deckId, data }: { deckId: string; data: CreateCardInput }) => {
-      const result = await apiRequest<FlashcardCardItem>(`/flashcard-decks/${deckId}/cards`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+    mutationFn: async ({
+      deckId,
+      data,
+    }: {
+      deckId: string;
+      data: CreateCardInput;
+    }) => {
+      const result = await apiRequest<FlashcardCardItem>(
+        `/flashcard-decks/${deckId}/cards`,
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        },
+      );
       if (!result.data) {
         throw new ApiError({
           message: result.message ?? "Failed to add card",
@@ -146,8 +158,9 @@ export function useAddCard() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks", variables.deckId] });
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({
+        queryKey: ["flashcard-decks", variables.deckId],
+      });
     },
   });
 }
@@ -156,11 +169,14 @@ export function useImportAnkiDeck() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { title: string; cards: CreateCardInput[]; groupIds?: string[] }) => {
-      const result = await apiRequest<FlashcardDeckItem>("/flashcard-decks/import", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+    mutationFn: async (data: { title: string; cards: CreateCardInput[] }) => {
+      const result = await apiRequest<FlashcardDeckItem>(
+        "/flashcard-decks/import",
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        },
+      );
       if (!result.data) {
         throw new ApiError({
           message: result.message ?? "Failed to import Anki deck",
@@ -208,45 +224,53 @@ export function useGroupFlashcardDecks(groupId: string) {
 
 export type DeckWithStatus = FlashcardDeckItem & { status: string };
 
-export function usePublishDeck() {
-  const queryClient = useQueryClient();
+export type DeckGroup = {
+  groupId: string;
+  groupName: string;
+};
 
-  return useMutation({
-    mutationFn: async (deckId: string) => {
-      const result = await apiRequest<DeckWithStatus>(`/flashcard-decks/${deckId}/publish`, {
-        method: "PATCH",
-      });
+export function useDeckGroups(deckId: string) {
+  return useQuery({
+    queryKey: ["flashcard-decks", deckId, "groups"] as const,
+    queryFn: async () => {
+      const result = await apiRequest<DeckGroup[]>(
+        `/flashcard-decks/${deckId}/groups`,
+      );
       if (!result.data) {
         throw new ApiError({
-          message: result.message ?? "Failed to publish deck",
+          message: result.message ?? "Failed to fetch deck groups",
           code: result.code,
           status: result.status,
         });
       }
       return result.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-    },
+    enabled: !!deckId,
   });
 }
 
-export function useAddDeckToGroup() {
+export function useUpdatePublishGroups() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ deckId, groupId }: { deckId: string; groupId: string }) => {
-      const result = await apiRequest<{ groupId: string; deckId: string; sortOrder: number }>(
-        `/flashcard-decks/${deckId}/add-to-group`,
-        {
-          method: "POST",
-          body: JSON.stringify({ groupId }),
-        },
-      );
+    mutationFn: async ({
+      deckId,
+      groupIds,
+    }: {
+      deckId: string;
+      groupIds: string[];
+    }) => {
+      const result = await apiRequest<{
+        added: number;
+        removed: number;
+        published: boolean;
+      }>(`/flashcard-decks/${deckId}/groups`, {
+        method: "PATCH",
+        body: JSON.stringify({ groupIds }),
+      });
       if (!result.data) {
         throw new ApiError({
-          message: result.message ?? "Failed to add deck to group",
+          message: result.message ?? "Failed to update publish groups",
           code: result.code,
           status: result.status,
         });

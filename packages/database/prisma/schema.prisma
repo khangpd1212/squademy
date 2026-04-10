@@ -199,6 +199,8 @@ model LearningPathItem {
 
   @@map("learning_path_items")
   @@index([groupId, sortOrder])
+  @@unique([groupId, deckId])
+  @@unique([groupId, lessonId])
 }
 
 model LessonReaction {

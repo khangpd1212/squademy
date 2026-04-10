@@ -1,5 +1,5 @@
 import { VALIDATION } from "@squademy/shared";
-import { IsString, IsOptional, MaxLength, MinLength, IsArray, ArrayMinSize } from "class-validator";
+import { IsString, IsOptional, MaxLength, MinLength } from "class-validator";
 
 export class CreateDeckDto {
   @IsString()
@@ -11,9 +11,4 @@ export class CreateDeckDto {
   @IsOptional()
   @MaxLength(500)
   description?: string;
-
-  @IsArray()
-  @IsOptional()
-  @ArrayMinSize(1)
-  groupIds?: string[];
 }

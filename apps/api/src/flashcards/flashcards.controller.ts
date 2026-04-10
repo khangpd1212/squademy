@@ -6,7 +6,7 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
+  UseGuards
 } from "@nestjs/common";
 import {
   CurrentUser,
@@ -14,7 +14,6 @@ import {
 } from "../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { AddCardDto } from "./dto/add-card.dto";
-import { AddToGroupDto } from "./dto/add-to-group.dto";
 import { CreateDeckDto } from "./dto/create-deck.dto";
 import { ImportAnkiDeckDto } from "./dto/import-anki-deck.dto";
 import { FlashcardsService } from "./flashcards.service";
@@ -64,23 +63,24 @@ export class FlashcardsController {
     return { ok: true, data: deck };
   }
 
-  @Patch(":deckId/publish")
-  async publish(
-    @Param("deckId") deckId: string,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    const deck = await this.flashcardsService.publishDeck(deckId, user.userId);
-    return { ok: true, data: deck };
+  @Get(":deckId/groups")
+  async getDeckGroups(@Param("deckId") deckId: string) {
+    const groups = await this.flashcardsService.getDeckGroups(deckId);
+    return { ok: true, data: groups };
   }
 
-  @Post(":deckId/add-to-group")
-  async addToGroup(
+  @Patch(":deckId/groups")
+  async updatePublishGroups(
     @Param("deckId") deckId: string,
-    @Body() dto: AddToGroupDto,
     @CurrentUser() user: JwtPayload,
+    @Body() body: { groupIds: string[] },
   ) {
-    const item = await this.flashcardsService.addToGroup(deckId, dto.groupId, user.userId);
-    return { ok: true, data: item };
+    const updatedDeck = await this.flashcardsService.updatePublishGroups(
+      deckId,
+      user.userId,
+      body.groupIds,
+    );
+    return { ok: true, data: updatedDeck };
   }
 
   @Delete(":deckId")

@@ -69,7 +69,7 @@ export class FlashcardsService {
     }));
   }
 
-  async create(authorId: string, data: { title: string; description?: string; groupIds?: string[] }) {
+  async create(authorId: string, data: { title: string; description?: string }) {
     const deck = await this.prisma.flashcardDeck.create({
       data: {
         title: data.title,
@@ -88,22 +88,6 @@ export class FlashcardsService {
         updatedAt: true,
       },
     });
-
-    if (data.groupIds && data.groupIds.length > 0) {
-      const maxSortOrder = await this.prisma.learningPathItem.findFirst({
-        where: { groupId: { in: data.groupIds } },
-        orderBy: { sortOrder: "desc" },
-      });
-      let sortOrder = (maxSortOrder?.sortOrder ?? -1) + 1;
-
-      await this.prisma.learningPathItem.createMany({
-        data: data.groupIds.map((groupId) => ({
-          groupId,
-          deckId: deck.id,
-          sortOrder: sortOrder++,
-        })),
-      });
-    }
 
     return {
       id: deck.id,
@@ -182,7 +166,25 @@ export class FlashcardsService {
     return { success: true };
   }
 
-  async publishDeck(deckId: string, authorId: string) {
+  async getDeckGroups(deckId: string) {
+    const items = await this.prisma.learningPathItem.findMany({
+      where: { deckId },
+      include: {
+        group: { select: { id: true, name: true } },
+      },
+    });
+
+    return items.map((item) => ({
+      groupId: item.groupId,
+      groupName: item.group.name,
+    }));
+  }
+
+  async updatePublishGroups(
+    deckId: string,
+    authorId: string,
+    groupIds: string[],
+  ) {
     const deck = await this.prisma.flashcardDeck.findFirst({
       where: { id: deckId, authorId },
     });
@@ -191,61 +193,56 @@ export class FlashcardsService {
       throw new NotFoundException({ code: ErrorCode.FLASHCARD_DECK_NOT_FOUND });
     }
 
-    if (deck.cardCount === 0) {
+    if (deck.cardCount === 0 && groupIds.length > 0) {
       throw new BadRequestException({
         code: ErrorCode.FLASHCARD_EMPTY_DECK,
-        message: "Cannot publish an empty deck.",
+        message: "Cannot publish an empty deck. Add at least one card first.",
       });
     }
 
-    const updated = await this.prisma.flashcardDeck.update({
-      where: { id: deckId },
-      data: { status: "published" },
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        cardCount: true,
-        updatedAt: true,
-      },
+    const existingItems = await this.prisma.learningPathItem.findMany({
+      where: { deckId },
+      select: { groupId: true },
     });
+    const existingGroupIds = existingItems.map((item) => item.groupId);
+
+    const groupsToAdd = groupIds.filter((id) => !existingGroupIds.includes(id));
+    const groupsToRemove = existingGroupIds.filter((id) => !groupIds.includes(id));
+
+    const shouldPublish = groupIds.length > 0 && deck.status !== "published";
+
+    await this.prisma.$transaction([
+      ...groupsToRemove.map((groupId) =>
+        this.prisma.learningPathItem.delete({
+          where: { groupId_deckId: { groupId, deckId } },
+        }),
+      ),
+      ...(groupsToAdd.length > 0
+        ? [
+            this.prisma.learningPathItem.createMany({
+              data: groupsToAdd.map((groupId, index) => ({
+                groupId,
+                deckId,
+                sortOrder: index,
+              })),
+            }),
+          ]
+        : []),
+      ...(shouldPublish
+        ? [
+            this.prisma.flashcardDeck.update({
+              where: { id: deckId },
+              data: { status: "published" },
+            }),
+          ]
+        : []),
+    ]);
 
     return {
-      id: updated.id,
-      title: updated.title,
-      status: updated.status,
-      cardCount: updated.cardCount,
-      updatedAt: updated.updatedAt.toISOString(),
+      added: groupsToAdd.length,
+      removed: groupsToRemove.length,
+      published: shouldPublish,
     };
-  }
-
-  async addToGroup(deckId: string, groupId: string, authorId: string) {
-    const deck = await this.prisma.flashcardDeck.findFirst({
-      where: { id: deckId, authorId },
-    });
-
-    if (!deck) {
-      throw new NotFoundException({ code: ErrorCode.FLASHCARD_DECK_NOT_FOUND });
-    }
-
-    const lastItem = await this.prisma.learningPathItem.findFirst({
-      where: { groupId },
-      orderBy: { sortOrder: "desc" },
-    });
-    const nextSortOrder = (lastItem?.sortOrder ?? -1) + 1;
-
-    const item = await this.prisma.learningPathItem.create({
-      data: {
-        groupId,
-        deckId,
-        sortOrder: nextSortOrder,
-      },
-      include: {
-        deck: { select: { id: true, title: true, status: true } },
-      },
-    });
-
-    return item;
   }
 
   async addCard(
@@ -332,7 +329,6 @@ export class FlashcardsService {
         tags?: string[];
         extraNotes?: string;
       }[];
-      groupIds?: string[];
     },
   ) {
     if (!data.cards || data.cards.length === 0) {
@@ -371,22 +367,6 @@ export class FlashcardsService {
         updatedAt: true,
       },
     });
-
-    if (data.groupIds && data.groupIds.length > 0) {
-      const maxSortOrder = await this.prisma.learningPathItem.findFirst({
-        where: { groupId: { in: data.groupIds } },
-        orderBy: { sortOrder: "desc" },
-      });
-      let sortOrder = (maxSortOrder?.sortOrder ?? -1) + 1;
-
-      await this.prisma.learningPathItem.createMany({
-        data: data.groupIds.map((groupId) => ({
-          groupId,
-          deckId: deck.id,
-          sortOrder: sortOrder++,
-        })),
-      });
-    }
 
     return {
       id: deck.id,

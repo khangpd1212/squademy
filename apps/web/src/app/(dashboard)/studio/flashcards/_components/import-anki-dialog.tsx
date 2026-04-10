@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useImportAnkiDeck } from "@/hooks/api/use-flashcard-queries";
-import { useMyGroups } from "@/hooks/api/use-group-queries";
 import { parseAnkiDeck, type AnkiParsedCard } from "@/lib/anki/parser";
 
 const importSchema = z.object({
@@ -40,9 +39,6 @@ export function ImportAnkiDialog({ open, onOpenChange }: ImportAnkiDialogProps) 
   const [parsedCards, setParsedCards] = useState<AnkiParsedCard[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-
-  const { data: groups = [] } = useMyGroups();
 
   const {
     register,
@@ -52,14 +48,6 @@ export function ImportAnkiDialog({ open, onOpenChange }: ImportAnkiDialogProps) 
   } = useForm<ImportForm>({
     resolver: zodResolver(importSchema),
   });
-
-  const toggleGroup = (groupId: string) => {
-    setSelectedGroups((prev) =>
-      prev.includes(groupId)
-        ? prev.filter((id) => id !== groupId)
-        : [...prev, groupId]
-    );
-  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,12 +95,10 @@ export function ImportAnkiDialog({ open, onOpenChange }: ImportAnkiDialogProps) 
           tags: card.tags ?? undefined,
           extraNotes: card.extraNotes ?? undefined,
         })),
-        groupIds: selectedGroups,
       });
       reset();
       setSelectedFile(null);
       setParsedCards([]);
-      setSelectedGroups([]);
       onOpenChange(false);
       toast.success(`Imported ${parsedCards.length} cards successfully.`);
       router.push(`/studio/flashcards/${deck.id}`);
@@ -127,7 +113,6 @@ export function ImportAnkiDialog({ open, onOpenChange }: ImportAnkiDialogProps) 
       setSelectedFile(null);
       setParsedCards([]);
       setParseError(null);
-      setSelectedGroups([]);
     }
     onOpenChange(isOpen);
   };
@@ -176,31 +161,6 @@ export function ImportAnkiDialog({ open, onOpenChange }: ImportAnkiDialogProps) 
               <p className="text-sm text-destructive">{errors.title.message}</p>
             )}
           </div>
-
-          {groups.length > 0 && (
-            <div className="space-y-2">
-              <Label>Add to Groups (optional)</Label>
-              <div className="flex flex-wrap gap-2">
-                {groups.map((group) => (
-                  <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => toggleGroup(group.id)}
-                    className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                      selectedGroups.includes(group.id)
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background hover:bg-accent"
-                    }`}
-                  >
-                    {group.name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Selected {selectedGroups.length} group(s)
-              </p>
-            </div>
-          )}
 
           <DialogFooter>
             <Button

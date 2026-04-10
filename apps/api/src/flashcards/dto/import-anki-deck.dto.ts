@@ -21,8 +21,4 @@ export class ImportAnkiDeckDto {
   @ValidateNested({ each: true })
   @Type(() => AddCardDto)
   cards!: AddCardDto[];
-
-  @IsArray()
-  @IsString({ each: true })
-  groupIds?: string[];
 }

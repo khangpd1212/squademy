@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,8 +18,8 @@ import {
 import {
   useFlashcardDeck,
   useDeleteDeck,
-  usePublishDeck,
-  useAddDeckToGroup,
+  useDeckGroups,
+  useUpdatePublishGroups,
 } from "@/hooks/api/use-flashcard-queries";
 import { useMyGroups } from "@/hooks/api/use-group-queries";
 import { AddCardDialog } from "./add-card-dialog";
@@ -30,17 +31,30 @@ interface DeckEditorViewProps {
   deckId: string;
 }
 
+type PublishForm = {
+  groupIds: string[];
+};
+
 export function DeckEditorView({ deckId }: DeckEditorViewProps) {
   const router = useRouter();
   const { data: deck, isLoading, isError, error } = useFlashcardDeck(deckId);
   const deleteDeck = useDeleteDeck();
-  const publishDeck = usePublishDeck();
-  const addToGroup = useAddDeckToGroup();
-  const { data: groups = [] } = useMyGroups();
+  const updatePublishGroups = useUpdatePublishGroups();
+  const { data: myGroups = [] } = useMyGroups();
+  const { data: deckGroups = [], refetch: refetchDeckGroups } =
+    useDeckGroups(deckId);
   const [addCardOpen, setAddCardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+
+  const publishedGroupIds = deckGroups.map((g) => g.groupId);
+
+  const publishForm = useForm<PublishForm>({
+    defaultValues: {
+      groupIds: publishedGroupIds,
+    },
+  });
+  const groupIds = useWatch({ control: publishForm.control, name: "groupIds" });
 
   const handleDelete = async () => {
     try {
@@ -52,31 +66,28 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (data: PublishForm) => {
     try {
-      if (selectedGroups.length > 0) {
-        for (const groupId of selectedGroups) {
-          await addToGroup.mutateAsync({ deckId, groupId });
-        }
-        toast.success(`Added to ${selectedGroups.length} group(s)`);
-      }
-      if (deck?.status !== "published") {
-        await publishDeck.mutateAsync(deckId);
+      const result = await updatePublishGroups.mutateAsync({
+        deckId,
+        groupIds: data.groupIds,
+      });
+
+      if (result.published) {
         toast.success("Deck published successfully.");
       }
-      setPublishDialogOpen(false);
-      setSelectedGroups([]);
-    } catch (err) {
-      console.error("Failed to publish deck:", err);
-    }
-  };
+      if (result.added > 0) {
+        toast.success(`Added to ${result.added} group(s)`);
+      }
+      if (result.removed > 0) {
+        toast.success(`Removed from ${result.removed} group(s)`);
+      }
 
-  const toggleGroup = (groupId: string) => {
-    setSelectedGroups((prev) =>
-      prev.includes(groupId)
-        ? prev.filter((id) => id !== groupId)
-        : [...prev, groupId],
-    );
+      setPublishDialogOpen(false);
+      refetchDeckGroups();
+    } catch (err) {
+      console.error("Failed to update groups:", err);
+    }
   };
 
   if (isLoading) {
@@ -124,20 +135,14 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          {deck.status !== "published" && (
-            <Button
-              variant="outline"
-              onClick={() => setPublishDialogOpen(true)}>
-              Publish to Groups
-            </Button>
-          )}
-          {deck.status === "published" && (
-            <Button
-              variant="outline"
-              onClick={() => setPublishDialogOpen(true)}>
-              Add to More Groups
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            onClick={() => {
+              publishForm.reset({ groupIds: publishedGroupIds });
+              setPublishDialogOpen(true);
+            }}>
+            Publish to Groups
+          </Button>
           <Button
             variant="destructive"
             onClick={() => setDeleteDialogOpen(true)}>
@@ -216,73 +221,88 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
         isDeleting={deleteDeck.isPending}
       />
 
-      <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
+      <Dialog
+        open={publishDialogOpen}
+        onOpenChange={(open) => {
+          setPublishDialogOpen(open);
+          if (open) {
+            publishForm.reset({ groupIds: publishedGroupIds });
+          }
+        }}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Publish to Groups</DialogTitle>
-            <DialogDescription>
-              {deck.status === "published"
-                ? "Add this deck to more groups."
-                : "Publish this deck to make it available to group members."}
-            </DialogDescription>
-          </DialogHeader>
+          <form
+            onSubmit={publishForm.handleSubmit(handlePublish)}
+            className="space-y-4">
+            <DialogHeader>
+              <DialogTitle>Publish to Groups</DialogTitle>
+              <DialogDescription>
+                Add this deck to groups. It will be automatically published.
+              </DialogDescription>
+            </DialogHeader>
 
-          {deck.cardCount === 0 && (
-            <p className="text-sm text-destructive">
-              Cannot publish an empty deck. Add at least one card first.
-            </p>
-          )}
-
-          {deck.cardCount > 0 && groups.length > 0 && (
-            <div className="space-y-2">
-              <Label>Select Groups</Label>
-              <div className="flex flex-wrap gap-2">
-                {groups.map((group) => (
-                  <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => toggleGroup(group.id)}
-                    className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                      selectedGroups.includes(group.id)
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background hover:bg-accent"
-                    }`}>
-                    {group.name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Selected {selectedGroups.length} group(s)
+            {deck.cardCount === 0 && (
+              <p className="text-sm text-destructive">
+                Cannot publish an empty deck. Add at least one card first.
               </p>
-            </div>
-          )}
+            )}
 
-          {deck.cardCount > 0 && groups.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              You are not a member of any groups. Join a group first to publish.
-            </p>
-          )}
+            {deck.cardCount > 0 && myGroups.length > 0 && (
+              <div className="space-y-2">
+                <Label>Select Groups</Label>
+                <div className="flex flex-wrap gap-2">
+                  {myGroups.map((group) => {
+                    const isSelected = groupIds.includes(group.id);
+                    return (
+                      <button
+                        key={group.id}
+                        type="button"
+                        onClick={() => {
+                          const current = publishForm.getValues("groupIds");
+                          const newGroups = current.includes(group.id)
+                            ? current.filter((id) => id !== group.id)
+                            : [...current, group.id];
+                          publishForm.setValue("groupIds", newGroups);
+                        }}
+                        className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-input bg-background hover:bg-accent"
+                        }`}>
+                        {group.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Selected {groupIds.length} group(s)
+                </p>
+              </div>
+            )}
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setPublishDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handlePublish}
-              disabled={
-                publishDeck.isPending ||
-                addToGroup.isPending ||
-                (deck.status !== "published" && deck.cardCount === 0) ||
-                selectedGroups.length === 0
-              }>
-              {publishDeck.isPending || addToGroup.isPending
-                ? "Publishing..."
-                : "Publish"}
-            </Button>
-          </DialogFooter>
+            {deck.cardCount > 0 && myGroups.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                You are not a member of any groups. Join a group first to publish.
+              </p>
+            )}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPublishDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  updatePublishGroups.isPending ||
+                  deck.cardCount === 0 ||
+                  groupIds.length === 0
+                }>
+                {updatePublishGroups.isPending ? "Publishing..." : "Publish"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
