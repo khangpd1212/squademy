@@ -2,11 +2,11 @@
 id: 5.3
 key: 5-3-flashcard-practice-session-swipe-ui-offline-first
 title: Flashcard Practice Session (Swipe UI + Offline-First)
-status: backlog
+status: review
 epic: epic-5
 priority: high
 created: 2026-04-09
-updated: 2026-04-09
+updated: 2026-04-11
 ---
 
 # Story 5.3: Flashcard Practice Session (Swipe UI + Offline-First)
@@ -61,30 +61,30 @@ So that I can practice anywhere, even without an internet connection.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Frontend - Practice Session Page (AC: 1-3)
-  - [ ] 1.1: Create `/group/[groupId]/flashcards/[deckId]/page.tsx`
-  - [ ] 1.2: Fetch cards via `useFlashcardCards` hook
-  - [ ] 1.3: Implement Dexie.js caching for offline
-- [ ] Task 2: Card Display & Flip (AC: 4-6)
-  - [ ] 2.1: Implement card component with Front/Back
-  - [ ] 2.2: Add Framer Motion 3D rotateY flip animation
-  - [ ] 2.3: Render Back side content (meaning, IPA, audio)
-- [ ] Task 3: Swipe Gestures (AC: 7-8)
-  - [ ] 3.1: Add @use-gesture/react for swipe handling
-  - [ ] 3.2: Implement "Again" (swipe left) and "Good" (swipe right)
-  - [ ] 3.3: Add card exit animations
-- [ ] Task 4: Keyboard Controls (AC: 9-12)
-  - [ ] 4.1: Implement Space to flip
-  - [ ] 4.2: Implement Arrow Left/Right for grading
-  - [ ] 4.3: Disable arrow keys until card is flipped
-  - [ ] 4.4: Add keyboard hints UI
-- [ ] Task 5: Grade Recording (AC: 13-14)
-  - [ ] 5.1: Create `useGradeCard` mutation
-  - [ ] 5.2: Implement offline queue in Dexie
-- [ ] Task 6: Session Summary (AC: 18-19)
-  - [ ] 6.1: Calculate accuracy % and cards reviewed
-  - [ ] 6.2: Create summary UI component
-  - [ ] 6.3: Implement "Continue" and "Done" buttons
+- [x] Task 1: Frontend - Practice Session Page (AC: 1-3)
+  - [x] 1.1: Create `/group/[groupId]/flashcards/[deckId]/page.tsx`
+  - [x] 1.2: Fetch cards via `useFlashcardCards` hook
+  - [x] 1.3: Implement Dexie.js caching for offline
+- [x] Task 2: Card Display & Flip (AC: 4-6)
+  - [x] 2.1: Implement card component with Front/Back
+  - [x] 2.2: Add Framer Motion 3D rotateY flip animation
+  - [x] 2.3: Render Back side content (meaning, IPA, audio)
+- [x] Task 3: Swipe Gestures (AC: 7-8)
+  - [x] 3.1: Add @use-gesture/react for swipe handling
+  - [x] 3.2: Implement "Again" (swipe left) and "Good" (swipe right)
+  - [x] 3.3: Add card exit animations
+- [x] Task 4: Keyboard Controls (AC: 9-12)
+  - [x] 4.1: Implement Space to flip
+  - [x] 4.2: Implement Arrow Left/Right for grading
+  - [x] 4.3: Disable arrow keys until card is flipped
+  - [x] 4.4: Add keyboard hints UI
+- [x] Task 5: Grade Recording (AC: 13-14)
+  - [x] 5.1: Create `useGradeCard` mutation
+  - [x] 5.2: Implement offline queue in Dexie
+- [x] Task 6: Session Summary (AC: 18-19)
+  - [x] 6.1: Calculate accuracy % and cards reviewed
+  - [x] 6.2: Create summary UI component
+  - [x] 6.3: Implement "Continue" and "Done" buttons
 
 ---
 

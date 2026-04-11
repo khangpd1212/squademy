@@ -63,6 +63,15 @@ export class FlashcardsController {
     return { ok: true, data: deck };
   }
 
+  @Get(":deckId/cards")
+  async getCards(
+    @Param("deckId") deckId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const deck = await this.flashcardsService.findOne(deckId, user.userId);
+    return { ok: true, data: deck.cards };
+  }
+
   @Get(":deckId/groups")
   async getDeckGroups(@Param("deckId") deckId: string) {
     const groups = await this.flashcardsService.getDeckGroups(deckId);

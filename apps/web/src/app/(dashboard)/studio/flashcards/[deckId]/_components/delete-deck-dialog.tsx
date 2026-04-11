@@ -32,7 +32,7 @@ export function DeleteDeckDialog({
         <DialogHeader>
           <DialogTitle>Delete Deck</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete "{deckTitle}"? This will also delete all cards in this deck. This action cannot be undone.
+            Are you sure you want to delete &quot;{deckTitle}&quot;? This will also delete all cards in this deck. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
 

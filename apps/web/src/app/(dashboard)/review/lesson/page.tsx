@@ -58,7 +58,7 @@ export default function LessonReviewQueuePage() {
             href={`/review/lesson/${lesson.id}`}
             className="block rounded-lg border bg-card p-4 transition-shadow hover:shadow-md"
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <h3 className="font-semibold">{lesson.title}</h3>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">

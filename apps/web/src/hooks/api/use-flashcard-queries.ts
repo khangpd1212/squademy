@@ -1,50 +1,17 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FlashcardDeck, FlashcardCard, FlashcardDeckDetail, CreateCardInput } from "@squademy/shared";
 import { ApiError } from "@/lib/api/api-error";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
 
-export type FlashcardDeckItem = {
-  id: string;
-  title: string;
-  description?: string;
-  status: string;
-  cardCount: number;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type FlashcardCardItem = {
-  id: string;
-  front: string;
-  back: string | null;
-  pronunciation: string | null;
-  audioUrl: string | null;
-  exampleSentence: string | null;
-  imageUrl: string | null;
-  tags: string[] | null;
-  extraNotes: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type FlashcardDeckDetail = FlashcardDeckItem & {
-  cards: FlashcardCardItem[];
-};
-
-export type CreateCardInput = {
-  front: string;
-  back?: string;
-  pronunciation?: string;
-  exampleSentence?: string;
-  tags?: string[];
-  extraNotes?: string;
-};
+export type FlashcardDeckItem = FlashcardDeck;
+export type FlashcardCardItem = FlashcardCard;
 
 export function useFlashcardDecks() {
   return useQuery({
-    queryKey: ["flashcard-decks", "my"] as const,
+    queryKey: queryKeys.flashcards.myDecks,
     queryFn: async () => {
       const result = await apiRequest<FlashcardDeckItem[]>("/flashcard-decks");
       if (!result.data) {
@@ -61,7 +28,7 @@ export function useFlashcardDecks() {
 
 export function useFlashcardDeck(deckId: string) {
   return useQuery({
-    queryKey: ["flashcard-decks", deckId] as const,
+    queryKey: queryKeys.flashcards.detail(deckId),
     queryFn: async () => {
       const result = await apiRequest<FlashcardDeckDetail>(
         `/flashcard-decks/${deckId}`,
@@ -98,7 +65,7 @@ export function useCreateDeck() {
       return result.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.flashcards.all });
     },
   });
 }
@@ -124,7 +91,7 @@ export function useDeleteDeck() {
       return result.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.flashcards.all });
     },
   });
 }
@@ -157,9 +124,9 @@ export function useAddCard() {
       return result.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.flashcards.all });
       queryClient.invalidateQueries({
-        queryKey: ["flashcard-decks", variables.deckId],
+        queryKey: queryKeys.flashcards.detail(variables.deckId),
       });
     },
   });
@@ -187,7 +154,7 @@ export function useImportAnkiDeck() {
       return result.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.flashcards.all });
     },
   });
 }
@@ -231,7 +198,7 @@ export type DeckGroup = {
 
 export function useDeckGroups(deckId: string) {
   return useQuery({
-    queryKey: ["flashcard-decks", deckId, "groups"] as const,
+    queryKey: queryKeys.flashcards.groups(deckId),
     queryFn: async () => {
       const result = await apiRequest<DeckGroup[]>(
         `/flashcard-decks/${deckId}/groups`,
@@ -278,8 +245,8 @@ export function useUpdatePublishGroups() {
       return result.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.flashcards.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
     },
   });
 }

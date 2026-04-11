@@ -16,12 +16,12 @@ export function FlashcardDeckCard({ deck, groupId }: FlashcardDeckCardProps) {
       toast.error("This deck has no cards to practice");
       return;
     }
-    window.location.href = `/group/${groupId}/flashcards/${deck.id}/practice`;
+    window.location.href = `/group/${groupId}/flashcards/${deck.id}`
   };
 
   return (
     <div className="group block rounded-lg border bg-card p-4 transition-colors hover:bg-accent">
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
         <div className="flex-1">
           <h3 className="font-medium group-hover:text-primary">
             {deck.title}

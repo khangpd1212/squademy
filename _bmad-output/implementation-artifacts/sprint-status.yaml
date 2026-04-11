@@ -83,7 +83,7 @@ development_status:
   epic-5: in-progress
   5-1-flashcard-deck-management-anki-import: done
   5-2-group-flashcard-browser: done
-  5-3-flashcard-practice-session-swipe-ui-offline-first: backlog
+  5-3-flashcard-practice-session-swipe-ui-offline-first: review
   5-4-spaced-repetition-scheduling-sm-2: backlog
   5-5-quiz-completion: backlog
   5-6-inline-flashcard-editing-during-study: backlog

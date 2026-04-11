@@ -18,3 +18,5 @@ export interface NavItem {
 export interface GroupNavItem extends NavItem {
   groupId: string;
 }
+
+export * from "./flashcard";

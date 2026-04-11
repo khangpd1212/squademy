@@ -54,3 +54,16 @@ export const flashcardDeckDetailSchema = flashcardDeckSchema.extend({
   cards: z.array(flashcardCardSchema),
 });
 export type FlashcardDeckDetail = z.infer<typeof flashcardDeckDetailSchema>;
+
+export const srsGradeSchema = z.object({
+  deckId: z.string(),
+  cardId: z.string(),
+  grade: z.number().min(0).max(1),
+  createdAt: z.number().optional(),
+});
+export type SrsGradeInput = z.infer<typeof srsGradeSchema>;
+
+export const srsGradeBatchSchema = z.object({
+  grades: z.array(srsGradeSchema),
+});
+export type SrsGradeBatchInput = z.infer<typeof srsGradeBatchSchema>;

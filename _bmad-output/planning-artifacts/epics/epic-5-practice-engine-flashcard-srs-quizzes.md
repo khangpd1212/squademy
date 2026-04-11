@@ -124,7 +124,7 @@ So that I study efficiently and review cards just before I forget them.
 **Then** the new `ease_factor`, `interval_days`, and `next_review_at` are calculated from the grade (0=Again, 1=Hard, 2=Good, 3=Easy)
 **And** `srs_progress` is updated via NestJS API `POST /srs-progress` (or queued in Dexie if offline)
 
-**Given** I navigate to `/practice` (Daily Mix)
+**Given** I navigate to `/group/[groupId]/flashcards/[deckId]` (Daily Mix)
 **When** the page loads
 **Then** `GET /srs-progress/due` (JwtAuthGuard) returns cards with `next_review_at <= now()` as today's review batch
 **And** the total count of due cards is shown prominently: "12 cards due today"

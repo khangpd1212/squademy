@@ -31,6 +31,7 @@ model User {
   reviewComments      ReviewComment[]
   lessonReactions    LessonReaction[]
   lessonProgresses   LessonProgress[]
+  srsProgresses      SRSProgress[]
   aliveTextInteractions AliveTextInteraction[]
 
   @@map("users")
@@ -182,6 +183,26 @@ model FlashcardCard {
   deck FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@map("flashcard_cards")
+}
+
+model SRSProgress {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  deckId        String   @map("deck_id")
+  cardId        String   @map("card_id")
+  grade         Int       @default(0)
+  nextReviewDate DateTime? @map("next_review_date")
+  lastReviewDate DateTime? @map("last_review_date")
+  interval      Int       @default(1)
+  easeFactor    Float     @default(2.5) @map("ease_factor")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardId])
+  @@index([userId, nextReviewDate])
+  @@map("srs_progress")
 }
 
 model LearningPathItem {

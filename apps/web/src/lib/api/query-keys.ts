@@ -8,6 +8,7 @@ export const queryKeys = {
     profile: ["users", "profile"] as const,
   },
   groups: {
+    all: ["groups"] as const,
     myGroups: ["groups", "my"] as const,
     detail: (id: string) => ["groups", id] as const,
     members: (groupId: string) => ["groups", groupId, "members"] as const,
@@ -17,6 +18,13 @@ export const queryKeys = {
   },
   invitations: {
     list: () => ["invitations"] as const,
+  },
+  flashcards: {
+    myDecks: ["flashcard-decks", "my"] as const,
+    detail: (deckId: string) => ["flashcard-decks", deckId] as const,
+    all: ["flashcard-decks"] as const,
+    cards: (deckId: string) => ["flashcards", deckId, "cards"] as const,
+    groups: (deckId: string) => ["flashcard-decks", deckId, "groups"] as const,
   },
   lessons: {
     myLessons: ["lessons", "my"] as const,

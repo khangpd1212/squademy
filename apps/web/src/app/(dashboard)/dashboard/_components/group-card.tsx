@@ -58,7 +58,7 @@ export function GroupCard({ group }: GroupCardProps) {
     <Link href={`/group/${group.id}`} className="block">
       <Card className="h-full transition-shadow hover:shadow-md">
         <CardContent className="space-y-3">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold leading-tight">{group.name}</h3>
             <Badge className={cn("capitalize", getRoleBadgeClass(group.role))}>
               {group.role}

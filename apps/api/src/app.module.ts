@@ -10,6 +10,7 @@ import { MembersModule } from "./members/members.module";
 import { InvitationsModule } from "./invitations/invitations.module";
 import { LessonsModule } from "./lessons/lessons.module";
 import { FlashcardsModule } from "./flashcards/flashcards.module";
+import { SrsProgressModule } from "./srs-progress/srs-progress.module";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { FlashcardsModule } from "./flashcards/flashcards.module";
     InvitationsModule,
     LessonsModule,
     FlashcardsModule,
+    SrsProgressModule,
   ],
   providers: [
     {
