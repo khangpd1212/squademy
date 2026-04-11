@@ -24,6 +24,7 @@
     "INVITATION_ALREADY_RESPONDED": "Lời mời đã được phản hồi.",
     "FORBIDDEN_NOT_MEMBER": "Bạn không phải thành viên của nhóm này.",
     "FORBIDDEN_NOT_ADMIN": "Cần quyền quản trị viên.",
+    "FORBIDDEN_NOT_EDITOR": "Cần quyền biên tập viên để xuất bản deck vào nhóm.",
     "FORBIDDEN_MISSING_CONTEXT": "Thiếu ngữ cảnh.",
     "USER_NOT_FOUND": "Không tìm thấy người dùng.",
     "fallback": "Đã xảy ra lỗi. Vui lòng thử lại.",

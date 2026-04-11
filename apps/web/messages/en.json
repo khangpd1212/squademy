@@ -24,6 +24,7 @@
     "INVITATION_ALREADY_RESPONDED": "Invitation has already been responded to.",
     "FORBIDDEN_NOT_MEMBER": "You are not a member of this group.",
     "FORBIDDEN_NOT_ADMIN": "Admin access required.",
+    "FORBIDDEN_NOT_EDITOR": "Editor access required to publish decks to groups.",
     "FORBIDDEN_MISSING_CONTEXT": "Missing context.",
     "USER_NOT_FOUND": "User not found.",
     "fallback": "Something went wrong. Please try again.",

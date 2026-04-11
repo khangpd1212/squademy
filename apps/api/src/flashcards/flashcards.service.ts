@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { ErrorCode } from "@squademy/shared";
+import { ErrorCode, GROUP_ROLES } from "@squademy/shared";
 
 @Injectable()
 export class FlashcardsService {
@@ -198,6 +203,29 @@ export class FlashcardsService {
         code: ErrorCode.FLASHCARD_EMPTY_DECK,
         message: "Cannot publish an empty deck. Add at least one card first.",
       });
+    }
+
+    // Verify user has editor/admin role for all groups they're trying to publish to
+    if (groupIds.length > 0) {
+      const memberships = await this.prisma.groupMember.findMany({
+        where: {
+          userId: authorId,
+          groupId: { in: groupIds },
+          isDeleted: false,
+          role: { in: [GROUP_ROLES.EDITOR, GROUP_ROLES.ADMIN] },
+        },
+        select: { groupId: true },
+      });
+
+      const authorizedGroupIds = new Set(memberships.map((m) => m.groupId));
+      const unauthorizedGroups = groupIds.filter((id) => !authorizedGroupIds.has(id));
+
+      if (unauthorizedGroups.length > 0) {
+        throw new ForbiddenException({
+          code: ErrorCode.FORBIDDEN_NOT_EDITOR,
+          message: "You must be an editor or admin to publish to these groups.",
+        });
+      }
     }
 
     const existingItems = await this.prisma.learningPathItem.findMany({

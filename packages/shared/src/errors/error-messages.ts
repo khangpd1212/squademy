@@ -21,6 +21,7 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.INVITATION_ALREADY_RESPONDED]: "Invitation has already been responded to.",
   [ErrorCode.FORBIDDEN_NOT_MEMBER]: "You are not a member of this group.",
   [ErrorCode.FORBIDDEN_NOT_ADMIN]: "Admin access required.",
+  [ErrorCode.FORBIDDEN_NOT_EDITOR]: "Editor access required to publish decks to groups.",
   [ErrorCode.FORBIDDEN_MISSING_CONTEXT]: "Missing context.",
   [ErrorCode.USER_NOT_FOUND]: "User not found.",
   [ErrorCode.GROUP_DELETE_FAILED]: "Failed to delete group. Please try again.",
