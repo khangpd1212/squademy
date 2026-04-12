@@ -1,13 +1,21 @@
 "use client";
 
-import { use, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useLesson, useLessonComments, useMarkLessonRead, useGroupLearningPath } from "@/hooks/api";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight } from "lucide-react";
-import MarkdownRenderer from "@/components/markdown-renderer";
 import "@/components/editor/editor-styles.css";
+import { RemoveLessonButton } from "@/components/lessons/remove-lesson-button";
+import MarkdownRenderer from "@/components/markdown-renderer";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useGroupLearningPath,
+  useGroupMemberRole,
+  useLesson,
+  useLessonComments,
+  useMarkLessonRead
+} from "@/hooks/api";
+import { GROUP_ROLES } from "@squademy/shared";
+import { ArrowLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { use, useEffect } from "react";
 
 type PageProps = {
   params: Promise<{ groupId: string; lessonId: string }>;
@@ -20,11 +28,17 @@ export default function GroupLessonDetailPage({ params }: PageProps) {
   const { data: comments = [] } = useLessonComments(lessonId);
   const markLessonRead = useMarkLessonRead();
   const { data: learningPathItems = [] } = useGroupLearningPath(groupId);
+  const { data: role } = useGroupMemberRole(groupId);
 
-  const currentLessonIndex = learningPathItems.findIndex(item => item.lesson?.id === lessonId);
-  const nextLesson = currentLessonIndex >= 0 && currentLessonIndex < learningPathItems.length - 1 
-    ? learningPathItems[currentLessonIndex + 1] 
-    : null;
+  const canRemove = role === GROUP_ROLES.ADMIN || role === GROUP_ROLES.EDITOR;
+
+  const currentLessonIndex = learningPathItems.findIndex(
+    (item) => item.lesson?.id === lessonId,
+  );
+  const nextLesson =
+    currentLessonIndex >= 0 && currentLessonIndex < learningPathItems.length - 1
+      ? learningPathItems[currentLessonIndex + 1]
+      : null;
 
   useEffect(() => {
     if (!lessonId || isLoading) return;
@@ -34,18 +48,22 @@ export default function GroupLessonDetailPage({ params }: PageProps) {
 
     const handleScroll = () => {
       if (hasMarkedRead) return;
-      
+
       const scrollHeight = document.documentElement.scrollHeight;
       const scrollTop = document.documentElement.scrollTop;
       const clientHeight = document.documentElement.clientHeight;
-      
+
       if (scrollTop + clientHeight >= scrollHeight - 100) {
         if (!markLessonRead.isPending) {
           markLessonRead.mutate(
             { lessonId: currentLessonId },
             {
-              onSuccess: () => { hasMarkedRead = true; },
-              onError: () => { hasMarkedRead = false; },
+              onSuccess: () => {
+                hasMarkedRead = true;
+              },
+              onError: () => {
+                hasMarkedRead = false;
+              },
             },
           );
         }
@@ -109,20 +127,33 @@ export default function GroupLessonDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <Button
-        variant="ghost"
-        onClick={() => router.push(`/group/${groupId}/lessons`)}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Lessons
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={() => router.push(`/group/${groupId}/lessons`)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Lessons
+        </Button>
+        {lesson && canRemove && (
+          <RemoveLessonButton
+            lessonId={lessonId}
+            groupId={groupId}
+            lessonTitle={lesson.title}
+          />
+        )}
+      </div>
 
       <div className="rounded-lg border bg-card p-6">{renderContent()}</div>
 
       {nextLesson && nextLesson.lesson && (
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-          <div className="text-sm text-muted-foreground mb-2">Continue with the next lesson:</div>
+          <div className="text-sm text-muted-foreground mb-2">
+            Continue with the next lesson:
+          </div>
           <Button
-            onClick={() => router.push(`/group/${groupId}/lessons/${nextLesson.lesson!.id}`)}
+            onClick={() =>
+              router.push(`/group/${groupId}/lessons/${nextLesson.lesson!.id}`)
+            }
             className="w-full justify-between">
             <span>{nextLesson.lesson!.title}</span>
             <ChevronRight className="h-4 w-4" />

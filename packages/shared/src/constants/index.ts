@@ -62,6 +62,7 @@ export const ErrorCode = {
   LEARNING_PATH_ITEM_EXISTS: "LEARNING_PATH_ITEM_EXISTS",
   REACTION_FAILED: "REACTION_FAILED",
   PROGRESS_UPDATE_FAILED: "PROGRESS_UPDATE_FAILED",
+  LESSON_ALREADY_SOFT_DELETED: "LESSON_ALREADY_SOFT_DELETED",
 } as const;
 
 export const GROUP_ROLES = {
@@ -83,6 +84,7 @@ export const LESSON_STATUS = {
   REVIEW: "review",
   PUBLISHED: "published",
   REJECTED: "rejected",
+  DELETED: "deleted",
 } as const;
 
 export type LessonStatus = (typeof LESSON_STATUS)[keyof typeof LESSON_STATUS];

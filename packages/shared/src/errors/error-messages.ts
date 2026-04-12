@@ -47,6 +47,7 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.LEARNING_PATH_ITEM_EXISTS]: "This item already exists in the learning path.",
   [ErrorCode.REACTION_FAILED]: "Failed to update reaction. Please try again.",
   [ErrorCode.PROGRESS_UPDATE_FAILED]: "Failed to update progress. Please try again.",
+  [ErrorCode.LESSON_ALREADY_SOFT_DELETED]: "This lesson has already been removed.",
 };
 
 export function getErrorMessage(code: string): string {

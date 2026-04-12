@@ -45,19 +45,12 @@ describe("LessonsService", () => {
 
   describe("findAllByAuthor", () => {
     it("returns filtered and ordered lessons for the author", async () => {
-      const mockLessons = [
+const mockLessons = [
         {
           id: "lesson-1",
-          title: "Lesson A",
-          status: LESSON_STATUS.PUBLISHED,
-          groupId: "group-1",
-          updatedAt: new Date("2026-03-10"),
-          group: { name: "IELTS Warriors" },
-        },
-        {
-          id: "lesson-2",
-          title: "Lesson B",
+          title: "My First Lesson",
           status: LESSON_STATUS.DRAFT,
+          isDeleted: false,
           groupId: "group-1",
           updatedAt: new Date("2026-03-05"),
           group: { name: "IELTS Warriors" },
@@ -70,13 +63,13 @@ describe("LessonsService", () => {
       expect(prisma.lesson.findMany).toHaveBeenCalledWith({
         where: {
           authorId: "user-1",
-          isDeleted: false,
           group: { isDeleted: false },
         },
         select: {
           id: true,
           title: true,
           status: true,
+          isDeleted: true,
           groupId: true,
           updatedAt: true,
           group: { select: { name: true } },

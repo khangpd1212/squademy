@@ -158,7 +158,7 @@ export default function PracticeSessionPage({ params }: PageProps) {
 
       <KeyboardHints isFlipped={isFlipped} />
 
-      <div className="mt-6 flex justify-center gap-4">
+      <div className="flex justify-center gap-4 mt-4">
         <Button
           variant={isFlipped ? "destructive" : "outline"}
           disabled={!isFlipped}

@@ -40,7 +40,7 @@ describe("LessonsController", () => {
       create: jest.fn(),
       update: jest.fn(),
       submit: jest.fn(),
-      deleteLesson: jest.fn(),
+      deleteDraftLesson: jest.fn(),
     } as unknown as jest.Mocked<LessonsService>;
 
     controller = new LessonsController(lessonsService);
@@ -53,6 +53,7 @@ describe("LessonsController", () => {
           id: "lesson-1",
           title: "My First Lesson",
           status: LESSON_STATUS.DRAFT,
+          isDeleted: false,
           groupId: "group-1",
           updatedAt: new Date("2026-03-01T00:00:00.000Z"),
           group: { name: "IELTS Warriors" },
@@ -211,26 +212,26 @@ describe("LessonsController", () => {
 
   describe("DELETE /lessons/:id (delete)", () => {
     it("deletes draft lesson and returns ok", async () => {
-      lessonsService.deleteLesson.mockResolvedValue(undefined);
+      lessonsService.deleteDraftLesson.mockResolvedValue(undefined);
 
       const result = await controller.delete("lesson-1");
 
-      expect(lessonsService.deleteLesson).toHaveBeenCalledWith("lesson-1");
+      expect(lessonsService.deleteDraftLesson).toHaveBeenCalledWith("lesson-1");
       expect(result).toEqual({ ok: true });
     });
 
     it("deletes rejected lesson and returns ok", async () => {
-      lessonsService.deleteLesson.mockResolvedValue(undefined);
+      lessonsService.deleteDraftLesson.mockResolvedValue(undefined);
 
       const result = await controller.delete("lesson-2");
 
-      expect(lessonsService.deleteLesson).toHaveBeenCalledWith("lesson-2");
+      expect(lessonsService.deleteDraftLesson).toHaveBeenCalledWith("lesson-2");
       expect(result).toEqual({ ok: true });
     });
 
     it("propagates BadRequestException when lesson is in review", async () => {
       const { BadRequestException } = await import("@nestjs/common");
-      lessonsService.deleteLesson.mockRejectedValue(new BadRequestException());
+      lessonsService.deleteDraftLesson.mockRejectedValue(new BadRequestException());
 
       await expect(controller.delete("lesson-1")).rejects.toThrow(
         BadRequestException,
@@ -239,7 +240,7 @@ describe("LessonsController", () => {
 
     it("propagates BadRequestException when lesson is published", async () => {
       const { BadRequestException } = await import("@nestjs/common");
-      lessonsService.deleteLesson.mockRejectedValue(new BadRequestException());
+      lessonsService.deleteDraftLesson.mockRejectedValue(new BadRequestException());
 
       await expect(controller.delete("lesson-3")).rejects.toThrow(
         BadRequestException,
@@ -248,7 +249,7 @@ describe("LessonsController", () => {
 
     it("propagates NotFoundException when lesson not found", async () => {
       const { NotFoundException } = await import("@nestjs/common");
-      lessonsService.deleteLesson.mockRejectedValue(new NotFoundException());
+      lessonsService.deleteDraftLesson.mockRejectedValue(new NotFoundException());
 
       await expect(controller.delete("lesson-x")).rejects.toThrow(
         NotFoundException,

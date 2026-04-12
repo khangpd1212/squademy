@@ -75,7 +75,7 @@ development_status:
   4-1-editor-review-queue-lesson-approval-rejection: done
   4-2-line-level-comments-on-lessons: done
   4-3-published-lesson-view-learning-path: done
-  4-4-content-moderation-soft-delete: backlog
+  4-4-content-moderation-soft-delete: done
   4-5-learning-path-roadmap-editor: backlog
   epic-4-retrospective: optional
 
@@ -83,7 +83,7 @@ development_status:
   epic-5: in-progress
   5-1-flashcard-deck-management-anki-import: done
   5-2-group-flashcard-browser: done
-  5-3-flashcard-practice-session-swipe-ui-offline-first: review
+  5-3-flashcard-practice-session-swipe-ui-offline-first: done
   5-4-spaced-repetition-scheduling-sm-2: backlog
   5-5-quiz-completion: backlog
   5-6-inline-flashcard-editing-during-study: backlog

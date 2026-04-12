@@ -61,12 +61,13 @@ describe("StudioLessonsView", () => {
     expect(screen.getByText("IELTS Warriors")).toBeInTheDocument();
   });
 
-  it("renders all 4 status badges correctly", () => {
+  it("renders all 5 status badges correctly", () => {
     const statuses = [
       { status: LESSON_STATUS.DRAFT, label: "Draft" },
       { status: LESSON_STATUS.REVIEW, label: "In Review" },
       { status: LESSON_STATUS.PUBLISHED, label: "Published" },
       { status: LESSON_STATUS.REJECTED, label: "Rejected" },
+      { status: LESSON_STATUS.DELETED, label: "Deleted" },
     ];
 
     useMyLessons.mockReturnValue({
@@ -86,6 +87,7 @@ describe("StudioLessonsView", () => {
     expect(screen.getByText("In Review")).toBeInTheDocument();
     expect(screen.getByText("Published")).toBeInTheDocument();
     expect(screen.getByText("Rejected")).toBeInTheDocument();
+    expect(screen.getByText("Deleted")).toBeInTheDocument();
   });
 
   it("shows empty state when no lessons", () => {

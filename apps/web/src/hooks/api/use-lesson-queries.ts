@@ -475,3 +475,32 @@ export function useMarkLessonRead() {
     },
   });
 }
+
+type SoftDeleteResult = {
+  lessonId: string;
+  isDeleted: boolean;
+};
+
+export function useSoftDeleteLesson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      const result = await apiRequest<SoftDeleteResult>(`/lessons/${lessonId}/soft-delete`, {
+        method: "PATCH",
+      });
+      if (!result.data) {
+        throw new ApiError({
+          message: result.message ?? "Failed to remove lesson",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+    onSuccess: async (_data, lessonId) => {
+      queryClient.removeQueries({ queryKey: queryKeys.lessons.detail(lessonId) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.lessons.myLessons });
+      await queryClient.invalidateQueries({ queryKey: ["groups"] });
+    },
+  });
+}

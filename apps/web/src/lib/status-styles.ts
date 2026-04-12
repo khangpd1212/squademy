@@ -21,4 +21,9 @@ export const STATUS_STYLES: Record<LessonStatus, { label: string; className: str
     className:
       "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400",
   },
+  deleted: {
+    label: "Deleted",
+    className:
+      "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400",
+  },
 };

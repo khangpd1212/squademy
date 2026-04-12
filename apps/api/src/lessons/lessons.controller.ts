@@ -85,7 +85,7 @@ export class LessonsController {
   @Delete(":id")
   @UseGuards(ResourceOwnerGuard)
   async delete(@Param("id") id: string) {
-    await this.lessonsService.deleteLesson(id);
+    await this.lessonsService.deleteDraftLesson(id);
     return { ok: true };
   }
 
@@ -181,5 +181,12 @@ export class LessonsController {
   async getProgress(@Param("lessonId") lessonId: string, @CurrentUser() user: JwtPayload) {
     const progress = await this.lessonsService.getProgress(lessonId, user.userId);
     return { ok: true, data: progress };
+  }
+
+  @Patch(":id/soft-delete")
+  @UseGuards(GroupEditorGuard)
+  async softDelete(@Param("id") id: string) {
+    const result = await this.lessonsService.softDeleteLesson(id);
+    return { ok: true, data: result };
   }
 }

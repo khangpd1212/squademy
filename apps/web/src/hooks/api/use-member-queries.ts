@@ -4,13 +4,14 @@ import { type MemberRole } from "@squademy/shared";
 import { ApiError } from "@/lib/api/api-error";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";
+import { useCurrentUser } from "./use-auth-queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type GroupMember = {
-  user_id: string;
+  userId: string;
   role: string;
-  joined_at: string;
-  profiles: { display_name: string; avatar_url: string | null } | null;
+  joinedAt: string;
+  profiles: { displayName: string; avatarUrl: string | null } | null;
 };
 
 export function useGroupMembers(groupId: string) {
@@ -34,13 +35,13 @@ export function useGroupMembers(groupId: string) {
         });
       }
       return (result.data ?? []).map((member): GroupMember => ({
-        user_id: member.userId,
+        userId: member.userId,
         role: member.role,
-        joined_at: member.joinedAt,
+        joinedAt: member.joinedAt,
         profiles: member.user
           ? {
-              display_name: member.user.displayName,
-              avatar_url: member.user.avatarUrl,
+              displayName: member.user.displayName,
+              avatarUrl: member.user.avatarUrl,
             }
           : null,
       }));
@@ -112,4 +113,16 @@ export function useUpdateMemberRole(groupId: string) {
       });
     },
   });
+}
+
+export function useGroupMemberRole(groupId: string) {
+  const { data: currentUser } = useCurrentUser();
+  const { data: members = [], isLoading } = useGroupMembers(groupId);
+
+  const myMember = members.find((m) => m.userId === currentUser?.userId);
+
+  return {
+    data: (myMember?.role as MemberRole) ?? null,
+    isLoading,
+  };
 }

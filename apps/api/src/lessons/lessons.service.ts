@@ -18,13 +18,13 @@ export class LessonsService {
     return this.prisma.lesson.findMany({
       where: {
         authorId: userId,
-        isDeleted: false,
         group: { isDeleted: false },
       },
       select: {
         id: true,
         title: true,
         status: true,
+        isDeleted: true,
         groupId: true,
         updatedAt: true,
         group: { select: { name: true } },
@@ -35,7 +35,7 @@ export class LessonsService {
 
   async findOneById(lessonId: string, userId: string) {
     const lesson = await this.prisma.lesson.findFirst({
-      where: { id: lessonId, isDeleted: false },
+      where: { id: lessonId },
     });
     if (!lesson) {
       throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
@@ -181,7 +181,7 @@ export class LessonsService {
     }
   }
 
-  async deleteLesson(id: string) {
+  async deleteDraftLesson(id: string) {
     const lesson = await this.prisma.lesson.findFirst({
       where: { id, isDeleted: false },
     });
@@ -192,9 +192,8 @@ export class LessonsService {
       throw new BadRequestException({ code: ErrorCode.LESSON_DELETE_NOT_ALLOWED });
     }
     try {
-      await this.prisma.lesson.update({
+      await this.prisma.lesson.delete({
         where: { id },
-        data: { isDeleted: true },
       });
     } catch {
       throw new BadRequestException({ code: ErrorCode.LESSON_DELETE_FAILED });
@@ -522,5 +521,27 @@ export class LessonsService {
     return this.prisma.lessonProgress.findUnique({
       where: { lessonId_userId: { lessonId, userId } },
     });
+  }
+
+  async softDeleteLesson(lessonId: string) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: { id: lessonId },
+      select: { id: true, isDeleted: true, groupId: true },
+    });
+
+    if (!lesson) {
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
+    }
+
+    if (lesson.isDeleted) {
+      throw new BadRequestException({ code: ErrorCode.LESSON_ALREADY_SOFT_DELETED });
+    }
+
+    await this.prisma.lesson.update({
+      where: { id: lessonId },
+      data: { isDeleted: true, status: LESSON_STATUS.DELETED },
+    });
+
+    return { lessonId, isDeleted: true };
   }
 }

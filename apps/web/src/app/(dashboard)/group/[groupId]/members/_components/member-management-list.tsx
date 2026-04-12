@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  GroupMember,
   useRemoveMember,
   useUpdateMemberRole,
 } from "@/hooks/api/use-member-queries";
@@ -17,15 +18,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type Member = {
-  user_id: string;
-  role: string;
-  joined_at: string;
-  profiles: { display_name: string; avatar_url: string | null } | null;
-};
-
 type MemberManagementListProps = {
-  members: Member[];
+  members: GroupMember[];
   currentUserId: string;
   isAdmin: boolean;
   groupId: string;
@@ -50,18 +44,21 @@ export function MemberManagementList({
   >({});
 
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
-  const [removeDialogUserId, setRemoveDialogUserId] = useState<string | null>(null);
+  const [removeDialogUserId, setRemoveDialogUserId] = useState<string | null>(
+    null,
+  );
   const updateMemberRoleMutation = useUpdateMemberRole(groupId);
   const removeMemberMutation = useRemoveMember(groupId);
 
   const removeTarget = useMemo(
-    () => members.find((member) => member.user_id === removeDialogUserId) ?? null,
+    () =>
+      members.find((member) => member.userId === removeDialogUserId) ?? null,
     [members, removeDialogUserId],
   );
 
   const roleChangeTarget = useMemo(
     () =>
-      members.find((member) => member.user_id === roleChangeDialog?.userId) ??
+      members.find((member) => member.userId === roleChangeDialog?.userId) ??
       null,
     [members, roleChangeDialog?.userId],
   );
@@ -83,7 +80,9 @@ export function MemberManagementList({
     const previousMembers = members;
     setUpdatingRoleFor(userId);
     setMembers((prev) =>
-      prev.map((member) => (member.user_id === userId ? { ...member, role } : member))
+      prev.map((member) =>
+        member.userId === userId ? { ...member, role } : member,
+      ),
     );
 
     try {
@@ -92,7 +91,10 @@ export function MemberManagementList({
       setMembers(previousMembers);
       setErrorsByUser((prev) => ({
         ...prev,
-        [userId]: err instanceof Error ? err.message : "Network error. Please try again.",
+        [userId]:
+          err instanceof Error
+            ? err.message
+            : "Network error. Please try again.",
       }));
     } finally {
       setUpdatingRoleFor(null);
@@ -114,7 +116,7 @@ export function MemberManagementList({
 
     const previousMembers = members;
     setRemovingUserId(userId);
-    setMembers((prev) => prev.filter((member) => member.user_id !== userId));
+    setMembers((prev) => prev.filter((member) => member.userId !== userId));
 
     try {
       await removeMemberMutation.mutateAsync(userId);
@@ -122,7 +124,10 @@ export function MemberManagementList({
       setMembers(previousMembers);
       setErrorsByUser((prev) => ({
         ...prev,
-        [userId]: err instanceof Error ? err.message : "Network error. Please try again.",
+        [userId]:
+          err instanceof Error
+            ? err.message
+            : "Network error. Please try again.",
       }));
     } finally {
       setRemoveDialogUserId(null);
@@ -135,22 +140,24 @@ export function MemberManagementList({
       <ul className="divide-y">
         {members.map((member) => {
           const profile = member.profiles;
-          const displayName = profile?.display_name ?? "Unknown";
+          const displayName = profile?.displayName ?? "Unknown";
           const initials = displayName.slice(0, 2).toUpperCase();
           const memberRole =
-            pendingRoleSelect[member.user_id] ??
-            ((member.role as MemberRole) ?? GROUP_ROLES.MEMBER);
-          const isCurrentUser = member.user_id === currentUserId;
+            pendingRoleSelect[member.userId] ??
+            (member.role as MemberRole) ??
+            GROUP_ROLES.MEMBER;
+          const isCurrentUser = member.userId === currentUserId;
           const isPending =
-            updatingRoleFor === member.user_id || removingUserId === member.user_id;
-          const rowError = errorsByUser[member.user_id];
+            updatingRoleFor === member.userId ||
+            removingUserId === member.userId;
+          const rowError = errorsByUser[member.userId];
 
           return (
-            <li key={member.user_id} className="py-3">
+            <li key={member.userId} className="py-3">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  {profile?.avatar_url ? (
-                    <AvatarImage src={profile.avatar_url} alt={displayName} />
+                  {profile?.avatarUrl ? (
+                    <AvatarImage src={profile.avatarUrl} alt={displayName} />
                   ) : null}
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
@@ -160,17 +167,19 @@ export function MemberManagementList({
                     {isCurrentUser ? " (You)" : ""}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Joined {new Date(member.joined_at).toLocaleDateString()}
+                    Joined {new Date(member.joinedAt).toLocaleDateString()}
                   </p>
                 </div>
 
                 {isAdmin ? (
                   <div className="flex items-center gap-2">
-                    <label className="sr-only" htmlFor={`role-${member.user_id}`}>
+                    <label
+                      className="sr-only"
+                      htmlFor={`role-${member.userId}`}>
                       Role for {displayName}
                     </label>
                     <select
-                      id={`role-${member.user_id}`}
+                      id={`role-${member.userId}`}
                       aria-label={`Role for ${displayName}`}
                       className="rounded-md border bg-background px-2 py-1 text-sm capitalize"
                       value={memberRole}
@@ -179,15 +188,14 @@ export function MemberManagementList({
                         const nextRole = event.target.value as MemberRole;
                         setPendingRoleSelect((prev) => ({
                           ...prev,
-                          [member.user_id]: nextRole,
+                          [member.userId]: nextRole,
                         }));
                         setRoleChangeDialog({
-                          userId: member.user_id,
+                          userId: member.userId,
                           displayName,
                           newRole: nextRole,
                         });
-                      }}
-                    >
+                      }}>
                       {roleOptions.map((role) => (
                         <option key={role} value={role}>
                           {role}
@@ -200,8 +208,7 @@ export function MemberManagementList({
                       size="sm"
                       aria-label={`Remove ${displayName}`}
                       disabled={isPending}
-                      onClick={() => setRemoveDialogUserId(member.user_id)}
-                    >
+                      onClick={() => setRemoveDialogUserId(member.userId)}>
                       Remove
                     </Button>
                   </div>
@@ -231,15 +238,14 @@ export function MemberManagementList({
             });
             setRoleChangeDialog(null);
           }
-        }}
-      >
+        }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Change role?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {roleChangeDialog && roleChangeTarget
-              ? `Set ${roleChangeTarget.profiles?.display_name ?? roleChangeDialog.displayName} to ${roleChangeDialog.newRole}.`
+              ? `Set ${roleChangeTarget.profiles?.displayName ?? roleChangeDialog.displayName} to ${roleChangeDialog.newRole}.`
               : "Apply this role change?"}
           </p>
           <DialogFooter>
@@ -247,8 +253,7 @@ export function MemberManagementList({
               type="button"
               variant="outline"
               disabled={Boolean(
-                roleChangeDialog &&
-                  updatingRoleFor === roleChangeDialog.userId,
+                roleChangeDialog && updatingRoleFor === roleChangeDialog.userId,
               )}
               onClick={() => {
                 if (roleChangeDialog) {
@@ -259,18 +264,15 @@ export function MemberManagementList({
                   });
                 }
                 setRoleChangeDialog(null);
-              }}
-            >
+              }}>
               Cancel
             </Button>
             <Button
               type="button"
               disabled={Boolean(
-                roleChangeDialog &&
-                  updatingRoleFor === roleChangeDialog.userId,
+                roleChangeDialog && updatingRoleFor === roleChangeDialog.userId,
               )}
-              onClick={() => void handleConfirmRoleChange()}
-            >
+              onClick={() => void handleConfirmRoleChange()}>
               Confirm change
             </Button>
           </DialogFooter>
@@ -281,15 +283,14 @@ export function MemberManagementList({
         open={Boolean(removeDialogUserId)}
         onOpenChange={(open) => {
           if (!open) setRemoveDialogUserId(null);
-        }}
-      >
+        }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Remove member?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {removeTarget
-              ? `This will remove ${removeTarget.profiles?.display_name ?? "this member"} from the group.`
+              ? `This will remove ${removeTarget.profiles?.displayName ?? "this member"} from the group.`
               : "This will remove the selected member from the group."}
           </p>
           <DialogFooter>
@@ -297,16 +298,14 @@ export function MemberManagementList({
               type="button"
               variant="outline"
               disabled={Boolean(removingUserId)}
-              onClick={() => setRemoveDialogUserId(null)}
-            >
+              onClick={() => setRemoveDialogUserId(null)}>
               Cancel
             </Button>
             <Button
               type="button"
               variant="destructive"
               disabled={Boolean(removingUserId)}
-              onClick={handleConfirmRemove}
-            >
+              onClick={handleConfirmRemove}>
               Confirm Remove
             </Button>
           </DialogFooter>

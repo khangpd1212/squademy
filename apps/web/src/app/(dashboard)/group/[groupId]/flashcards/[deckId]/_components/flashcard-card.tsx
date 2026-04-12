@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { motion } from "framer-motion";
 import { FlashcardCardItem } from "@/types/flashcard";
+import DOMpurify from "dompurify";
 
 interface FlashcardCardProps {
   card: FlashcardCardItem;
@@ -20,23 +21,22 @@ export function FlashcardCard({ card, onFlip, isFlipped }: FlashcardCardProps) {
   return (
     <div className="relative w-full max-w-md mx-auto perspective-1000">
       <motion.div
-        className="relative w-full h-80 cursor-pointer preserve-3d"
+        className="relative w-full h-140 cursor-pointer preserve-3d"
         onClick={handleTap}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        style={{ transformStyle: "preserve-3d" }}
-      >
+        style={{ transformStyle: "preserve-3d" }}>
         <div
           className="absolute inset-0 rounded-xl border bg-card p-6 shadow-lg backface-hidden"
-          style={{ backfaceVisibility: "hidden" }}
-        >
+          style={{ backfaceVisibility: "hidden" }}>
           <div className="flex h-full flex-col items-center justify-center">
-            <div className="text-center text-lg font-medium">
-              {card.front}
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Tap to reveal
-            </p>
+            <div
+              className="text-center text-lg font-medium"
+              dangerouslySetInnerHTML={{
+                __html: DOMpurify.sanitize(card.front),
+              }}
+            />
+            <p className="mt-4 text-sm text-muted-foreground">Tap to reveal</p>
           </div>
         </div>
 
@@ -45,13 +45,14 @@ export function FlashcardCard({ card, onFlip, isFlipped }: FlashcardCardProps) {
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-          }}
-        >
+          }}>
           <div className="flex h-full flex-col overflow-auto">
-            <div className="text-center text-lg font-medium">
-              {card.back || "No answer"}
-            </div>
-
+            <div
+              className="text-center text-lg font-medium"
+              dangerouslySetInnerHTML={{
+                __html: DOMpurify.sanitize(card.back || "No answer"),
+              }}
+            />
             {card.pronunciation && (
               <p className="mt-3 text-center text-sm text-muted-foreground">
                 [{card.pronunciation}]

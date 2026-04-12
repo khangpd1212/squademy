@@ -27,7 +27,7 @@ export function GroupMembersView({ groupId }: { groupId: string }) {
   if (!group || !currentUser) return null;
 
   const currentMember = members.find(
-    (m) => m.user_id === currentUser.userId,
+    (m) => m.userId === currentUser.userId,
   );
   const isAdmin = currentMember?.role === GROUP_ROLES.ADMIN;
 

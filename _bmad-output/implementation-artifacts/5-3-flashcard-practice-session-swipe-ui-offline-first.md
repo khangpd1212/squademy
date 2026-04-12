@@ -2,7 +2,7 @@
 id: 5.3
 key: 5-3-flashcard-practice-session-swipe-ui-offline-first
 title: Flashcard Practice Session (Swipe UI + Offline-First)
-status: review
+status: done
 epic: epic-5
 priority: high
 created: 2026-04-09
