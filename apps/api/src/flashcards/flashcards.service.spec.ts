@@ -151,7 +151,7 @@ describe("FlashcardsService", () => {
         ],
       });
 
-      const result = await service.findOne("deck-1", "user-1");
+      const result = await service.findOne("deck-1");
 
       expect(result.id).toBe("deck-1");
       expect(result.cards).toHaveLength(1);
@@ -161,7 +161,7 @@ describe("FlashcardsService", () => {
     it("throws NotFoundException when deck not found", async () => {
       prisma.flashcardDeck.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne("deck-1", "user-1")).rejects.toThrow(
+      await expect(service.findOne("deck-1")).rejects.toThrow(
         NotFoundException
       );
     });

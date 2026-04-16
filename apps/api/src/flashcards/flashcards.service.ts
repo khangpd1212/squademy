@@ -105,9 +105,9 @@ export class FlashcardsService {
     };
   }
 
-  async findOne(deckId: string, authorId: string) {
+  async findOne(deckId: string) {
     const deck = await this.prisma.flashcardDeck.findFirst({
-      where: { id: deckId, authorId },
+      where: { id: deckId },
       include: {
         cards: {
           select: {

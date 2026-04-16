@@ -55,20 +55,14 @@ export class FlashcardsController {
   }
 
   @Get(":deckId")
-  async findOne(
-    @Param("deckId") deckId: string,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    const deck = await this.flashcardsService.findOne(deckId, user.userId);
+  async findOne(@Param("deckId") deckId: string) {
+    const deck = await this.flashcardsService.findOne(deckId);
     return { ok: true, data: deck };
   }
 
   @Get(":deckId/cards")
-  async getCards(
-    @Param("deckId") deckId: string,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    const deck = await this.flashcardsService.findOne(deckId, user.userId);
+  async getCards(@Param("deckId") deckId: string) {
+    const deck = await this.flashcardsService.findOne(deckId);
     return { ok: true, data: deck.cards };
   }
 

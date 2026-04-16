@@ -87,9 +87,9 @@ describe("FlashcardsController", () => {
         cards: [],
       });
 
-      const result = await controller.findOne("deck-1", mockUser);
+      const result = await controller.findOne("deck-1");
 
-      expect(service.findOne).toHaveBeenCalledWith("deck-1", "user-1");
+      expect(service.findOne).toHaveBeenCalledWith("deck-1");
       expect(result.ok).toBe(true);
       expect(result.data.id).toBe("deck-1");
     });

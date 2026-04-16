@@ -52,6 +52,11 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
             <p className="text-xs text-muted-foreground">Flashcard deck</p>
           </div>
         </div>
+        <Link href={`/group/${groupId}/flashcards/${item.deck!.id}`}>
+          <Button size="sm" variant="outline" className="shrink-0">
+            Study
+          </Button>
+        </Link>
       </div>
     );
   }

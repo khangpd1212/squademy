@@ -60,7 +60,7 @@ development_status:
   2-6-delete-group: done
   epic-2-retrospective: optional
 
-  # ── Epic 3: Content Studio — Lesson & Flashcard Creation ──
+  # ── Epic 3: Content Studio — Lesson Creation ──
   epic-3: in-progress
   3-1-lesson-list-content-studio-navigation: done
   3-2-wysiwyg-lesson-editor: done
