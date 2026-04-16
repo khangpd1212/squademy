@@ -290,6 +290,24 @@ export class GroupsService {
       throw new BadRequestException("Either lessonId or deckId is required.");
     }
 
+    if (dto.lessonId) {
+      const existing = await this.prisma.learningPathItem.findFirst({
+        where: { groupId, lessonId: dto.lessonId },
+      });
+      if (existing) {
+        throw new BadRequestException({ code: ErrorCode.LEARNING_PATH_ITEM_EXISTS });
+      }
+    }
+
+    if (dto.deckId) {
+      const existing = await this.prisma.learningPathItem.findFirst({
+        where: { groupId, deckId: dto.deckId },
+      });
+      if (existing) {
+        throw new BadRequestException({ code: ErrorCode.LEARNING_PATH_ITEM_EXISTS });
+      }
+    }
+
     const lastItem = await this.prisma.learningPathItem.findFirst({
       where: { groupId },
       orderBy: { sortOrder: "desc" },
@@ -312,11 +330,16 @@ export class GroupsService {
 
   async getLearningPathItemsForEdit(groupId: string) {
     const inPathItems = await this.prisma.learningPathItem.findMany({
-      where: { groupId },
+      where: {
+        groupId,
+        OR: [
+          { lessonId: null },
+          { lesson: { isDeleted: false } },
+        ],
+      },
       orderBy: { sortOrder: "asc" },
       include: {
         lesson: {
-          where: { isDeleted: false },
           select: { id: true, title: true, status: true, author: { select: { displayName: true } } },
         },
         deck: { select: { id: true, title: true } },

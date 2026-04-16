@@ -60,6 +60,7 @@ export default function RoadmapPage({ params }: PageProps) {
 
   const handleRemove = async (itemId: string) => {
     await removeMutation.mutateAsync(itemId);
+    toast.success("Removed from learning path");
   };
 
   const handleAdd = async (type: "lesson" | "deck", itemId: string) => {

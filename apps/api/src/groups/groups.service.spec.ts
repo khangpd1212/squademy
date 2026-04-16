@@ -150,7 +150,9 @@ describe("GroupsService", () => {
 
     it("adds lesson to learning path with next sortOrder", async () => {
       prismaWithLPAdd.group.findFirst.mockResolvedValue({ id: "group-1" });
-      prismaWithLPAdd.learningPathItem.findFirst.mockResolvedValue({ sortOrder: 2 });
+      prismaWithLPAdd.learningPathItem.findFirst
+        .mockResolvedValueOnce(null)  // duplicate check - no existing item
+        .mockResolvedValueOnce({ sortOrder: 2 });  // get last sortOrder
       prismaWithLPAdd.learningPathItem.create.mockResolvedValue({
         id: "lp-new",
         sortOrder: 3,
@@ -179,6 +181,17 @@ describe("GroupsService", () => {
       await expect(service.addLearningPathItem("group-1", {})).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it("throws error when item already exists in learning path", async () => {
+      prismaWithLPAdd.group.findFirst.mockResolvedValue({ id: "group-1" });
+      prismaWithLPAdd.learningPathItem.findFirst.mockResolvedValue({ id: "existing" });  // duplicate found
+
+      await expect(
+        service.addLearningPathItem("group-1", { lessonId: "lesson-1" }),
+      ).rejects.toMatchObject({
+        response: { code: ErrorCode.LEARNING_PATH_ITEM_EXISTS },
+      });
     });
   });
 });
