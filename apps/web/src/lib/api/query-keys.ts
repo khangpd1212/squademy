@@ -14,6 +14,7 @@ export const queryKeys = {
     members: (groupId: string) => ["groups", groupId, "members"] as const,
     inviteLink: (groupId: string) => ["groups", groupId, "invite-link"] as const,
     learningPath: (groupId: string) => ["groups", groupId, "learning-path"] as const,
+    learningPathEdit: (groupId: string) => ["groups", groupId, "learning-path-edit"] as const,
     groupFlashcardDecks: (groupId: string) => ["groups", groupId, "flashcard-decks"] as const,
   },
   invitations: {

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGroup } from "@/hooks/api/use-group-queries";
+import { useGroupMemberRole } from "@/hooks/api/use-member-queries";
+import { GROUP_ROLES } from "@squademy/shared";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -11,6 +13,7 @@ const tabs = [
   { label: "Lessons", suffix: "/lessons" },
   { label: "Flashcards", suffix: "/flashcards" },
   { label: "Exercises", suffix: "/exercises" },
+  { label: "Roadmap", suffix: "/roadmap", editorOnly: true },
   { label: "Leaderboard", suffix: "/leaderboard" },
   { label: "Members", suffix: "/members" },
   { label: "Settings", suffix: "/settings" },
@@ -24,7 +27,11 @@ export function GroupLayoutShell({
   children: React.ReactNode;
 }) {
   const { data: group, isLoading, isError } = useGroup(groupId);
+  const { data: myRole } = useGroupMemberRole(groupId);
   const pathname = usePathname();
+
+  const isEditorOrAdmin = myRole === GROUP_ROLES.ADMIN || myRole === GROUP_ROLES.EDITOR;
+  const visibleTabs = tabs.filter((tab) => !tab.editorOnly || isEditorOrAdmin);
 
   if (isLoading) {
     return (
@@ -62,7 +69,7 @@ export function GroupLayoutShell({
         <p className="text-sm text-muted-foreground">Group workspace</p>
       </div>
       <nav className="flex gap-2 overflow-x-auto border-b pb-2">
-        {tabs.map((tab) => {
+        {visibleTabs.map((tab) => {
           const href = `${basePath}${tab.suffix}`;
           const isActive =
             tab.suffix === ""

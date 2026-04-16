@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   BookOpen,
   Dumbbell,
@@ -10,9 +8,11 @@ import {
   Mail,
   MessageSquare,
   Plus,
-  Settings,
+  Settings
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navItems: { title: string; href: string; icon?: React.ComponentType<{ className?: string }>; iconSrc?: string }[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },

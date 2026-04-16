@@ -13,6 +13,7 @@ import {
   JwtPayload,
 } from "../common/decorators/current-user.decorator";
 import { GroupAdminGuard } from "../common/guards/group-admin.guard";
+import { GroupEditorGroupGuard } from "../common/guards/group-editor-group.guard";
 import { GroupMemberGuard } from "../common/guards/group-member.guard";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { GroupsService } from "./groups.service";
@@ -61,8 +62,35 @@ export class GroupsController {
     return { ok: true, data: items };
   }
 
+  @Get(":id/learning-path/edit")
+  @UseGuards(GroupEditorGroupGuard)
+  async getLearningPathForEdit(@Param("id") id: string) {
+    const items = await this.groupsService.getLearningPathItemsForEdit(id);
+    return { ok: true, data: items };
+  }
+
+  @Patch(":id/learning-path/reorder")
+  @UseGuards(GroupEditorGroupGuard)
+  async reorderLearningPath(
+    @Param("id") id: string,
+    @Body() dto: { itemIds: string[] },
+  ) {
+    const items = await this.groupsService.reorderLearningPath(id, dto.itemIds);
+    return { ok: true, data: items };
+  }
+
+  @Delete(":id/learning-path/:itemId")
+  @UseGuards(GroupEditorGroupGuard)
+  async removeLearningPathItem(
+    @Param("id") id: string,
+    @Param("itemId") itemId: string,
+  ) {
+    const items = await this.groupsService.removeLearningPathItem(id, itemId);
+    return { ok: true, data: items };
+  }
+
   @Post(":id/learning-path")
-  @UseGuards(GroupMemberGuard)
+  @UseGuards(GroupEditorGroupGuard)
   async addLearningPathItem(
     @Param("id") id: string,
     @Body() dto: { lessonId?: string; deckId?: string },

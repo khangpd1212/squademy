@@ -76,7 +76,7 @@ development_status:
   4-2-line-level-comments-on-lessons: done
   4-3-published-lesson-view-learning-path: done
   4-4-content-moderation-soft-delete: done
-  4-5-learning-path-roadmap-editor: backlog
+  4-5-learning-path-roadmap-editor: review
   epic-4-retrospective: optional
 
   # ── Epic 5: Practice Engine — Flashcard SRS & Quizzes ──

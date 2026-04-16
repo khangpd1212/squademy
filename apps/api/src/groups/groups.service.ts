@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { ErrorCode, GROUP_ROLES, LESSON_STATUS, VALIDATION } from "@squademy/shared";
+import { ErrorCode, GROUP_ROLES, LESSON_STATUS, VALIDATION, FLASHCARD_DECK_STATUS } from "@squademy/shared";
 import { customAlphabet } from "nanoid";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateGroupDto } from "./dto/create-group.dto";
@@ -308,5 +308,114 @@ export class GroupsService {
         deck: { select: { id: true, title: true } },
       },
     });
+  }
+
+  async getLearningPathItemsForEdit(groupId: string) {
+    const inPathItems = await this.prisma.learningPathItem.findMany({
+      where: { groupId },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        lesson: {
+          where: { isDeleted: false },
+          select: { id: true, title: true, status: true, author: { select: { displayName: true } } },
+        },
+        deck: { select: { id: true, title: true } },
+      },
+    });
+
+    const inPathLessonIds = inPathItems.filter(i => i.lessonId).map(i => i.lessonId!);
+    const inPathDeckIds = inPathItems.filter(i => i.deckId).map(i => i.deckId!);
+
+    const availableLessons = await this.prisma.lesson.findMany({
+      where: {
+        groupId,
+        isDeleted: false,
+        status: LESSON_STATUS.PUBLISHED,
+        id: { notIn: inPathLessonIds },
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        author: { select: { displayName: true } },
+      },
+      orderBy: { title: "asc" },
+    });
+
+    const availableDecks = await this.prisma.flashcardDeck.findMany({
+      where: {
+        status: FLASHCARD_DECK_STATUS.PUBLISHED,
+        id: { notIn: inPathDeckIds },
+        learningPathItems: { none: { groupId } },
+      },
+      select: { id: true, title: true },
+      orderBy: { title: "asc" },
+    });
+
+    return {
+      inPath: inPathItems,
+      availableLessons,
+      availableDecks,
+    };
+  }
+
+  async reorderLearningPath(groupId: string, itemIds: string[]) {
+    const items = await this.prisma.learningPathItem.findMany({
+      where: { groupId },
+      select: { id: true },
+    });
+
+    const existingIds = new Set(items.map(i => i.id));
+    for (const id of itemIds) {
+      if (!existingIds.has(id)) {
+        throw new BadRequestException({ code: ErrorCode.LEARNING_PATH_ITEM_NOT_FOUND });
+      }
+    }
+
+    await this.prisma.$transaction(
+      itemIds.map((id, index) =>
+        this.prisma.learningPathItem.update({
+          where: { id },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+
+    return this.prisma.learningPathItem.findMany({
+      where: { groupId },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        lesson: { select: { id: true, title: true, status: true, author: { select: { displayName: true } } } },
+        deck: { select: { id: true, title: true } },
+      },
+    });
+  }
+
+  async removeLearningPathItem(groupId: string, itemId: string) {
+    const item = await this.prisma.learningPathItem.findFirst({
+      where: { id: itemId, groupId },
+    });
+
+    if (!item) {
+      throw new NotFoundException({ code: ErrorCode.LEARNING_PATH_ITEM_NOT_FOUND });
+    }
+
+    await this.prisma.learningPathItem.delete({ where: { id: itemId } });
+
+    const remainingItems = await this.prisma.learningPathItem.findMany({
+      where: { groupId },
+      orderBy: { sortOrder: "asc" },
+    });
+
+    await this.prisma.$transaction(
+      remainingItems.map((item, index) =>
+        this.prisma.learningPathItem.update({
+          where: { id: item.id },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+
+    return remainingItems;
   }
 }
