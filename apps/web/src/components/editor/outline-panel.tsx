@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { type Editor } from "@tiptap/react";
+import { Empty } from "@/components/ui/empty";
+import { Heading } from "lucide-react";
 
 type HeadingItem = {
   level: number;
@@ -49,8 +51,8 @@ export function OutlinePanel({ editor }: OutlinePanelProps) {
 
   if (headings.length === 0) {
     return (
-      <div className="px-3 py-4 text-xs text-zinc-400 dark:text-zinc-600">
-        No headings yet
+      <div className="px-3 py-4">
+        <Empty icon={Heading} title="No headings yet" />
       </div>
     );
   }

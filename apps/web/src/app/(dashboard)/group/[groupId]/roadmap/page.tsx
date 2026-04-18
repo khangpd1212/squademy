@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ChevronUp, ChevronDown, Plus, Trash2, BookOpen, FileText } from "lucide-react";
+import { Empty } from "@/components/ui/empty";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -86,14 +87,15 @@ export default function RoadmapPage({ params }: PageProps) {
       </div>
 
       {inPath.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          No items in the learning path yet.
-          {hasAvailableItems && (
-            <Button variant="link" onClick={() => setShowAddModal(true)}>
+        <Empty
+          icon={BookOpen}
+          title="No items in the learning path yet"
+          action={hasAvailableItems && (
+            <Button onClick={() => setShowAddModal(true)}>
               Add your first item
             </Button>
           )}
-        </div>
+        />
       ) : (
         <div className="space-y-2">
           {inPath.map((item, index) => {

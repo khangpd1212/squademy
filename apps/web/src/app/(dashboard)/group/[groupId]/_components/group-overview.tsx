@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/card";
 import { DAY_NAMES } from "@squademy/shared";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Empty } from "@/components/ui/empty";
 import { useGroup } from "@/hooks/api/use-group-queries";
 import { useGroupLearningPath } from "@/hooks/api/use-group-learning-path";
 import { LearningPathCard } from "@/components/learning-path/learning-path-card";
+import { GraduationCap } from "lucide-react";
 
 export function GroupOverview({ groupId }: { groupId: string }) {
   const { data: group, isLoading } = useGroup(groupId);
@@ -87,9 +89,10 @@ export function GroupOverview({ groupId }: { groupId: string }) {
             <Skeleton className="h-14 w-full" />
           </div>
         ) : !learningPathItems || learningPathItems.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No lessons in this group&apos;s learning path yet
-          </p>
+          <Empty
+            icon={GraduationCap}
+            title="No lessons in this group's learning path yet"
+          />
         ) : (
           <div className="space-y-2">
             {learningPathItems.map((item) => (

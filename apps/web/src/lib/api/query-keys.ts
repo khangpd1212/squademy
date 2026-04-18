@@ -27,6 +27,10 @@ export const queryKeys = {
     cards: (deckId: string) => ["flashcards", deckId, "cards"] as const,
     groups: (deckId: string) => ["flashcard-decks", deckId, "groups"] as const,
   },
+  srs: {
+    due: (deckId?: string) => ["srs-progress", "due", deckId ?? "all"] as const,
+    ahead: (deckId?: string) => ["srs-progress", "ahead", deckId ?? "all"] as const,
+  },
   lessons: {
     myLessons: ["lessons", "my"] as const,
     detail: (id: string) => ["lessons", id] as const,

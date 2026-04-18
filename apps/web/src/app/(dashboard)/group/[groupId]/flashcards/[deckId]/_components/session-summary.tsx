@@ -2,17 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, PlayCircle } from "lucide-react";
 
 interface SessionSummaryProps {
   totalCards: number;
   correctCount: number;
   accuracy: number;
+  onStudyAhead?: () => void;
 }
 
 export function SessionSummary({
   totalCards,
   accuracy,
+  onStudyAhead,
 }: SessionSummaryProps) {
   const router = useRouter();
 
@@ -45,6 +47,17 @@ export function SessionSummary({
             </>
           )}
         </div>
+
+        {onStudyAhead && (
+          <Button
+            variant="outline"
+            onClick={onStudyAhead}
+            className="w-full gap-2"
+          >
+            <PlayCircle className="h-4 w-4" />
+            Study Ahead
+          </Button>
+        )}
 
         <div className="flex gap-4">
           <Button

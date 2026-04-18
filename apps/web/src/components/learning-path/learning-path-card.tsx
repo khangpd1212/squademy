@@ -15,7 +15,6 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
   const hasDeck = item.deck !== null;
 
   if (hasLesson) {
-    const contributor = hasLesson ? item.lesson!.author.displayName : null;
     return (
       <div className="group flex items-center justify-between gap-4 rounded-lg border border-border p-3 transition-colors hover:bg-muted/50">
         <div className="flex items-center gap-3 min-w-0">
@@ -24,17 +23,11 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
           </div>
           <div className="min-w-0">
             <p className="truncate font-medium text-sm">{item.lesson!.title}</p>
-            {contributor && (
-              <p className="text-xs text-muted-foreground truncate">
-                by {contributor}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground truncate">Lesson</p>
           </div>
         </div>
         <Link href={`/group/${groupId}/lessons/${item.lesson!.id}`}>
-          <Button size="sm" className="sq-btn-green shrink-0">
-            Read
-          </Button>
+          <Button size="sm">Study</Button>
         </Link>
       </div>
     );
@@ -53,9 +46,7 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
           </div>
         </div>
         <Link href={`/group/${groupId}/flashcards/${item.deck!.id}`}>
-          <Button size="sm" variant="outline" className="shrink-0">
-            Study
-          </Button>
+          <Button size="sm">Study</Button>
         </Link>
       </div>
     );

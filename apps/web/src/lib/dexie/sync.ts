@@ -70,10 +70,17 @@ export function useOfflineSync() {
   };
 }
 
+interface SRSValues {
+  easeFactor: number;
+  interval: number;
+  repetitions: number;
+}
+
 export async function recordGrade(
   deckId: string,
   cardId: string,
   grade: number,
+  srsValues?: SRSValues,
 ): Promise<void> {
   const isOnline = navigator.onLine;
 
@@ -84,9 +91,9 @@ export async function recordGrade(
         body: JSON.stringify({ deckId, cardId, grade }),
       });
     } catch {
-      await addToGradeQueue(deckId, cardId, grade);
+      await addToGradeQueue(deckId, cardId, grade, srsValues);
     }
   } else {
-    await addToGradeQueue(deckId, cardId, grade);
+    await addToGradeQueue(deckId, cardId, grade, srsValues);
   }
 }

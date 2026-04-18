@@ -25,6 +25,8 @@ import { useMyGroups } from "@/hooks/api/use-group-queries";
 import { AddCardDialog } from "./add-card-dialog";
 import { DeleteDeckDialog } from "./delete-deck-dialog";
 import { Card, CardContent } from "@/components/ui/card";
+import { Empty } from "@/components/ui/empty";
+import { BookOpen } from "lucide-react";
 import DOMPurify from "dompurify";
 
 interface DeckEditorViewProps {
@@ -153,13 +155,14 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
       </div>
 
       {deck.cards.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h2 className="mb-2 text-xl font-semibold">No cards yet</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Add your first flashcard to this deck.
-          </p>
-          <Button onClick={() => setAddCardOpen(true)}>Add Card</Button>
-        </div>
+        <Empty
+          icon={BookOpen}
+          title="No cards yet"
+          description="Add your first flashcard to this deck."
+          action={
+            <Button onClick={() => setAddCardOpen(true)}>Add Card</Button>
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {deck.cards.map((card) => (
@@ -281,7 +284,8 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
 
             {deck.cardCount > 0 && myGroups.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                You are not a member of any groups. Join a group first to publish.
+                You are not a member of any groups. Join a group first to
+                publish.
               </p>
             )}
 

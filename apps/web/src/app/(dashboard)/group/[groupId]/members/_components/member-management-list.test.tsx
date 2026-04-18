@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemberManagementList } from "./member-management-list";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 import { GROUP_ROLES } from "@squademy/shared";
+import { GroupMember } from "@/hooks";
 
 jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
@@ -21,18 +22,18 @@ jest.mock("@/components/ui/dialog", () => ({
   ),
 }));
 
-const members = [
+const members: GroupMember[] = [
   {
-    user_id: "user-1",
+    userId: "user-1",
     role: GROUP_ROLES.ADMIN,
-    joined_at: "2026-03-10T00:00:00.000Z",
-    profiles: { display_name: "Admin User", avatar_url: null },
+    joinedAt: "2026-03-10T00:00:00.000Z",
+    profiles: { displayName: "Admin User", avatarUrl: null },
   },
   {
-    user_id: "user-2",
+    userId: "user-2",
     role: GROUP_ROLES.MEMBER,
-    joined_at: "2026-03-11T00:00:00.000Z",
-    profiles: { display_name: "Member User", avatar_url: null },
+    joinedAt: "2026-03-11T00:00:00.000Z",
+    profiles: { displayName: "Member User", avatarUrl: null },
   },
 ];
 
@@ -114,7 +115,9 @@ describe("MemberManagementList", () => {
     );
     await user.click(screen.getByRole("button", { name: "Confirm change" }));
 
-    expect(screen.getByLabelText("Role for Member User")).toHaveValue(GROUP_ROLES.EDITOR);
+    expect(screen.getByLabelText("Role for Member User")).toHaveValue(
+      GROUP_ROLES.EDITOR,
+    );
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
   });
 
@@ -175,7 +178,9 @@ describe("MemberManagementList", () => {
         ),
       ).toBeInTheDocument(),
     );
-    expect(screen.getByLabelText("Role for Admin User")).toHaveValue(GROUP_ROLES.ADMIN);
+    expect(screen.getByLabelText("Role for Admin User")).toHaveValue(
+      GROUP_ROLES.ADMIN,
+    );
   });
 
   it("shows error and rolls back when sole-admin self-removal fails", async () => {

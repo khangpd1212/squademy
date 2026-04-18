@@ -1,10 +1,9 @@
-"use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -14,6 +13,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -69,23 +69,26 @@ export function NewLessonDialog({ open, onOpenChange }: Props) {
         {groups.length === 0 && !groupsLoading && (
           <Link
             href="/"
-            className="text-sm text-primary underline underline-offset-4"
-          >
+            className="text-sm text-primary underline underline-offset-4">
             Go to dashboard
           </Link>
         )}
 
         {groups.length > 1 && (
-          <Select value={selectedGroupId} onValueChange={(value) => setSelectedGroupId(value ?? "")}>
+          <Select
+            value={selectedGroupId}
+            onValueChange={(value) => setSelectedGroupId(value ?? "")}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a group…" />
             </SelectTrigger>
             <SelectContent>
-              {groups.map((group) => (
-                <SelectItem key={group.id} value={group.id}>
-                  {group.name}
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                {groups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         )}
@@ -98,13 +101,13 @@ export function NewLessonDialog({ open, onOpenChange }: Props) {
           </p>
         )}
 
-        <DialogFooter showCloseButton>
+        <DialogFooter>
+          <DialogClose render={<Button variant="outline">Cancel</Button>} />
           {groups.length > 0 && (
             <Button
               onClick={handleCreate}
-              disabled={!activeGroupId || createLesson.isPending}
-            >
-              {createLesson.isPending ? "Creating…" : "Create"}
+              disabled={!activeGroupId || createLesson.isPending}>
+              {createLesson.isPending ? "Creating…" : "Create Lesson"}
             </Button>
           )}
         </DialogFooter>

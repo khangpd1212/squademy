@@ -159,8 +159,9 @@ model FlashcardDeck {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  author User           @relation(fields: [authorId], references: [id])
-  cards  FlashcardCard[]
+  author  User             @relation(fields: [authorId], references: [id])
+  cards   FlashcardCard[]
+  srsProgress SRSProgress[]
   learningPathItems LearningPathItem[]
 
   @@map("flashcard_decks")
@@ -180,7 +181,8 @@ model FlashcardCard {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  deck FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  deck        FlashcardDeck  @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  srsProgress SRSProgress[]
 
   @@map("flashcard_cards")
 }
@@ -195,10 +197,13 @@ model SRSProgress {
   lastReviewDate DateTime? @map("last_review_date")
   interval      Int       @default(1)
   easeFactor    Float     @default(2.5) @map("ease_factor")
+  repetitions   Int       @default(0) @map("repetitions")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card FlashcardCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  deck FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@unique([userId, cardId])
   @@index([userId, nextReviewDate])

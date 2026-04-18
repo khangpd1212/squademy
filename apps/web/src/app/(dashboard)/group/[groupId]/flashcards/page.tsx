@@ -3,7 +3,9 @@
 import { use } from "react";
 import { useGroupFlashcardDecks } from "@/hooks/api/use-flashcard-queries";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Empty } from "@/components/ui/empty";
 import { FlashcardDeckCard } from "./_components/flashcard-deck-card";
+import { Layers } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -30,9 +32,11 @@ export default function GroupFlashcardsPage({ params }: PageProps) {
     return (
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Flashcards</h2>
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="mt-2 text-muted-foreground">No flashcards yet. Check back later!</p>
-        </div>
+        <Empty
+          icon={Layers}
+          title="No flashcards yet"
+          description="Check back later!"
+        />
       </div>
     );
   }

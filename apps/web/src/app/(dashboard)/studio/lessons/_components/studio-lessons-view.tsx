@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Empty } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyLessons } from "@/hooks/api/use-lesson-queries";
+import { BookOpen } from "lucide-react";
+import { useState } from "react";
 import { DeleteLessonDialog } from "./delete-lesson-dialog";
-import { EmptyLessonState } from "./empty-lesson-state";
 import { LessonListItem } from "./lesson-list-item";
 import { NewLessonDialog } from "./new-lesson-dialog";
 
@@ -53,7 +54,14 @@ export function StudioLessonsView() {
       {!isLoading && !isError && lessons && (
         <>
           {lessons.length === 0 ? (
-            <EmptyLessonState onNewLesson={() => setDialogOpen(true)} />
+            <Empty
+              icon={BookOpen}
+              title="No lessons yet"
+              description="You haven't created any lessons yet. Start contributing!"
+              action={
+                <Button onClick={() => setDialogOpen(true)}>New Lesson</Button>
+              }
+            />
           ) : (
             <div className="flex flex-col gap-2">
               {lessons.map((lesson) => (

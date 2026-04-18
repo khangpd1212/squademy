@@ -36,4 +36,7 @@ export interface GradeQueueItem {
   cardId: string;
   grade: number;
   createdAt: number;
+  easeFactor?: number;
+  interval?: number;
+  repetitions?: number;
 }

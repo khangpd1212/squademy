@@ -43,12 +43,14 @@ export async function addToGradeQueue(
   deckId: string,
   cardId: string,
   grade: number,
+  srsValues?: { easeFactor: number; interval: number; repetitions: number },
 ): Promise<void> {
   await flashcardDb.gradeQueue.add({
     deckId,
     cardId,
     grade,
     createdAt: Date.now(),
+    ...(srsValues ?? {}),
   });
 }
 

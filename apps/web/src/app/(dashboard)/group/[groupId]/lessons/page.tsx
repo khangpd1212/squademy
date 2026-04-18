@@ -4,6 +4,7 @@ import { use } from "react";
 import Link from "next/link";
 import { useGroupPublishedLessons } from "@/hooks/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Empty } from "@/components/ui/empty";
 import { BookOpen, User } from "lucide-react";
 
 type PageProps = {
@@ -31,10 +32,11 @@ export default function GroupLessonsPage({ params }: PageProps) {
     return (
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Lessons</h2>
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <BookOpen className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-2 text-muted-foreground">No published lessons yet.</p>
-        </div>
+        <Empty
+          icon={BookOpen}
+          title="No published lessons yet."
+          description="Publish your first lesson to get started."
+        />
       </div>
     );
   }
