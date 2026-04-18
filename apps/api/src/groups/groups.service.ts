@@ -8,6 +8,7 @@ import { customAlphabet } from "nanoid";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateGroupDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
+import { Prisma } from "@squademy/database";
 
 const MAX_INVITE_CODE_RETRIES = 3;
 
@@ -29,15 +30,21 @@ function isUniqueConstraintError(error: unknown): boolean {
 export class GroupsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findMyGroups(userId: string) {
-    const memberships = await this.prisma.groupMember.findMany({
-      where: {
-        userId,
+  async findMyGroups(userId: string, roles?: string[]) {
+    const where: Prisma.GroupMemberWhereInput = {
+      userId,
+      isDeleted: false,
+      group: {
         isDeleted: false,
-        group: {
-          isDeleted: false,
-        },
       },
+    };
+
+    if (roles && roles.length > 0) {
+      where.role = { in: roles };
+    }
+
+    const memberships = await this.prisma.groupMember.findMany({
+      where,
       include: {
         group: {
           include: {

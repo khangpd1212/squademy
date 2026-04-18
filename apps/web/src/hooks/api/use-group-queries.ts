@@ -157,6 +157,25 @@ export function useMyGroups() {
   });
 }
 
+export function useEditableGroups() {
+  return useQuery({
+    queryKey: [...queryKeys.groups.myGroups, "editable"] as const,
+    queryFn: async () => {
+      const result = await apiRequest<MyGroupItem[]>(
+        "/groups/me?role=admin,editor",
+      );
+      if (result.message || !result.data) {
+        throw new ApiError({
+          message: result.message ?? "Could not load groups.",
+          code: result.code,
+          status: result.status,
+        });
+      }
+      return result.data;
+    },
+  });
+}
+
 export function useDeleteGroup(groupId: string) {
   const queryClient = useQueryClient();
 

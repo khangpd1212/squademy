@@ -21,7 +21,7 @@ import {
   useDeckGroups,
   useUpdatePublishGroups,
 } from "@/hooks/api/use-flashcard-queries";
-import { useMyGroups } from "@/hooks/api/use-group-queries";
+import { useEditableGroups } from "@/hooks/api/use-group-queries";
 import { AddCardDialog } from "./add-card-dialog";
 import { DeleteDeckDialog } from "./delete-deck-dialog";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +42,7 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
   const { data: deck, isLoading, isError, error } = useFlashcardDeck(deckId);
   const deleteDeck = useDeleteDeck();
   const updatePublishGroups = useUpdatePublishGroups();
-  const { data: myGroups = [] } = useMyGroups();
+  const { data: myGroups = [] } = useEditableGroups();
   const { data: deckGroups = [], refetch: refetchDeckGroups } =
     useDeckGroups(deckId);
   const [addCardOpen, setAddCardOpen] = useState(false);
@@ -284,8 +284,8 @@ export function DeckEditorView({ deckId }: DeckEditorViewProps) {
 
             {deck.cardCount > 0 && myGroups.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                You are not a member of any groups. Join a group first to
-                publish.
+                You are not an admin or editor of any groups. Join a group as
+                admin or editor to publish.
               </p>
             )}
 

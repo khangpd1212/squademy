@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -37,8 +38,12 @@ export class GroupsController {
   }
 
   @Get("me")
-  async findMine(@CurrentUser() user: JwtPayload) {
-    const groups = await this.groupsService.findMyGroups(user.userId);
+  async findMine(
+    @CurrentUser() user: JwtPayload,
+    @Query("role") roles?: string,
+  ) {
+    const roleFilter = roles ? roles.split(",") : undefined;
+    const groups = await this.groupsService.findMyGroups(user.userId, roleFilter);
     return { ok: true, data: groups };
   }
 
