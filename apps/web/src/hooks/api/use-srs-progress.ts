@@ -34,12 +34,6 @@ export interface SRSProgressWithCard {
   };
 }
 
-interface ApiResponse<T> {
-  ok: boolean;
-  data?: T;
-  message?: string;
-}
-
 export function useDueCards(deckId?: string) {
   return useQuery({
     queryKey: queryKeys.srs.due(deckId),
@@ -47,7 +41,7 @@ export function useDueCards(deckId?: string) {
       const url = deckId
         ? `/srs-progress/due?deckId=${encodeURIComponent(deckId)}`
         : "/srs-progress/due";
-      const result = await apiRequest<ApiResponse<SRSProgressWithCard[]>>(url);
+      const result = await apiRequest<SRSProgressWithCard[]>(url);
       if (!result.data) {
         throw new Error(result.message ?? "Failed to fetch due cards");
       }
@@ -63,7 +57,7 @@ export function useAheadCards(deckId?: string) {
       const url = deckId
         ? `/srs-progress/ahead?deckId=${encodeURIComponent(deckId)}`
         : "/srs-progress/ahead";
-      const result = await apiRequest<ApiResponse<SRSProgressWithCard[]>>(url);
+      const result = await apiRequest<SRSProgressWithCard[]>(url);
       if (!result.data) {
         throw new Error(result.message ?? "Failed to fetch ahead cards");
       }

@@ -79,7 +79,11 @@ export function NewLessonDialog({ open, onOpenChange }: Props) {
             value={selectedGroupId}
             onValueChange={(value) => setSelectedGroupId(value ?? "")}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a group…" />
+              <SelectValue>
+                {selectedGroupId
+                  ? groups.find((g) => g.id === selectedGroupId)?.name
+                  : "Select a group..."}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>

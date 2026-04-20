@@ -1,30 +1,30 @@
 "use client";
 
-import { use } from "react";
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useDueCards, useAheadCards } from "@/hooks/api/use-srs-progress";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAheadCards, useDueCards } from "@/hooks/api/use-srs-progress";
+import { queryKeys } from "@/lib/api/query-keys";
 import { recordGrade } from "@/lib/dexie/sync";
+import { AnimatePresence, motion } from "framer-motion";
+import { CheckCircle, PlayCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { FlashcardCard } from "./_components/flashcard-card";
 import { KeyboardHints } from "./_components/keyboard-hints";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { CheckCircle, PlayCircle } from "lucide-react";
+import { SessionSummary } from "./_components/session-summary";
+import { useQueryClient } from "@tanstack/react-query";
 
 type PageProps = {
   params: Promise<{ groupId: string; deckId: string }>;
 };
 
 export default function PracticeSessionPage({ params }: PageProps) {
+  const queryClient = useQueryClient();
   const { groupId: _groupId, deckId } = use(params);
   const router = useRouter();
 
-  const { data: dueCardsData, isLoading: isLoadingDue } = useDueCards(deckId);
-  const { data: aheadCardsData, refetch: fetchAhead } = useAheadCards(deckId);
-
-  const dueCards = useMemo(() => (Array.isArray(dueCardsData) ? dueCardsData : []), [dueCardsData]);
-  const aheadCards = useMemo(() => (Array.isArray(aheadCardsData) ? aheadCardsData : []), [aheadCardsData]);
+  const { data: dueCards = [], isLoading: isLoadingDue } = useDueCards(deckId);
+  const { data: aheadCards = [], refetch: fetchAhead } = useAheadCards(deckId);
 
   const [isFlipped, setIsFlipped] = useState(false);
   const [grades, setGrades] = useState<{ cardId: string; grade: number }[]>([]);
@@ -61,50 +61,48 @@ export default function PracticeSessionPage({ params }: PageProps) {
     setIsFlipped(true);
   }, []);
 
-  const handleGrade = useCallback(
-    async (grade: number) => {
-      if (!displayCards || currentIndex >= displayCards.length) return;
+  const handleGrade = async (grade: number) => {
+    if (!displayCards || currentIndex >= displayCards.length) return;
 
-      const card = displayCards[currentIndex];
-      setGrades((prev) => [...prev, { cardId: card.id, grade }]);
+    const card = displayCards[currentIndex];
+    setGrades((prev) => [...prev, { cardId: card.id, grade }]);
 
-      const srsProgress = studyAheadMode
-        ? aheadCards[currentIndex]
-        : sessionCards[currentIndex];
+    const srsProgress = studyAheadMode
+      ? aheadCards[currentIndex]
+      : sessionCards[currentIndex];
 
-      await recordGrade(deckId, card.id, grade, {
-        easeFactor: srsProgress?.easeFactor ?? 2.5,
-        interval: srsProgress?.interval ?? 1,
-        repetitions: srsProgress?.repetitions ?? 0,
+    await recordGrade(deckId, card.id, grade, {
+      easeFactor: srsProgress?.easeFactor ?? 2.5,
+      interval: srsProgress?.interval ?? 1,
+      repetitions: srsProgress?.repetitions ?? 0,
+    });
+
+    if (currentIndex + 1 >= displayCards.length) {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.srs.due(deckId),
       });
-
-      if (currentIndex + 1 >= displayCards.length) {
-        if (studyAheadMode) {
-          setStudyAheadMode(false);
-        }
-        setIsComplete(true);
-      } else {
-        setIsFlipped(false);
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.srs.ahead(deckId),
+      });
+      if (studyAheadMode) {
+        setStudyAheadMode(false);
       }
-    },
-    [displayCards, currentIndex, deckId, studyAheadMode, aheadCards, sessionCards],
-  );
+      setIsComplete(true);
+    } else {
+      setIsFlipped(false);
+    }
+  };
 
   const handleStudyAhead = useCallback(async () => {
     await fetchAhead();
     setStudyAheadMode(true);
     setIsFlipped(false);
     setIsComplete(false);
+    setGrades([]);
   }, [fetchAhead]);
 
   const handleExitStudyAhead = useCallback(() => {
     setStudyAheadMode(false);
-    setIsFlipped(false);
-    setIsComplete(false);
-  }, []);
-
-  const handleRestartSession = useCallback(() => {
-    setGrades([]);
     setIsFlipped(false);
     setIsComplete(false);
   }, []);
@@ -145,7 +143,8 @@ export default function PracticeSessionPage({ params }: PageProps) {
           <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
           <h2 className="text-2xl font-bold">You&apos;re all caught up!</h2>
           <p className="text-muted-foreground">
-            No cards due for review right now. Great job staying on top of your studies!
+            No cards due for review right now. Great job staying on top of your
+            studies!
           </p>
           {aheadCards.length > 0 && (
             <Button onClick={handleStudyAhead} className="w-full gap-2">
@@ -154,7 +153,10 @@ export default function PracticeSessionPage({ params }: PageProps) {
             </Button>
           )}
           <div className="flex gap-4">
-            <Button variant="outline" onClick={() => router.back()} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+              className="flex-1">
               Go Back
             </Button>
             <Button onClick={() => router.push("/")} className="flex-1">
@@ -169,59 +171,31 @@ export default function PracticeSessionPage({ params }: PageProps) {
   if (isComplete && !studyAheadMode) {
     const correctCount = grades.filter((g) => g.grade >= 2).length;
     const accuracy = Math.round((correctCount / grades.length) * 100);
-    
+
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-4">
-        <div className="w-full max-w-md space-y-8 text-center">
-          <h2 className="text-2xl font-bold">Session Complete!</h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-lg border bg-card p-4">
-              <p className="text-sm text-muted-foreground">Cards Reviewed</p>
-              <p className="text-3xl font-bold">{sessionCards.length}</p>
-            </div>
-            <div className="rounded-lg border bg-card p-4">
-              <p className="text-sm text-muted-foreground">Accuracy</p>
-              <p className="text-3xl font-bold">{accuracy}%</p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center gap-2">
-            {accuracy >= 70 ? (
-              <>
-                <CheckCircle className="h-8 w-8 text-green-500" />
-                <span className="text-green-500">Great job!</span>
-              </>
-            ) : (
-              <span className="text-yellow-500">Keep practicing!</span>
-            )}
-          </div>
-
-          {aheadCards.length > 0 && (
-            <Button
-              variant="outline"
-              onClick={handleStudyAhead}
-              className="w-full gap-2"
-            >
-              <PlayCircle className="h-4 w-4" />
-              Study Ahead ({aheadCards.length} cards)
-            </Button>
-          )}
-
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={handleRestartSession} className="flex-1">
-              Study Again
-            </Button>
-            <Button onClick={() => router.push("/")} className="flex-1">
-              Done
-            </Button>
-          </div>
-        </div>
-      </div>
+      <SessionSummary
+        totalCards={grades.length}
+        correctCount={correctCount}
+        accuracy={accuracy}
+        onStudyAhead={aheadCards.length > 0 ? handleStudyAhead : undefined}
+      />
     );
   }
 
   const currentCard = displayCards[currentIndex];
+
+  if (!currentCard) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-4">
+        <div className="w-full max-w-md text-center space-y-4">
+          <p className="text-muted-foreground">No cards available</p>
+          <Button onClick={() => router.back()} variant="outline">
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col pb-20">
@@ -254,8 +228,7 @@ export default function PracticeSessionPage({ params }: PageProps) {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="w-full max-w-md"
-          >
+            className="w-full max-w-md">
             <FlashcardCard
               card={currentCard}
               onFlip={handleFlip}
@@ -272,16 +245,14 @@ export default function PracticeSessionPage({ params }: PageProps) {
           variant={isFlipped ? "destructive" : "outline"}
           disabled={!isFlipped}
           onClick={() => handleGrade(0)}
-          className="w-24"
-        >
+          className="w-24">
           Again
         </Button>
         <Button
           variant={isFlipped ? "default" : "outline"}
           disabled={!isFlipped}
           onClick={() => handleGrade(2)}
-          className="w-24 bg-green-600 hover:bg-green-700"
-        >
+          className="w-24 bg-green-600 hover:bg-green-700">
           Good
         </Button>
       </div>

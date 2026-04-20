@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FlashcardDeck, FlashcardCard, FlashcardDeckDetail, CreateCardInput } from "@squademy/shared";
+import {
+  FlashcardDeck,
+  FlashcardCard,
+  FlashcardDeckDetail,
+  CreateCardInput,
+} from "@squademy/shared";
 import { ApiError } from "@/lib/api/api-error";
 import { apiRequest } from "@/lib/api/browser-client";
 import { queryKeys } from "@/lib/api/query-keys";

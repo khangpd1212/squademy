@@ -94,7 +94,8 @@ export const FLASHCARD_DECK_STATUS = {
   PUBLISHED: "published",
 } as const;
 
-export type FlashcardDeckStatus = (typeof FLASHCARD_DECK_STATUS)[keyof typeof FLASHCARD_DECK_STATUS];
+export type FlashcardDeckStatus =
+  (typeof FLASHCARD_DECK_STATUS)[keyof typeof FLASHCARD_DECK_STATUS];
 
 export const ReactionType = {
   THUMBS_UP: "thumbs_up",
@@ -109,4 +110,5 @@ export const AliveTextInteractionType = {
   REVEAL: "reveal",
 } as const;
 
-export type AliveTextInteractionType = (typeof AliveTextInteractionType)[keyof typeof AliveTextInteractionType];
+export type AliveTextInteractionType =
+  (typeof AliveTextInteractionType)[keyof typeof AliveTextInteractionType];

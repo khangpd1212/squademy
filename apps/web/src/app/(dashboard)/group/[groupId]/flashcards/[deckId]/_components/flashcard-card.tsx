@@ -19,9 +19,9 @@ export function FlashcardCard({ card, onFlip, isFlipped }: FlashcardCardProps) {
   }, [isFlipped, onFlip]);
 
   return (
-    <div className="relative w-full max-w-md mx-auto perspective-1000">
+    <div className="relative w-full max-w-md mx-auto">
       <motion.div
-        className="relative w-full h-140 cursor-pointer preserve-3d"
+        className="relative w-full h-100 cursor-pointer preserve-3d"
         onClick={handleTap}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}

@@ -145,7 +145,7 @@ export class SrsProgressService {
       }),
       this.prisma.flashcardCard.findMany({
         where: {
-          deckId: deckId ?? undefined,
+          deckId,
         },
         include: {
           deck: { select: { id: true, title: true } },

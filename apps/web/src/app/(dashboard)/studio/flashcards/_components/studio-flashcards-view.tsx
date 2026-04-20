@@ -4,12 +4,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFlashcardDecks } from "@/hooks/api/use-flashcard-queries";
+import {
+  useDeckGroups,
+  useFlashcardDecks,
+} from "@/hooks/api/use-flashcard-queries";
 import { NewDeckDialog } from "./new-deck-dialog";
 import { ImportAnkiDialog } from "./import-anki-dialog";
 import { FlashcardDeckItem } from "./flashcard-deck-item";
+import { FlashcardDeckItem as FlashcardDeckItemType } from "@/hooks/api/use-flashcard-queries";
 import { Empty } from "@/components/ui/empty";
 import { Layers } from "lucide-react";
+
+function DeckItemWithGroups({
+  deck,
+  onClick,
+}: {
+  deck: FlashcardDeckItemType;
+  onClick: () => void;
+}) {
+  const { data: groups } = useDeckGroups(deck.id);
+  return <FlashcardDeckItem deck={deck} groups={groups} onClick={onClick} />;
+}
 
 export function StudioFlashcardsView() {
   const router = useRouter();
@@ -64,7 +79,7 @@ export function StudioFlashcardsView() {
           ) : (
             <div className="flex flex-col gap-2">
               {decks.map((deck) => (
-                <FlashcardDeckItem
+                <DeckItemWithGroups
                   key={deck.id}
                   deck={deck}
                   onClick={() => router.push(`/studio/flashcards/${deck.id}`)}

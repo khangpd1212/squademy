@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { type Editor } from "@tiptap/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LESSON_STATUS } from "@squademy/shared";
 import {
   useLesson,
   useLessonComments,
@@ -12,7 +11,7 @@ import {
   LessonDetail,
 } from "@/hooks/api/use-lesson-queries";
 import { queryKeys } from "@/lib/api/query-keys";
-import { STATUS_STYLES } from "@/lib/status-styles";
+import { LESSON_STATUS } from "@squademy/shared";
 import { LessonEditor } from "@/components/editor/lesson-editor";
 import { OutlinePanel } from "@/components/editor/outline-panel";
 import { SaveIndicator } from "./save-indicator";
@@ -20,6 +19,7 @@ import { ParagraphCommentTrigger } from "@/components/lessons/paragraph-comment-
 import { cn } from "@/lib/utils";
 import MarkdownRenderer from "@/components/markdown-renderer";
 import "@/components/editor/editor-styles.css";
+import { STATUS_STYLES } from "@/lib/status-styles";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 const SUBMIT_UI = {

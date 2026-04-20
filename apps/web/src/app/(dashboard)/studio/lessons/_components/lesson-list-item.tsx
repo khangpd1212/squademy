@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { STATUS_STYLES } from "@/lib/status-styles";
+import {LESSON_STATUS } from "@squademy/shared";
 import type { MyLessonItem } from "@/hooks/api/use-lesson-queries";
-import { LESSON_STATUS } from "@squademy/shared";
+import { STATUS_STYLES } from "@/lib/status-styles";
 
 type Props = {
   lesson: MyLessonItem;
@@ -12,10 +12,7 @@ type Props = {
 };
 
 export function LessonListItem({ lesson, onDelete }: Props) {
-  const status = STATUS_STYLES[lesson.status] ?? {
-    label: lesson.status,
-    className: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  };
+  const status = STATUS_STYLES[lesson.status];
 
   const canDelete =
     lesson.status === LESSON_STATUS.DRAFT ||

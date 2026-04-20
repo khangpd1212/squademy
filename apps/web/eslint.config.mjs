@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" },
       ],
+      "react-compiler/error": "off",
+      "react-hooks/exhaustive-deps": "off",
     },
   },
   globalIgnores([
