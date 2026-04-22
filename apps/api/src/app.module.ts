@@ -11,6 +11,7 @@ import { InvitationsModule } from "./invitations/invitations.module";
 import { LessonsModule } from "./lessons/lessons.module";
 import { FlashcardsModule } from "./flashcards/flashcards.module";
 import { SrsProgressModule } from "./srs-progress/srs-progress.module";
+import { ExercisesModule } from "./exercises/exercises.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SrsProgressModule } from "./srs-progress/srs-progress.module";
     LessonsModule,
     FlashcardsModule,
     SrsProgressModule,
+    ExercisesModule,
   ],
   providers: [
     {

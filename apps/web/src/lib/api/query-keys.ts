@@ -40,4 +40,8 @@ export const queryKeys = {
     reactions: (lessonId: string) => ["lessons", lessonId, "reactions"] as const,
     progress: (lessonId: string) => ["lessons", lessonId, "progress"] as const,
   },
+  exercises: {
+    detail: (exerciseId: string) => ["exercises", exerciseId] as const,
+    submissions: (exerciseId: string) => ["exercises", exerciseId, "submissions"] as const,
+  },
 } as const;

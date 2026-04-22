@@ -48,6 +48,8 @@ export const ErrorMessage: Record<string, string> = {
   [ErrorCode.REACTION_FAILED]: "Failed to update reaction. Please try again.",
   [ErrorCode.PROGRESS_UPDATE_FAILED]: "Failed to update progress. Please try again.",
   [ErrorCode.LESSON_ALREADY_SOFT_DELETED]: "This lesson has already been removed.",
+  [ErrorCode.EXERCISE_NOT_FOUND]: "Exercise not found.",
+  [ErrorCode.NOT_GROUP_MEMBER]: "You must be a group member to access this challenge.",
 };
 
 export function getErrorMessage(code: string): string {

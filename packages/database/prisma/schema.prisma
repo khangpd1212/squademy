@@ -33,6 +33,8 @@ model User {
   lessonProgresses   LessonProgress[]
   srsProgresses      SRSProgress[]
   aliveTextInteractions AliveTextInteraction[]
+  createdExercises  Exercise[]        @relation("ExerciseCreator")
+  exerciseSubmissions ExerciseSubmission[]
 
   @@map("users")
 }
@@ -134,19 +136,61 @@ model ReviewComment {
 
 model Exercise {
   id               String    @id @default(uuid())
+  title            String?
+  type             String
   groupId          String    @map("group_id")
   lessonId         String?   @map("lesson_id")
-  type             String
-  payload          Json
+  createdById      String?   @map("created_by_id")
+  payload          Json?
   isGroupChallenge Boolean   @default(false) @map("is_group_challenge")
   isDeleted        Boolean   @default(false) @map("is_deleted")
   scheduledAt      DateTime? @map("scheduled_at")
   createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  group  Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  lesson Lesson? @relation(fields: [lessonId], references: [id])
+  group       Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  lesson      Lesson?             @relation(fields: [lessonId], references: [id])
+  createdBy   User?               @relation("ExerciseCreator", fields: [createdById], references: [id])
+  questions   ExerciseQuestion[]
+  submissions ExerciseSubmission[]
 
+  @@index([groupId])
   @@map("exercises")
+}
+
+model ExerciseQuestion {
+  id         String   @id @default(uuid())
+  exerciseId String   @map("exercise_id")
+  type       String   // 'mcq', 'fill_blank', 'cloze', 'dictation', 'ipa_to_word'
+  prompt     String
+  options    Json?    // Array for MCQ: [{ label, value }]
+  answers    Json?    // Array for Cloze/multiple answers
+  audioUrl   String?  @map("audio_url")
+  ipa        String?
+  order      Int
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([exerciseId])
+  @@map("exercise_questions")
+}
+
+model ExerciseSubmission {
+  id           String    @id @default(uuid())
+  exerciseId   String    @map("exercise_id")
+  userId       String    @map("user_id")
+  answers      Json      // [{ questionId, answer, isCorrect }]
+  score        Float?
+  correctCount Int?      @map("correct_count")
+  totalCount   Int?      @map("total_count")
+  timeTaken    Int       @map("time_taken") // Seconds
+  focusEvents  Json?     @map("focus_events") // [{ type: 'blur' | 'focus', timestamp }]
+  submittedAt  DateTime  @default(now()) @map("submitted_at")
+
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([exerciseId, userId])
+  @@map("exercise_submissions")
 }
 
 model FlashcardDeck {

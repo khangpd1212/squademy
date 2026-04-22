@@ -2,7 +2,7 @@
 id: 5.4
 key: 5-4-spaced-repetition-scheduling-sm-2
 title: Spaced Repetition Scheduling (SM-2)
-status: review
+status: done
 epic: epic-5
 priority: high
 created: 2026-04-17
