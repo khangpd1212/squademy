@@ -3,6 +3,5 @@
   "buildCommand": "yarn workspace @squademy/web build",
   "devCommand": "yarn workspace @squademy/web dev",
   "installCommand": "yarn install",
-  "root": ".",
   "packageManager": "yarn@4.13.0"
 }
