@@ -5,6 +5,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAheadCards, useDueCards } from "@/hooks/api/use-srs-progress";
 import { queryKeys } from "@/lib/api/query-keys";
 import { recordGrade } from "@/lib/dexie/sync";
+import type { PersonalCard } from "@/types/flashcard";
+import {
+  getPersonalDeck,
+  createPersonalDeck,
+  updatePersonalCard,
+  autoMergePersonalDeck,
+} from "@/lib/dexie/flashcards";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, PlayCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -31,6 +38,47 @@ export default function PracticeSessionPage({ params }: PageProps) {
   const [isComplete, setIsComplete] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [studyAheadMode, setStudyAheadMode] = useState(false);
+  const [personalCards, setPersonalCards] = useState<PersonalCard[]>([]);
+  const [personalDeckId, setPersonalDeckId] = useState<string>("");
+
+  useEffect(() => {
+    async function initPersonalDeck() {
+      let personal = await getPersonalDeck(deckId);
+      const sourceCards = dueCards.map(
+        (srs) => srs.card as Record<string, unknown>,
+      );
+
+      if (!personal && sourceCards.length > 0) {
+        const deckInfo = await queryClient.ensureQueryData({
+          queryKey: queryKeys.flashcards.detail(deckId),
+          queryFn: async () => {
+            const res = await fetch(`/api/flashcard-decks/${deckId}`);
+            if (!res.ok) return null;
+            return res.json();
+          },
+        });
+        const title = deckInfo?.data?.title || "Untitled Deck";
+        personal = await createPersonalDeck(deckId, sourceCards, title, 1);
+      } else if (personal && sourceCards.length > 0) {
+        const latestVersion = 1;
+        const merged = await autoMergePersonalDeck(
+          deckId,
+          sourceCards,
+          latestVersion,
+        );
+        if (merged) personal = merged;
+      }
+
+      if (personal) {
+        setPersonalDeckId(personal.id);
+        setPersonalCards(personal.cards);
+      }
+    }
+
+    if (dueCards.length > 0 && deckId) {
+      initPersonalDeck();
+    }
+  }, [dueCards, deckId]);
 
   const sessionCards = useMemo(() => {
     if (studyAheadMode) return [];
@@ -38,13 +86,57 @@ export default function PracticeSessionPage({ params }: PageProps) {
   }, [dueCards, studyAheadMode]);
 
   const displayCards = useMemo(() => {
+    const mapToSimple = (srs: { card: Record<string, unknown> }) => srs.card;
     return studyAheadMode
-      ? aheadCards.map((srs) => srs.card)
-      : sessionCards.map((srs) => srs.card);
+      ? aheadCards.map(mapToSimple)
+      : sessionCards.map(mapToSimple);
   }, [studyAheadMode, aheadCards, sessionCards]);
 
   const currentIndex = grades.length;
   const totalCards = displayCards.length;
+  const isUsingPersonal = personalCards.length > 0 && displayCards.length > 0;
+
+  const displayCurrentCard = (): PersonalCard | null => {
+    if (!displayCards.length) return null;
+    if (isUsingPersonal && currentIndex < personalCards.length) {
+      return personalCards[currentIndex];
+    }
+    if (currentIndex >= displayCards.length) return null;
+    const raw = (displayCards as unknown[])[currentIndex] as
+      | { card?: Record<string, unknown> }
+      | undefined;
+    if (!raw?.card) return null;
+    const src = raw.card as {
+      id: string;
+      front: string | null;
+      back: string | null;
+      ipa?: string | null;
+      tags?: string[] | null;
+    };
+    return buildPersonalCard(src);
+  };
+
+  const buildPersonalCard = (src: {
+    id: string;
+    front: string | null;
+    back: string | null;
+    ipa?: string | null;
+    tags?: string[] | null;
+  }) => ({
+    id: src.id,
+    sourceId: src.id,
+    front: src.front || "",
+    back: src.back || "",
+    ipa: src.ipa || undefined,
+    tags: src.tags || [],
+    customNotes: "",
+    easeFactor: 2.5,
+    interval: 0,
+    repetitions: 0,
+    nextReview: 0,
+  });
+
+  const currentCard = displayCurrentCard();
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -61,10 +153,27 @@ export default function PracticeSessionPage({ params }: PageProps) {
     setIsFlipped(true);
   }, []);
 
+  const handleSaveCard = useCallback(
+    async (
+      cardId: string,
+      updates: Partial<
+        Pick<PersonalCard, "front" | "back" | "ipa" | "tags" | "customNotes">
+      >,
+    ) => {
+      if (!personalDeckId) return;
+      await updatePersonalCard(personalDeckId, cardId, updates);
+      setPersonalCards((prev) =>
+        prev.map((c) => (c.id === cardId ? { ...c, ...updates } : c)),
+      );
+    },
+    [personalDeckId],
+  );
+
   const handleGrade = async (grade: number) => {
     if (!displayCards || currentIndex >= displayCards.length) return;
 
-    const card = displayCards[currentIndex];
+    const card = displayCards[currentIndex] as { id: string } | undefined;
+    if (!card?.id) return;
     setGrades((prev) => [...prev, { cardId: card.id, grade }]);
 
     const srsProgress = studyAheadMode
@@ -182,8 +291,6 @@ export default function PracticeSessionPage({ params }: PageProps) {
     );
   }
 
-  const currentCard = displayCards[currentIndex];
-
   if (!currentCard) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -230,9 +337,30 @@ export default function PracticeSessionPage({ params }: PageProps) {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="w-full max-w-md">
             <FlashcardCard
-              card={currentCard}
+              card={
+                isUsingPersonal
+                  ? currentCard
+                  : {
+                      id: currentCard.id,
+                      sourceId: currentCard.id,
+                      front: currentCard.front || "",
+                      back: currentCard.back || "",
+                      ipa: currentCard.ipa || undefined,
+                      tags: currentCard.tags || [],
+                      customNotes: "",
+                      easeFactor: 2.5,
+                      interval: 0,
+                      repetitions: 0,
+                      nextReview: 0,
+                    }
+              }
               onFlip={handleFlip}
               isFlipped={isFlipped}
+              onSave={
+                isUsingPersonal
+                  ? (updates) => handleSaveCard(currentCard.id, updates)
+                  : undefined
+              }
             />
           </motion.div>
         </AnimatePresence>

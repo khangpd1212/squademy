@@ -40,3 +40,26 @@ export interface GradeQueueItem {
   interval?: number;
   repetitions?: number;
 }
+
+export interface PersonalDeck {
+  id: string;
+  sourceId: string;
+  title: string;
+  cards: PersonalCard[];
+  sourceVersion: number;
+  syncedAt: number;
+}
+
+export interface PersonalCard {
+  id: string;
+  sourceId: string | null;
+  front: string | null;
+  back: string | null;
+  ipa?: string | null;
+  tags?: string[] | null;
+  customNotes: string;
+  easeFactor: number;
+  interval: number;
+  repetitions: number;
+  nextReview: number;
+}

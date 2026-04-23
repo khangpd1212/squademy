@@ -1,22 +1,150 @@
 "use client";
 
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { FlashcardCardItem } from "@/types/flashcard";
 import DOMpurify from "dompurify";
+import { PersonalCard } from "@/types/flashcard";
 
 interface FlashcardCardProps {
-  card: FlashcardCardItem;
+  card: PersonalCard;
   onFlip?: () => void;
   isFlipped: boolean;
+  onSave?: (updates: Partial<Pick<PersonalCard, "front" | "back" | "ipa" | "tags" | "customNotes">>) => void;
 }
 
-export function FlashcardCard({ card, onFlip, isFlipped }: FlashcardCardProps) {
+export function FlashcardCard({
+  card,
+  onFlip,
+  isFlipped,
+  onSave,
+}: FlashcardCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    front: card.front || "",
+    back: card.back || "",
+    ipa: card.ipa || "",
+    tags: card.tags?.join(", ") || "",
+    customNotes: card.customNotes || "",
+  });
+  const [error, setError] = useState("");
+
   const handleTap = useCallback(() => {
-    if (!isFlipped) {
+    if (!isEditing && !isFlipped) {
       onFlip?.();
     }
-  }, [isFlipped, onFlip]);
+  }, [isEditing, isFlipped, onFlip]);
+
+  const handleSave = useCallback(() => {
+    if (!editData.front || !editData.front.trim()) {
+      setError("Front side is required.");
+      return;
+    }
+    setError("");
+    const tagsArray = editData.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    onSave?.({
+      front: editData.front,
+      back: editData.back,
+      ipa: editData.ipa || undefined,
+      tags: tagsArray,
+      customNotes: editData.customNotes,
+    });
+    setIsEditing(false);
+  }, [editData, onSave]);
+
+  const handleCancel = useCallback(() => {
+    setEditData({
+      front: card.front || "",
+      back: card.back || "",
+      ipa: card.ipa || "",
+      tags: card.tags?.join(", ") || "",
+      customNotes: card.customNotes || "",
+    });
+    setError("");
+    setIsEditing(false);
+  }, [card]);
+
+  if (isEditing) {
+    return (
+      <div className="relative w-full max-w-md mx-auto">
+        <div className="rounded-xl border bg-card p-6 shadow-lg space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Front</label>
+            <textarea
+              value={editData.front}
+              onChange={(e) => setEditData((d) => ({ ...d, front: e.target.value }))}
+              className="w-full p-3 rounded-lg border-2 border-border bg-background resize-none"
+              rows={2}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Back</label>
+            <textarea
+              value={editData.back}
+              onChange={(e) => setEditData((d) => ({ ...d, back: e.target.value }))}
+              className="w-full p-3 rounded-lg border-2 border-border bg-background resize-none"
+              rows={2}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">IPA (optional)</label>
+            <input
+              type="text"
+              value={editData.ipa}
+              onChange={(e) => setEditData((d) => ({ ...d, ipa: e.target.value }))}
+              className="w-full p-3 rounded-lg border-2 border-border bg-background"
+              placeholder="/həˈloʊ/"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tags (comma separated)</label>
+            <input
+              type="text"
+              value={editData.tags}
+              onChange={(e) => setEditData((d) => ({ ...d, tags: e.target.value }))}
+              className="w-full p-3 rounded-lg border-2 border-border bg-background"
+              placeholder="greeting, common, TOEFL"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Personal Notes</label>
+            <textarea
+              value={editData.customNotes}
+              onChange={(e) =>
+                setEditData((d) => ({ ...d, customNotes: e.target.value }))
+              }
+              className="w-full p-3 rounded-lg border-2 border-border bg-background resize-none"
+              rows={2}
+              placeholder="Add your own notes..."
+            />
+          </div>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleCancel}
+              className="flex-1 py-3 rounded-lg border-2 border-border"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex-1 py-3 rounded-lg bg-primary text-primary-foreground"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full max-w-md mx-auto">
@@ -33,7 +161,7 @@ export function FlashcardCard({ card, onFlip, isFlipped }: FlashcardCardProps) {
             <div
               className="text-center text-lg font-medium"
               dangerouslySetInnerHTML={{
-                __html: DOMpurify.sanitize(card.front),
+                __html: DOMpurify.sanitize(card.front || ""),
               }}
             />
             <p className="mt-4 text-sm text-muted-foreground">Tap to reveal</p>
@@ -50,32 +178,48 @@ export function FlashcardCard({ card, onFlip, isFlipped }: FlashcardCardProps) {
             <div
               className="text-center text-lg font-medium"
               dangerouslySetInnerHTML={{
-                __html: DOMpurify.sanitize(card.back || "No answer"),
+                __html: DOMpurify.sanitize(card.back || "") || "No answer",
               }}
             />
-            {card.pronunciation && (
+            {card.ipa && (
               <p className="mt-3 text-center text-sm text-muted-foreground">
-                [{card.pronunciation}]
+                [{card.ipa}]
               </p>
             )}
 
-            {card.exampleSentence && (
+            {card.customNotes && (
               <p className="mt-3 text-center text-sm italic text-muted-foreground">
-                {card.exampleSentence}
+                📝 {card.customNotes}
               </p>
-            )}
-
-            {card.audioUrl && (
-              <div className="mt-4 flex justify-center">
-                <audio controls className="h-8 w-48">
-                  <source src={card.audioUrl} type="audio/mpeg" />
-                  Your browser does not support audio.
-                </audio>
-              </div>
             )}
           </div>
         </div>
       </motion.div>
+
+      {isFlipped && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsEditing(true);
+          }}
+          className="absolute top-2 right-2 p-2 rounded-full bg-muted/80 hover:bg-muted"
+          title="Edit card"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
