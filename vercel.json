@@ -3,5 +3,5 @@
   "framework": "nextjs",
   "outputDirectory": "apps/web/.next",
   "installCommand": "corepack enable && corepack yarn workspaces focus @squademy/web @squademy/shared",
-  "buildCommand": "npx turbo run build --filter=@squademy/web..."
+  "buildCommand": "yarn turbo run build --filter=@squademy/web..."
 }
