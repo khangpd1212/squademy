@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.com/schemas/project.json",
-  "buildCommand": "cd apps/web && yarn build",
+  "buildCommand": "yarn workspace @squademy/web build",
   "installCommand": "corepack",
   "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1"
 }
