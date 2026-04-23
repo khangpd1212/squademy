@@ -21,7 +21,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 | `packages/database` | `@squademy/database` | Prisma 6 schema + generated client |
 | `packages/shared` | `@squademy/shared` | Zod schemas, constants, shared types |
 
-- **Build system**: Turborepo (`turbo.json`) + Yarn Workspaces 4 (`packageManager: "yarn@4.13.0"`)
+- **Build system**: Turborepo (`turbo.json`) + Yarn Workspaces 4 (`packageManager: "yarn@4.14.1"`)
 - **Node linker**: `node-modules` (`.yarnrc.yml`)
 - **Scripts**: `yarn dev` / `yarn build` / `yarn test` / `yarn lint` (all via Turborepo)
 
