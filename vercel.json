@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.com/schemas/project.json",
+  " Framework": "nextjs",
+  "buildCommand": "yarn workspace @squademy/web build",
+  "devCommand": "yarn workspace @squademy/web dev",
+  "installCommand": "yarn install",
+  "root": ".",
+  "packageManager": "yarn@4.13.0"
+}
