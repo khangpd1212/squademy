@@ -2,6 +2,5 @@
   "$schema": "https://openapi.vercel.com/schemas/project.json",
   "buildCommand": "yarn workspace @squademy/web build",
   "devCommand": "yarn workspace @squademy/web dev",
-  "installCommand": "yarn install",
-  "packageManager": "yarn@4.13.0"
+  "installCommand": "yarn install"
 }
