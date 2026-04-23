@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.com/schemas/project.json",
   "buildCommand": "turbo run build --filter=web",
-  "installCommand": "corepack enable && yarn install",
+  "installCommand": "corepack",
   "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1"
 }
