@@ -18,7 +18,7 @@
     "deploy:api": "fly deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile",
     "db:proxy": "fly proxy 5433:5432 -a squademy-db"
   },
-  "dependencies": {
+  "devDependencies": {
     "turbo": "^2"
   }
 }

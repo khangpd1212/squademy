@@ -10,7 +10,9 @@
         "!.next/cache/**",
         "dist/**"
       ],
-      "env": ["API_URL"]
+      "env": [
+        "API_URL"
+      ]
     },
     "dev": {
       "dependsOn": [
@@ -27,5 +29,8 @@
     "db:migrate": {
       "cache": false
     }
-  }
+  },
+  "globalEnv": [
+    "TURBO_TELEMETRY_DISABLED"
+  ]
 }
