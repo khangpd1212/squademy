@@ -12,6 +12,7 @@ import { LessonsModule } from "./lessons/lessons.module";
 import { FlashcardsModule } from "./flashcards/flashcards.module";
 import { SrsProgressModule } from "./srs-progress/srs-progress.module";
 import { ExercisesModule } from "./exercises/exercises.module";
+import { VersionModule } from "./version/version.module";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ExercisesModule } from "./exercises/exercises.module";
     FlashcardsModule,
     SrsProgressModule,
     ExercisesModule,
+    VersionModule,
   ],
   providers: [
     {

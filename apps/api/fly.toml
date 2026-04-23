@@ -1,0 +1,30 @@
+# fly.toml app configuration file generated for squademy-api on 2026-04-23T00:19:49+07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'squademy-api'
+primary_region = 'sin'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[deploy]
+  release_command = "npx prisma migrate deploy --schema=./packages/database/prisma/schema.prisma"
+
+[env]
+  PORT = '8080'
+  FRONTEND_URL = 'https://squademy-web.vercel.app,http://localhost:4000'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = '512mb'
+  cpus = 1
+  memory_mb = 512
