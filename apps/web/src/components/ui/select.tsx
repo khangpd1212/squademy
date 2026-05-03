@@ -6,7 +6,7 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+const BaseSelect = SelectPrimitive.Root
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -188,7 +188,7 @@ function SelectScrollDownButton({
 }
 
 export {
-  Select,
+  BaseSelect,
   SelectContent,
   SelectGroup,
   SelectItem,

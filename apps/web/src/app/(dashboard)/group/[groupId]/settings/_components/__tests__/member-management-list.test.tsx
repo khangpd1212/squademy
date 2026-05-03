@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemberManagementList } from "./member-management-list";
+import { MemberManagementList } from "../member-management-list";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 import { GROUP_ROLES } from "@squademy/shared";
 import { GroupMember } from "@/hooks";
@@ -27,13 +27,17 @@ const members: GroupMember[] = [
     userId: "user-1",
     role: GROUP_ROLES.ADMIN,
     joinedAt: "2026-03-10T00:00:00.000Z",
-    profiles: { displayName: "Admin User", avatarUrl: null },
+    user: {
+      displayName: "Admin User", avatarUrl: null,
+    },
   },
   {
     userId: "user-2",
     role: GROUP_ROLES.MEMBER,
     joinedAt: "2026-03-11T00:00:00.000Z",
-    profiles: { displayName: "Member User", avatarUrl: null },
+    user: {
+      displayName: "Member User", avatarUrl: null,
+    },
   },
 ];
 

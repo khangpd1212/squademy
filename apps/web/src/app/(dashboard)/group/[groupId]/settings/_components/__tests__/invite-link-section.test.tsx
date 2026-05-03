@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { InviteLinkSection } from "./invite-link-section";
+import { InviteLinkSection } from "../invite-link-section";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 jest.mock("@/components/ui/dialog", () => ({

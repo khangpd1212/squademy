@@ -10,14 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui-custom";
 import { Button } from "@/components/ui/button";
 import { useMyGroups } from "@/hooks/api/use-group-queries";
 import { useCreateLesson } from "@/hooks/api/use-lesson-queries";
@@ -75,26 +68,13 @@ export function NewLessonDialog({ open, onOpenChange }: Props) {
         )}
 
         {groups.length > 1 && (
-          <Select
-            value={selectedGroupId}
-            onValueChange={(value) => setSelectedGroupId(value ?? "")}>
-            <SelectTrigger className="w-full">
-              <SelectValue>
-                {selectedGroupId
-                  ? groups.find((g) => g.id === selectedGroupId)?.name
-                  : "Select a group..."}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {groups.map((group) => (
-                  <SelectItem key={group.id} value={group.id}>
-                    {group.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <CustomSelect
+            className="w-full"
+            placeholder="Select a group..."
+            value={selectedGroupId || undefined}
+            options={groups.map((group) => ({ value: group.id, label: group.name }))}
+            onChange={(val: string | undefined) => setSelectedGroupId(val ?? "")}
+          />
         )}
 
         {createLesson.isError && (

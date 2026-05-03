@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { GroupSettingsForm } from "./group-settings-form";
+import { GroupSettingsForm } from "../group-settings-form";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 const refreshMock = jest.fn();

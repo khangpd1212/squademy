@@ -9,7 +9,7 @@ This file provides instructions for AI coding agents operating in the Squademy m
 | Workspace | Package | Purpose |
 |-----------|---------|---------|
 | `apps/web` | `@squademy/web` | Next.js 16 frontend (port 4000) |
-| `apps/api` | `@squademy/api` | NestJS 11 backend (port 4001) |
+| `apps/api` | `@squademy/api` | NestJS 11 backend (port 8080) |
 | `packages/database` | `@squademy/database` | Prisma 6 schema + generated client |
 | `packages/shared` | `@squademy/shared` | Zod v4 schemas, constants, shared types |
 

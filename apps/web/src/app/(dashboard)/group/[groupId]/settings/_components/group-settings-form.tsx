@@ -8,13 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui-custom";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateGroup } from "@/hooks/api/use-group-queries";
 import { DAY_NAMES, GroupSettingsInput, groupSettingsSchema } from "@squademy/shared";
@@ -125,31 +119,23 @@ export function GroupSettingsForm({
 
       <div className="space-y-2">
         <Label id="exerciseDeadlineDayLabel">Weekly exercise deadline day</Label>
-        <Select
-          value={typeof selectedDay === "number" ? String(selectedDay) : ""}
-          onValueChange={(val) => {
+        <CustomSelect
+          className="w-full"
+          aria-labelledby="exerciseDeadlineDayLabel"
+          placeholder="No schedule"
+          value={typeof selectedDay === "number" ? String(selectedDay) : undefined}
+          options={[
+            { value: "clear", label: "No schedule" },
+            ...DAY_NAMES.map((day, index) => ({ value: String(index), label: day })),
+          ]}
+          onChange={(val: string | undefined) => {
             const day = !val || val === "clear" ? null : Number(val);
             form.setValue("exerciseDeadlineDay", day, { shouldValidate: true });
             if (day === null) {
               form.setValue("exerciseDeadlineTime", null, { shouldValidate: true });
             }
           }}
-        >
-          <SelectTrigger
-            aria-labelledby="exerciseDeadlineDayLabel"
-            className="w-full"
-          >
-            <SelectValue placeholder="No schedule" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="clear">No schedule</SelectItem>
-            {DAY_NAMES.map((day, index) => (
-              <SelectItem key={day} value={String(index)}>
-                {day}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        />
       </div>
 
       {showTimeInput ? (

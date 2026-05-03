@@ -18,6 +18,7 @@ import { VersionModule } from "./version/version.module";
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [".env.local", ".env"],
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     PrismaModule,

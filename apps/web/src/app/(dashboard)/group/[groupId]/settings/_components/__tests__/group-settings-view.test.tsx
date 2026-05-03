@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { GroupSettingsView } from "./group-settings-view";
+import { GroupSettingsView } from "../group-settings-view";
 import { GROUP_ROLES } from "@squademy/shared";
 
 jest.mock("@/hooks/api/use-group-queries", () => ({

@@ -1,6 +1,5 @@
 "use client";
 
-import "@/components/editor/editor-styles.css";
 import { RemoveLessonButton } from "@/components/lessons/remove-lesson-button";
 import MarkdownRenderer from "@/components/markdown-renderer";
 import { Button } from "@/components/ui/button";

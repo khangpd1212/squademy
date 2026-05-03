@@ -139,7 +139,7 @@ export function MemberManagementList({
     <>
       <ul className="divide-y">
         {members.map((member) => {
-          const profile = member.profiles;
+          const profile = member.user;
           const displayName = profile?.displayName ?? "Unknown";
           const initials = displayName.slice(0, 2).toUpperCase();
           const memberRole =
@@ -245,7 +245,7 @@ export function MemberManagementList({
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {roleChangeDialog && roleChangeTarget
-              ? `Set ${roleChangeTarget.profiles?.displayName ?? roleChangeDialog.displayName} to ${roleChangeDialog.newRole}.`
+              ? `Set ${roleChangeTarget.user.displayName ?? roleChangeDialog.displayName} to ${roleChangeDialog.newRole}.`
               : "Apply this role change?"}
           </p>
           <DialogFooter>
@@ -290,7 +290,7 @@ export function MemberManagementList({
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {removeTarget
-              ? `This will remove ${removeTarget.profiles?.displayName ?? "this member"} from the group.`
+              ? `This will remove ${removeTarget.user.displayName ?? "this member"} from the group.`
               : "This will remove the selected member from the group."}
           </p>
           <DialogFooter>

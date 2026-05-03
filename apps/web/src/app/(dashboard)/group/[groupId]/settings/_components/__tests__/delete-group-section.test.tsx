@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DeleteGroupSection } from "./delete-group-section";
+import { DeleteGroupSection } from "../delete-group-section";
 import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 const pushMock = jest.fn();

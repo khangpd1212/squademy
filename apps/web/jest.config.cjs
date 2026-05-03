@@ -9,12 +9,13 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
-  roots: ["<rootDir>/src", "<rootDir>/tests"],
+  roots: ["<rootDir>/src"],
   testMatch: ["**/__tests__/**/*.test.ts?(x)", "**/?(*.)+(spec|test).ts?(x)"],
   // Allow Next/Jest transforms for ESM-only i18n packages used by page modules.
   transformIgnorePatterns: ["/node_modules/(?!(next-intl|use-intl)/)"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^@/test-utils/(.*)$": "<rootDir>/src/test-utils/$1",
   },
   testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/"],
   collectCoverageFrom: ["src/**/*.{ts,tsx}", "!**/*.d.ts"],

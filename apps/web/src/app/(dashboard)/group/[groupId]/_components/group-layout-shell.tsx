@@ -15,7 +15,6 @@ const tabs = [
   { label: "Exercises", suffix: "/exercises" },
   { label: "Roadmap", suffix: "/roadmap", editorOnly: true },
   { label: "Leaderboard", suffix: "/leaderboard" },
-  { label: "Members", suffix: "/members" },
   { label: "Settings", suffix: "/settings" },
 ];
 

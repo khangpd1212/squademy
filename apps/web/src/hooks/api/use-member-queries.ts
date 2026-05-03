@@ -9,9 +9,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type GroupMember = {
   userId: string;
-  role: string;
+  role: MemberRole;
   joinedAt: string;
-  profiles: { displayName: string; avatarUrl: string | null } | null;
+  user: {
+    id?: string;
+    email?: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
 };
 
 export function useGroupMembers(groupId: string) {
@@ -19,14 +24,9 @@ export function useGroupMembers(groupId: string) {
     queryKey: queryKeys.groups.members(groupId),
     enabled: Boolean(groupId),
     queryFn: async () => {
-      const result = await apiRequest<
-        Array<{
-          userId: string;
-          role: string;
-          joinedAt: string;
-          user: { id: string; displayName: string; avatarUrl: string | null };
-        }>
-      >(`/groups/${groupId}/members`);
+      const result = await apiRequest<GroupMember[]>(
+        `/groups/${groupId}/members`,
+      );
       if (result.message || !result.data) {
         throw new ApiError({
           message: result.message ?? "Could not load members.",
@@ -34,17 +34,14 @@ export function useGroupMembers(groupId: string) {
           status: result.status,
         });
       }
-      return (result.data ?? []).map((member): GroupMember => ({
-        userId: member.userId,
-        role: member.role,
-        joinedAt: member.joinedAt,
-        profiles: member.user
-          ? {
-              displayName: member.user.displayName,
-              avatarUrl: member.user.avatarUrl,
-            }
-          : null,
-      }));
+      return result.data.map(
+        (member): GroupMember => ({
+          userId: member.userId,
+          role: member.role,
+          joinedAt: member.joinedAt,
+          user: member.user,
+        }),
+      );
     },
   });
 }
@@ -122,7 +119,7 @@ export function useGroupMemberRole(groupId: string) {
   const myMember = members.find((m) => m.userId === currentUser?.userId);
 
   return {
-    data: (myMember?.role as MemberRole) ?? null,
+    data: myMember?.role,
     isLoading,
   };
 }
