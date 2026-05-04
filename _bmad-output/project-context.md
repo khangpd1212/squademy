@@ -86,6 +86,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 - **Next.js 16** uses `src/proxy.ts` as request interception entrypoint — do NOT create `middleware.ts`
 - **Tailwind CSS v4** config lives entirely in `globals.css` via `@theme inline` — do NOT create `tailwind.config.js`
+- **Tailwind CSS v4 CSS variable syntax**: Use `bg-(--clay-primary)` NOT `bg-[var(--clay-primary)]` — v4 uses parentheses syntax for CSS variables to avoid build warnings
+- **Tailwind CSS v4 arbitrary value shorthand**: Use `translate-y-10` NOT `translate-y-[2.5rem]` — v4 supports shorthand for arbitrary values (10 = 2.5rem), use unitless numbers for standard spacing values
 - **shadcn/ui base-nova** uses `@base-ui/react` primitives (NOT Radix UI) — check imports when adding new components
 - **Zod v4** has different API from v3 (e.g., type inference) — use v4 docs
 - **React 19** — Server Components are default; mark `"use client"` for client interactivity; `ref` is a prop (no `forwardRef`)

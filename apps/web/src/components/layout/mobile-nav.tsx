@@ -27,7 +27,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-(clay-surface-elevated) md:hidden">
       <div className="flex items-center justify-around">
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
@@ -39,7 +39,7 @@ export function MobileNav() {
               className={cn(
                 "flex flex-col items-center gap-1 px-2 py-2 text-xs",
                 isActive
-                  ? "text-primary"
+                  ? "text-(clay-primary)"
                   : "text-muted-foreground"
               )}
             >

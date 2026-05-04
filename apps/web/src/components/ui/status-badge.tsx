@@ -3,28 +3,28 @@
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLES = {
-  draft: {
-    label: "Draft",
-    className: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  },
-  review: {
-    label: "In Review",
-    className:
-      "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-  },
-  published: {
-    label: "Published",
-    className:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-  },
-  rejected: {
-    label: "Rejected",
-    className: "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400",
-  },
-  deleted: {
-    label: "Deleted",
-    className: "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400",
-  },
+    draft: {
+      label: "Draft",
+      className: "bg-(clay-surface-3) text-muted-foreground shadow-(shadow-clay-pressed)",
+    },
+    review: {
+      label: "In Review",
+      className:
+        "bg-(clay-warning)/20 text-(clay-warning-foreground)",
+    },
+    published: {
+      label: "Published",
+      className:
+        "bg-(clay-success)/20 text-(clay-success-foreground)",
+    },
+    rejected: {
+      label: "Rejected",
+      className: "bg-(clay-error)/20 text-(clay-error-foreground)",
+    },
+    deleted: {
+      label: "Deleted",
+      className: "bg-(clay-error)/20 text-(clay-error-foreground)",
+    },
 } as const;
 
 interface StatusBadgeProps {

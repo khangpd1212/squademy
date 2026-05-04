@@ -51,7 +51,7 @@ function ToolbarButton({ onClick, active, title, disabled, children }: ToolbarBu
       title={title}
       className={cn(
         "flex h-7 w-7 items-center justify-center rounded text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
-        active && "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100",
+        active && "bg-(clay-surface-elevated) text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100",
         disabled && "cursor-not-allowed opacity-50"
       )}
     >

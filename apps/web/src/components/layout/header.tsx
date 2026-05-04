@@ -31,13 +31,12 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-(clay-surface-elevated) shadow-(shadow-clay-subtle) px-4 md:px-6">
       <Button
         variant="ghost"
         size="icon"
         className="md:hidden"
-        onClick={toggleSidebar}
-      >
+        onClick={toggleSidebar}>
         <Menu className="h-5 w-5" />
         <span className="sr-only">Toggle menu</span>
       </Button>
@@ -56,8 +55,7 @@ export function Header() {
               variant="ghost"
               className="relative h-8 w-8 rounded-full"
             />
-          }
-        >
+          }>
           <Avatar className="h-8 w-8">
             <AvatarImage
               src={profile?.avatarUrl ?? undefined}
@@ -78,8 +76,7 @@ export function Header() {
               if (!logoutMutation.isPending) {
                 void handleLogout();
               }
-            }}
-          >
+            }}>
             {logoutMutation.isPending ? "Logging out..." : "Log out"}
           </DropdownMenuItem>
         </DropdownMenuContent>
