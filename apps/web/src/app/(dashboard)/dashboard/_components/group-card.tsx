@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import type { MyGroupItem } from "@/hooks/api/use-group-queries";
 import { cn } from "@/lib/utils";
 import { GROUP_ROLES, MemberRole } from "@squademy/shared";
@@ -56,13 +54,13 @@ type GroupCardProps = {
 export function GroupCard({ group }: GroupCardProps) {
   return (
     <Link href={`/group/${group.id}`} className="block">
-      <Card className="h-full transition-shadow hover:shadow-md">
-        <CardContent className="space-y-3">
+      <div className="clay-card h-full transition-shadow hover:shadow-(shadow-clay-hover)">
+        <div className="space-y-3 p-6">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold leading-tight">{group.name}</h3>
-            <Badge className={cn("capitalize", getRoleBadgeClass(group.role))}>
+            <span className={cn("clay-pill px-2.5 py-0.5 text-xs font-medium capitalize", getRoleBadgeClass(group.role))}>
               {group.role}
-            </Badge>
+            </span>
           </div>
 
           {group.description ? (
@@ -76,8 +74,8 @@ export function GroupCard({ group }: GroupCardProps) {
             </span>
             <span>{formatCreatedAt(group.createdAt)}</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 }

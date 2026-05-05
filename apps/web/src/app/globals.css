@@ -303,7 +303,7 @@
 
   /* Clay Card - soft 3D surface */
   .clay-card {
-    @apply rounded-(radius-clay) border bg-(clay-surface-1) text-foreground transition-all;
+    @apply rounded-clay border bg-(--clay-surface-1) text-foreground transition-all;
     border: var(--clay-border-subtle);
     box-shadow: var(--shadow-clay-outer);
     transition: var(--clay-transition-base);
@@ -315,14 +315,14 @@
   }
 
   .clay-card-elevated {
-    @apply bg-(clay-surface-elevated);
+    @apply bg-(--clay-surface-elevated);
     box-shadow: var(--shadow-clay-outer), var(--shadow-clay-inner);
   }
 
   /* Clay Button - puffy, tactile */
   .clay-btn {
     @apply inline-flex items-center justify-center font-medium transition-all;
-    @apply min-h-12 px-6 rounded-(radius-clay);
+    @apply min-h-12 px-6 rounded-clay;
     border: var(--clay-border-base);
     box-shadow: var(--shadow-clay-subtle);
     transition: var(--clay-transition-bounce);
@@ -351,27 +351,27 @@
 
   /* Clay Button Variants */
   .clay-btn-primary {
-    @apply bg-(clay-primary) text-(clay-primary-foreground);
+    @apply bg-(--clay-primary) text-(--clay-primary-foreground);
   }
 
   .clay-btn-primary:hover {
-    @apply bg-(clay-primary-hover);
+    @apply bg-(--clay-primary-hover);
   }
 
   .clay-btn-secondary {
-    @apply bg-(clay-secondary) text-(clay-secondary-foreground);
+    @apply bg-(--clay-secondary) text-(--clay-secondary-foreground);
   }
 
   .clay-btn-secondary:hover {
-    @apply bg-(clay-secondary-hover);
+    @apply bg-(--clay-secondary-hover);
   }
 
   .clay-btn-accent {
-    @apply bg-(clay-accent) text-(clay-accent-foreground);
+    @apply bg-(--clay-accent) text-(--clay-accent-foreground);
   }
 
   .clay-btn-accent:hover {
-    @apply bg-(clay-accent-hover);
+    @apply bg-(--clay-accent-hover);
   }
 
   .clay-btn-ghost {
@@ -380,15 +380,15 @@
   }
 
   .clay-btn-ghost:hover {
-    @apply bg-(clay-surface-2);
+    @apply bg-(--clay-surface-2);
     box-shadow: var(--shadow-clay-subtle);
   }
 
   /* Clay Input - soft, inviting */
   .clay-input {
     @apply w-full text-foreground transition-all;
-    @apply min-h-12 px-4 rounded-(radius-clay);
-    @apply bg-(clay-surface-2) border-transparent;
+    @apply min-h-12 px-4 rounded-clay;
+    @apply bg-(--clay-surface-2) border-transparent;
     box-shadow: var(--shadow-clay-inner);
     transition: var(--clay-transition-base);
   }
@@ -398,11 +398,11 @@
   }
 
   .clay-input:hover {
-    @apply bg-(clay-surface-3);
+    @apply bg-(--clay-surface-3);
   }
 
   .clay-input:focus {
-    @apply bg-(clay-surface-1);
+    @apply bg-(--clay-surface-1);
     box-shadow: var(--shadow-clay-focus), var(--shadow-clay-inner);
     border: var(--clay-border-focus);
     outline: none;
@@ -415,61 +415,61 @@
 
   /* Clay Surface - reusable background layers */
   .clay-surface {
-    @apply bg-(clay-surface-1);
+    @apply bg-(--clay-surface-1);
     box-shadow: var(--shadow-clay-outer);
   }
 
   .clay-surface-sm {
-    @apply bg-(clay-surface-1);
+    @apply bg-(--clay-surface-1);
     box-shadow: var(--shadow-clay-subtle);
   }
 
   .clay-surface-inset {
-    @apply bg-(clay-surface-2);
+    @apply bg-(--clay-surface-2);
     box-shadow: var(--shadow-clay-inner);
   }
 
   /* Clay Badge - pill-shaped status indicators */
   .clay-badge {
     @apply inline-flex items-center gap-1 font-medium text-xs;
-    @apply px-3 py-1 rounded-(radius-clay-full);
+    @apply px-3 py-1 rounded-clay-full;
     box-shadow: var(--shadow-clay-subtle);
     transition: var(--clay-transition-fast);
   }
 
   .clay-badge-success {
-    @apply bg-(clay-success) text-(clay-success-foreground);
+    @apply bg-(--clay-success) text-(--clay-success-foreground);
   }
 
   .clay-badge-warning {
-    @apply bg-(clay-warning) text-(clay-warning-foreground);
+    @apply bg-(--clay-warning) text-(--clay-warning-foreground);
   }
 
   .clay-badge-error {
-    @apply bg-(clay-error) text-(clay-error-foreground);
+    @apply bg-(--clay-error) text-(--clay-error-foreground);
   }
 
   .clay-badge-info {
-    @apply bg-(clay-info) text-(clay-info-foreground);
+    @apply bg-(--clay-info) text-(--clay-info-foreground);
   }
 
   /* Clay Avatar - soft circular */
   .clay-avatar {
-    @apply rounded-(radius-clay-full) overflow-hidden;
+    @apply rounded-clay-full overflow-hidden;
     box-shadow: var(--shadow-clay-subtle);
     border: 2px solid var(--clay-surface-1);
   }
 
   /* Clay Tooltip - floating bubble */
   .clay-tooltip {
-    @apply px-3 py-2 text-sm font-medium rounded-(radius-clay);
-    @apply bg-(clay-surface-elevated) text-foreground;
+    @apply px-3 py-2 text-sm font-medium rounded-clay;
+    @apply bg-(--clay-surface-elevated) text-foreground;
     box-shadow: var(--shadow-clay-hover);
   }
 
   /* Clay Dialog/Modal - soft floating panel */
   .clay-dialog {
-    @apply rounded-(radius-clay-lg) border bg-(clay-surface-elevated) text-foreground;
+    @apply rounded-clay-lg border bg-(--clay-surface-elevated) text-foreground;
     border: var(--clay-border-subtle);
     box-shadow: var(--shadow-clay-hover), var(--shadow-clay-inner);
   }

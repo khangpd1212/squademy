@@ -16,8 +16,8 @@ export function ImageUrlDialog({ editor, onClose }: ImageUrlDialogProps) {
   }
 
   return (
-    <div className="absolute z-50 mt-1 rounded-md border border-zinc-200 bg-white p-3 shadow-md dark:border-zinc-700 dark:bg-zinc-900">
-      <p className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+    <div className="clay-dialog absolute z-50 mt-1 overflow-hidden p-3">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">
         Image URL
       </p>
       <div className="flex flex-col gap-2">
@@ -30,7 +30,7 @@ export function ImageUrlDialog({ editor, onClose }: ImageUrlDialogProps) {
             if (e.key === "Escape") onClose();
           }}
           placeholder="https://..."
-          className="w-64 rounded border border-zinc-300 bg-transparent px-2 py-1 text-sm outline-none focus:border-zinc-500 dark:border-zinc-600"
+          className="clay-input w-64"
           autoFocus
         />
         {url && (
@@ -38,7 +38,7 @@ export function ImageUrlDialog({ editor, onClose }: ImageUrlDialogProps) {
           <img
             src={url}
             alt="preview"
-            className="max-h-24 max-w-full rounded object-contain"
+            className="max-h-24 max-w-full rounded-clay object-contain"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";
             }}
@@ -48,13 +48,13 @@ export function ImageUrlDialog({ editor, onClose }: ImageUrlDialogProps) {
           <button
             onClick={handleInsert}
             disabled={!url.trim()}
-            className="rounded bg-zinc-900 px-3 py-1 text-xs text-white hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className="clay-btn clay-btn-primary h-8 px-3 text-xs"
           >
             Insert
           </button>
           <button
             onClick={onClose}
-            className="rounded px-3 py-1 text-xs text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="clay-btn clay-btn-ghost h-8 px-3 text-xs"
           >
             Cancel
           </button>

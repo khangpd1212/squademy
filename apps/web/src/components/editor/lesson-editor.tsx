@@ -14,6 +14,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+// @ts-expect-error CSS import
 import "./editor-styles.css";
 import { EditorToolbar } from "./editor-toolbar";
 import { AliveText } from "./extensions/alive-text";
@@ -25,7 +26,10 @@ type LessonEditorProps = {
   contentMarkdown?: string;
   lessonTitle?: string;
   editable?: boolean;
-  onImportAction?: (content: Record<string, unknown>, markdown?: string) => void;
+  onImportAction?: (
+    content: Record<string, unknown>,
+    markdown?: string,
+  ) => void;
   ref?: Ref<Editor | null>;
 };
 
@@ -90,11 +94,13 @@ export function LessonEditor({
   const markdownToView = getMarkdown();
 
   return (
-    <div className="flex flex-col relative">
+    <div className="clay-card flex flex-col relative overflow-hidden">
       {editor && (
         <EditorToolbar
           editor={editor}
-          onMarkdownSelected={editable && !isViewMode ? handleMarkdownSelected : undefined}
+          onMarkdownSelected={
+            editable && !isViewMode ? handleMarkdownSelected : undefined
+          }
           contentMarkdown={contentMarkdown}
           lessonTitle={lessonTitle}
           enableImport={editable && !isViewMode}
@@ -104,15 +110,17 @@ export function LessonEditor({
       )}
 
       {isViewMode ? (
-        <div className="editor-content view-mode flex-1 p-4">
+        <div className="clay-surface-inset editor-content view-mode flex-1 p-4">
           <div className="markdown-content">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdownToView}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {markdownToView}
+            </ReactMarkdown>
           </div>
         </div>
       ) : (
         <EditorContent
           editor={editor}
-          className="editor-content flex-1"
+          className="clay-surface-inset editor-content flex-1"
         />
       )}
     </div>

@@ -59,14 +59,14 @@ export function AliveTextReveal({
     );
   }
 
-  return (
-    <motion.span
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      className="text-purple-700 dark:text-purple-400 font-medium"
-    >
-      {children}
-    </motion.span>
-  );
-}
+    return (
+      <motion.span
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="inline-flex items-center clay-pill px-2 py-0.5 text-xs font-medium text-(clay-primary-foreground) opacity-90"
+      >
+        {children}
+      </motion.span>
+    );
+ }

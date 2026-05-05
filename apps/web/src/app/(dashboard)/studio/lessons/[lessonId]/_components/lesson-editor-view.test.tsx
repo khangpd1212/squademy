@@ -30,7 +30,8 @@ jest.mock("@/components/editor/outline-panel", () => ({
 }));
 
 jest.mock("@/components/markdown-renderer", () => ({
-  MarkdownRenderer: () => <div data-testid="markdown-renderer" />,
+  __esModule: true,
+  default: () => <div data-testid="markdown-renderer" />,
 }));
 
 jest.mock("@/components/lessons/paragraph-comment-trigger", () => ({

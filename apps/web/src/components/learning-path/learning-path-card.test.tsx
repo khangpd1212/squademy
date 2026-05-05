@@ -24,17 +24,17 @@ describe("LearningPathCard", () => {
     },
   };
 
-  it("renders lesson with title and contributor", () => {
+  it("renders lesson with title and type label", () => {
     render(<LearningPathCard item={mockLessonItem} groupId="group-1" />);
 
     expect(screen.getByText("Introduction to IELTS")).toBeInTheDocument();
-    expect(screen.getByText("by John Doe")).toBeInTheDocument();
+    expect(screen.getByText("Lesson")).toBeInTheDocument();
   });
 
-  it("renders Read button with correct link", () => {
+  it("renders Study button with correct link", () => {
     render(<LearningPathCard item={mockLessonItem} groupId="group-1" />);
 
-    const button = screen.getByRole("link", { name: /read/i });
+    const button = screen.getByRole("link", { name: /study/i });
     expect(button).toHaveAttribute("href", "/group/group-1/lessons/lesson-1");
   });
 

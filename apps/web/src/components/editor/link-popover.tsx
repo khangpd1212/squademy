@@ -22,7 +22,7 @@ export function LinkPopover({ editor, onClose }: LinkPopoverProps) {
   }
 
   return (
-    <div className="absolute z-50 mt-1 rounded-md border border-zinc-200 bg-white p-3 shadow-md dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="clay-dialog absolute z-50 mt-1 overflow-hidden p-3">
       <div className="flex items-center gap-2">
         <input
           type="url"
@@ -33,19 +33,19 @@ export function LinkPopover({ editor, onClose }: LinkPopoverProps) {
             if (e.key === "Escape") onClose();
           }}
           placeholder="https://..."
-          className="w-56 rounded border border-zinc-300 bg-transparent px-2 py-1 text-sm outline-none focus:border-zinc-500 dark:border-zinc-600"
+          className="clay-input w-56"
           autoFocus
         />
         <button
           onClick={handleApply}
-          className="rounded bg-zinc-900 px-2 py-1 text-xs text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className="clay-btn clay-btn-primary h-8 px-2 text-xs"
         >
           Apply
         </button>
         {existingHref && (
           <button
             onClick={handleRemove}
-            className="rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+            className="clay-btn clay-btn-ghost h-8 px-2 text-xs text-(clay-error-foreground) hover:bg-(clay-error)/10"
           >
             Remove
           </button>

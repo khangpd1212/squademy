@@ -5,6 +5,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Providers } from "@/components/providers";
+// @ts-expect-error CSS import
 import "./globals.css";
 
 const nunito = Nunito({

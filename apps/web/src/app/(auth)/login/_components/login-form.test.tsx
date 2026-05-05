@@ -5,6 +5,7 @@ import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 
 const pushMock = jest.fn();
 const searchParamsMock = new URLSearchParams();
+const setAuthTokensMock = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -24,21 +25,31 @@ jest.mock("next-intl", () => ({
   },
 }));
 
+jest.mock("@/lib/api/browser-client", () => ({
+  apiRequest: jest.fn(),
+  setAuthTokens: (...args: unknown[]) => setAuthTokensMock(...args),
+  clearAuthTokens: jest.fn(),
+}));
+
+const { apiRequest: apiRequestMock } = jest.requireMock("@/lib/api/browser-client") as {
+  apiRequest: jest.Mock;
+};
+
 describe("LoginForm", () => {
   beforeEach(() => {
     pushMock.mockReset();
+    setAuthTokensMock.mockReset();
+    apiRequestMock.mockReset();
     searchParamsMock.delete("redirect");
-    global.fetch = jest.fn();
   });
 
   it("shows inline auth error and clears password but keeps email", async () => {
     const user = userEvent.setup();
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: false,
-      json: async () => ({
-        code: "AUTH_INVALID_CREDENTIALS",
-        message: "Invalid email or password.",
-      }),
+    apiRequestMock.mockResolvedValue({
+      data: null,
+      message: "Invalid email or password.",
+      code: "AUTH_INVALID_CREDENTIALS",
+      status: 401,
     });
 
     renderWithQueryClient(<LoginForm />);
@@ -58,14 +69,13 @@ describe("LoginForm", () => {
   it("preserves redirect query when login succeeds", async () => {
     const user = userEvent.setup();
     searchParamsMock.set("redirect", "/group/abc/exercises");
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        data: {
-          accessToken: "token-a",
-          refreshToken: "token-r",
-        },
-      }),
+    apiRequestMock.mockResolvedValue({
+      data: {
+        accessToken: "token-a",
+        refreshToken: "token-r",
+      },
+      message: null,
+      status: 200,
     });
 
     renderWithQueryClient(<LoginForm />);
@@ -75,10 +85,11 @@ describe("LoginForm", () => {
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        "http://localhost:4001/api/auth/login",
-        expect.objectContaining({ credentials: "include", method: "POST" })
+      expect(apiRequestMock).toHaveBeenCalledWith(
+        "/auth/login",
+        expect.objectContaining({ method: "POST" })
       );
+      expect(setAuthTokensMock).toHaveBeenCalledWith("token-a", "token-r");
       expect(pushMock).toHaveBeenCalledWith("/group/abc/exercises");
     });
   });
@@ -86,14 +97,13 @@ describe("LoginForm", () => {
   it("blocks open redirect and falls back to /dashboard", async () => {
     const user = userEvent.setup();
     searchParamsMock.set("redirect", "//evil.com");
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        data: {
-          accessToken: "token-a",
-          refreshToken: "token-r",
-        },
-      }),
+    apiRequestMock.mockResolvedValue({
+      data: {
+        accessToken: "token-a",
+        refreshToken: "token-r",
+      },
+      message: null,
+      status: 200,
     });
 
     renderWithQueryClient(<LoginForm />);

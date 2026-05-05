@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import {LESSON_STATUS } from "@squademy/shared";
 import type { MyLessonItem } from "@/hooks/api/use-lesson-queries";
@@ -21,36 +20,40 @@ export function LessonListItem({ lesson, onDelete }: Props) {
   return (
     <Link
       href={`/studio/lessons/${lesson.id}`}
-      className="group flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-accent hover:text-accent-foreground">
+      className={cn(
+        "flex w-full items-center justify-between rounded-(--radius-clay-lg) px-4 py-3 transition-colors group",
+        "bg-(--clay-surface-2) hover:bg-(--clay-surface-1) hover:text-(--clay-primary)",
+        "border-2 border-(--clay-border-base) hover:shadow-(--shadow-clay-subtle)"
+      )}
+    >
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate font-medium">{lesson.title}</span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-(--clay-muted-foreground) text-xs">
           {lesson.group.name}
         </span>
       </div>
       <div className="ml-4 flex shrink-0 items-center gap-3">
         <span
           className={cn(
-            "rounded-full px-2.5 py-0.5 text-xs font-medium",
+            "clay-pill px-2.5 py-0.5 text-xs font-medium",
             status.className,
           )}>
           {status.label}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-(--clay-muted-foreground) text-xs">
           {formatRelativeTime(lesson.updatedAt)}
         </span>
         {canDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+          <button
+            type="button"
+            className="clay-btn clay-btn-ghost h-8 w-8 p-0 text-(--clay-destructive) hover:bg-(--clay-destructive)/10"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onDelete?.(lesson.id);
             }}>
             <Trash2 className="h-4 w-4" />
-          </Button>
+          </button>
         )}
       </div>
     </Link>

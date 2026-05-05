@@ -1,13 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { DAY_NAMES } from "@squademy/shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Empty } from "@/components/ui/empty";
@@ -50,17 +43,17 @@ export function GroupOverview({ groupId }: { groupId: string }) {
       ) : null}
 
       {showEmptyState ? (
-        <Card className="sq-card">
-          <CardHeader>
-            <CardTitle>
+        <div className="clay-card">
+          <div className="px-6 py-4">
+            <h2 className="text-lg font-semibold">
               Your group is ready! Invite members to get started.
-            </CardTitle>
-            <CardDescription>
+            </h2>
+            <p className="text-sm text-muted-foreground">
               Invite classmates now and start building your shared learning
               path.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between gap-4">
+            </p>
+          </div>
+          <div className="flex items-center justify-between gap-4 border-t border-(clay-border-base) bg-(clay-surface-3) px-6 py-4 rounded-b-(radius-clay-lg)">
             <p className="text-sm text-muted-foreground">
               Members: {memberCount}{" "}
               {memberCount === 1 ? "member" : "members"}
@@ -71,8 +64,8 @@ export function GroupOverview({ groupId }: { groupId: string }) {
             >
               Invite Members
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : null}
 
       {!showEmptyState ? (

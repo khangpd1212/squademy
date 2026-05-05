@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { GroupSettingsView } from "../group-settings-view";
+import { renderWithQueryClient } from "@/test-utils/render-with-query-client";
 import { GROUP_ROLES } from "@squademy/shared";
 
 jest.mock("@/hooks/api/use-group-queries", () => ({
@@ -10,13 +11,19 @@ jest.mock("@/hooks/api/use-auth-queries", () => ({
   useCurrentUser: jest.fn(),
 }));
 
-jest.mock("./group-settings-form", () => ({
+jest.mock("@/hooks/api/use-member-queries", () => ({
+  useGroupMembers: jest.fn(),
+  useUpdateMemberRole: jest.fn(),
+  useRemoveMember: jest.fn(),
+}));
+
+jest.mock("../group-settings-form", () => ({
   GroupSettingsForm: ({ isAdmin }: { isAdmin: boolean }) => (
     <div>Group Settings Form ({isAdmin ? GROUP_ROLES.ADMIN : GROUP_ROLES.MEMBER})</div>
   ),
 }));
 
-jest.mock("./delete-group-section", () => ({
+jest.mock("../delete-group-section", () => ({
   DeleteGroupSection: ({ groupName }: { groupName: string }) => (
     <div>Delete Group Section for {groupName}</div>
   ),
@@ -29,6 +36,12 @@ const { useGroup } = jest.requireMock("@/hooks/api/use-group-queries") as {
 const { useCurrentUser } = jest.requireMock("@/hooks/api/use-auth-queries") as {
   useCurrentUser: jest.Mock;
 };
+
+const memberQueriesMocks = jest.requireMock("@/hooks/api/use-member-queries") as {
+  useGroupMembers: jest.Mock;
+};
+
+const { useGroupMembers } = memberQueriesMocks;
 
 const baseGroup = {
   id: "group-1",
@@ -53,6 +66,15 @@ describe("GroupSettingsView", () => {
   beforeEach(() => {
     useGroup.mockReset();
     useCurrentUser.mockReset();
+    useGroupMembers.mockReturnValue({ data: [], isLoading: false });
+    (jest.requireMock("@/hooks/api/use-member-queries") as Record<string, jest.Mock>).useUpdateMemberRole.mockReturnValue({
+      mutateAsync: jest.fn(),
+      isPending: false,
+    });
+    (jest.requireMock("@/hooks/api/use-member-queries") as Record<string, jest.Mock>).useRemoveMember.mockReturnValue({
+      mutateAsync: jest.fn(),
+      isPending: false,
+    });
   });
 
   it("renders delete section for admins", () => {
@@ -65,7 +87,7 @@ describe("GroupSettingsView", () => {
       isLoading: false,
     });
 
-    render(<GroupSettingsView groupId="group-1" />);
+    renderWithQueryClient(<GroupSettingsView groupId="group-1" />);
 
     expect(screen.getByText("Group Settings Form (admin)")).toBeInTheDocument();
     expect(
@@ -91,7 +113,7 @@ describe("GroupSettingsView", () => {
       isLoading: false,
     });
 
-    render(<GroupSettingsView groupId="group-1" />);
+    renderWithQueryClient(<GroupSettingsView groupId="group-1" />);
 
     expect(screen.getByText("Group Settings Form (member)")).toBeInTheDocument();
     expect(

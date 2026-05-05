@@ -10,6 +10,7 @@ import {
 } from "@/hooks/api/use-lesson-queries";
 import { useAuth } from "@/hooks/use-auth";
 import { VALIDATION } from "@squademy/shared";
+import { cn } from "@/lib/utils";
 
 type CommentThreadProps = {
   lessonId: string;
@@ -91,154 +92,158 @@ export function CommentThread({
     return "?";
   };
 
-  return (
-    <div className="space-y-4">
-      {topLevelComments.map((comment) => (
-        <div key={comment.id} className="space-y-2">
-          <div className="flex gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={comment.author.avatarUrl ?? undefined} />
-              <AvatarFallback>
-                {getInitials(comment.author.displayName, comment.author.fullName)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">
-                    {comment.author.displayName ?? "Anonymous"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(comment.createdAt)}
-                  </span>
-                </div>
-                {user?.userId && comment.author && (comment as { userId?: string }).userId === user.userId && (
-                  <button
-                    onClick={() => handleDelete(comment.id)}
-                    disabled={deleteComment.isPending}
-                    className="text-xs text-destructive hover:underline"
-                  >
-                    {deleteComment.isPending ? "Deleting..." : "Delete"}
-                  </button>
-                )}
-              </div>
-              <p className="text-sm">{comment.body}</p>
-              <button
-                onClick={() => setReplyTo(comment.id)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Reply className="w-3 h-3" />
-                Reply
-              </button>
-            </div>
-          </div>
+    return (
+      <div className="space-y-4">
+        {topLevelComments.map((comment) => (
+          <div key={comment.id} className="clay-card p-4 space-y-2">
+           <div className="flex gap-3">
+             <Avatar className="h-8 w-8">
+               <AvatarImage src={comment.author.avatarUrl ?? undefined} />
+               <AvatarFallback>
+                 {getInitials(comment.author.displayName, comment.author.fullName)}
+               </AvatarFallback>
+             </Avatar>
+             <div className="flex-1 space-y-1">
+               <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-2">
+                   <span className="font-medium text-sm">
+                     {comment.author.displayName ?? "Anonymous"}
+                   </span>
+                   <span className="text-(--clay-muted-foreground) text-xs">
+                     {formatDate(comment.createdAt)}
+                   </span>
+                 </div>
+                 {user?.userId && comment.author && (comment as { userId?: string }).userId === user.userId && (
+                   <button
+                     onClick={() => handleDelete(comment.id)}
+                     disabled={deleteComment.isPending}
+                     className="text-(--clay-destructive) text-xs hover:underline"
+                   >
+                     {deleteComment.isPending ? "Deleting..." : "Delete"}
+                   </button>
+                 )}
+               </div>
+               <p className="text-sm">{comment.body}</p>
+               <button
+                 onClick={() => setReplyTo(comment.id)}
+                 className={cn(
+                   "flex items-center gap-1 text-(--clay-muted-foreground) text-xs hover:text-(--clay-foreground) transition-colors"
+                 )}
+               >
+                 <Reply className="w-3 h-3" />
+                 Reply
+               </button>
+             </div>
+           </div>
 
-          {getReplies(comment.id).map((reply) => (
-            <div key={reply.id} className="flex gap-3 ml-11">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={reply.author.avatarUrl ?? undefined} />
-                <AvatarFallback className="text-xs">
-                  {getInitials(reply.author.displayName, reply.author.fullName)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">
-                      {reply.author.displayName ?? "Anonymous"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(reply.createdAt)}
-                    </span>
-                  </div>
-                  {user?.userId && reply.author && (reply as { userId?: string }).userId === user.userId && (
-                    <button
-                      onClick={() => handleDelete(reply.id)}
-                      disabled={deleteComment.isPending}
-                      className="text-xs text-destructive hover:underline"
-                    >
-                      {deleteComment.isPending ? "Deleting..." : "Delete"}
-                    </button>
-                  )}
-                </div>
-                <p className="text-sm">{reply.body}</p>
-              </div>
-            </div>
-          ))}
+           {getReplies(comment.id).map((reply) => (
+             <div key={reply.id} className="flex gap-3 ml-11">
+               <Avatar className="h-6 w-6">
+                 <AvatarImage src={reply.author.avatarUrl ?? undefined} />
+                 <AvatarFallback className="text-xs">
+                   {getInitials(reply.author.displayName, reply.author.fullName)}
+                 </AvatarFallback>
+               </Avatar>
+               <div className="flex-1 space-y-1">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2">
+                     <span className="font-medium text-sm">
+                       {reply.author.displayName ?? "Anonymous"}
+                     </span>
+                     <span className="text-(--clay-muted-foreground) text-xs">
+                       {formatDate(reply.createdAt)}
+                     </span>
+                   </div>
+                   {user?.userId && reply.author && (reply as { userId?: string }).userId === user.userId && (
+                     <button
+                       onClick={() => handleDelete(reply.id)}
+                       disabled={deleteComment.isPending}
+                       className="text-(--clay-destructive) text-xs hover:underline"
+                     >
+                       {deleteComment.isPending ? "Deleting..." : "Delete"}
+                     </button>
+                   )}
+                 </div>
+                 <p className="text-sm">{reply.body}</p>
+               </div>
+             </div>
+           ))}
 
-          {replyTo === comment.id && (
-            <div className="ml-11 space-y-2">
-              <Textarea
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Write a reply..."
-                className="min-h-20 text-sm"
-                maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
-              />
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">
-                  {replyText.length}/{VALIDATION.REVIEW_COMMENT_BODY_MAX}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setReplyTo(null);
-                      setReplyText("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleReply(comment.id)}
-                    disabled={!replyText.trim() || createComment.isPending}
-                  >
-                    {createComment.isPending ? "Posting..." : "Reply"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
+           {replyTo === comment.id && (
+             <div className="ml-11 space-y-2">
+               <Textarea
+                 value={replyText}
+                 onChange={(e) => setReplyText(e.target.value)}
+                 placeholder="Write a reply..."
+                 className="min-h-20 text-(--clay-input) bg-(--clay-surface) border border-(--clay-border) rounded-md focus:ring-(--clay-ring) focus:ring-offset-[--clay-ring-offset] px-3 py-2"
+                 maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
+               />
+               <div className="flex justify-between items-center">
+                 <span className="text-(--clay-muted-foreground) text-xs">
+                   {replyText.length}/{VALIDATION.REVIEW_COMMENT_BODY_MAX}
+                 </span>
+                 <div className="flex gap-2">
+                   <Button
+                     variant="ghost"
+                     size="sm"
+                     onClick={() => {
+                       setReplyTo(null);
+                       setReplyText("");
+                     }}
+                   >
+                     Cancel
+                   </Button>
+                   <Button
+                     size="sm"
+                     onClick={() => handleReply(comment.id)}
+                     disabled={!replyText.trim() || createComment.isPending}
+                   >
+                     {createComment.isPending ? "Posting..." : "Reply"}
+                   </Button>
+                 </div>
+               </div>
+             </div>
+           )}
+         </div>
+       ))}
 
-      <div className="space-y-2 pt-2">
-        {error && (
-          <p className="text-xs text-destructive">{error}</p>
-        )}
-        <Textarea
-          ref={textareaRef}
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Write a comment..."
-          className="min-h-20 text-sm"
-          maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
-        />
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground">
-            {newComment.length}/{VALIDATION.REVIEW_COMMENT_BODY_MAX}
-          </span>
-          <Button
-            size="sm"
-            onClick={handleSubmit}
-            disabled={!newComment.trim() || createComment.isPending}
-          >
-            {createComment.isPending ? "Posting..." : "Post Comment"}
-          </Button>
-        </div>
-      </div>
+       <div className="space-y-2 pt-2">
+         {error && (
+           <p className="text-(--clay-destructive) text-xs">{error}</p>
+         )}
+         <Textarea
+           ref={textareaRef}
+           value={newComment}
+           onChange={(e) => setNewComment(e.target.value)}
+           placeholder="Write a comment..."
+           className="min-h-20 text-(--clay-input) bg-(--clay-surface) border border-(--clay-border) rounded-md focus:ring-(--clay-ring) focus:ring-offset-[--clay-ring-offset] px-3 py-2"
+           maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
+         />
+         <div className="flex justify-between items-center">
+           <span className="text-(--clay-muted-foreground) text-xs">
+             {newComment.length}/{VALIDATION.REVIEW_COMMENT_BODY_MAX}
+           </span>
+           <Button
+             size="sm"
+             onClick={handleSubmit}
+             disabled={!newComment.trim() || createComment.isPending}
+           >
+             {createComment.isPending ? "Posting..." : "Post Comment"}
+           </Button>
+         </div>
+       </div>
 
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 p-1 rounded hover:bg-accent transition-colors"
-          aria-label="Close"
-        >
-          <X className="w-4 h-4 text-muted-foreground" />
-        </button>
-      )}
-    </div>
-  );
+       {onClose && (
+         <button
+           onClick={onClose}
+           className={cn(
+             "absolute top-2 right-2 p-1 rounded hover:bg-(--clay-accent) transition-colors"
+           )}
+           aria-label="Close"
+         >
+           <X className="w-4 h-4 text-(--clay-muted-foreground)" />
+         </button>
+       )}
+     </div>
+   );
 }

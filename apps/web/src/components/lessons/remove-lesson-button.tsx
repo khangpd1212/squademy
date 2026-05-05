@@ -45,13 +45,13 @@ export function RemoveLessonButton({
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-red-500 hover:text-red-600"
-        onClick={() => setIsOpen(true)}>
-        Remove Content
-      </Button>
+       <Button
+         variant="ghost"
+         size="sm"
+         className="text-(--clay-destructive) hover:text-(--clay-destructive)/80"
+         onClick={() => setIsOpen(true)}>
+         Remove Content
+       </Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
           <DialogHeader>

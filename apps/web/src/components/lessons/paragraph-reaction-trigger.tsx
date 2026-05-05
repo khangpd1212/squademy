@@ -44,29 +44,30 @@ export function ParagraphReactionTrigger({
     <div className="group/reaction relative">
       <div className="absolute left-0 top-1/2 -translate-x-full mr-1 -translate-y-1/2 opacity-0 group-hover/paragraph:opacity-100 transition-opacity pointer-events-none group-hover/paragraph:pointer-events-auto">
         {hasReactions ? (
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1">
             {reactions.slice(0, 3).map((reaction) => {
               const Icon = reactionIcons[reaction.type];
               return (
-                <div
-                  key={reaction.type}
-                  className={cn(
-                    "flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-medium",
-                    reaction.userReacted && "bg-primary/20 text-primary"
-                  )}
-                  title={`${reaction.count} ${reactionLabels[reaction.type]}${reaction.count > 1 ? "s" : ""}`}
-                >
+           <div
+             key={reaction.type}
+             className={cn(
+               "clay-pill px-2 py-0.5 text-xs font-medium",
+               reaction.userReacted && "bg-(--clay-primary)/20 text-(--clay-primary)",
+               !reaction.userReacted && "bg-(--clay-surface) text-(--clay-muted-foreground)"
+             )}
+             title={`${reaction.count} ${reactionLabels[reaction.type]}${reaction.count > 1 ? "s" : ""}`}
+           >
                   <Icon className="w-3 h-3" />
-                  {reaction.count > 1 && <span className="ml-0.5">{reaction.count}</span>}
+                  {reaction.count > 1 && <span className="ml-1 text-(--clay-primary)">{reaction.count}</span>}
                 </div>
               );
             })}
             {totalCount > 3 && (
-              <span className="text-[10px] text-muted-foreground">+{totalCount - 3}</span>
+              <span className="text-(--clay-primary) text-xs font-medium">+{totalCount - 3}</span>
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-0.5 bg-background rounded-md border shadow-sm p-0.5">
+          <div className="flex items-center gap-1">
             {(Object.keys(reactionIcons) as LessonReaction["type"][]).map((type) => {
               const Icon = reactionIcons[type];
               const reaction = reactions.find((r) => r.type === type);
@@ -78,12 +79,12 @@ export function ParagraphReactionTrigger({
                   onClick={() => handleReaction(type)}
                   disabled={isToggling}
                   className={cn(
-                    "flex items-center justify-center w-6 h-6 rounded hover:bg-accent transition-colors",
-                    isActive && "text-primary bg-primary/10"
+                    "inline-flex items-center rounded-full border border-(--clay-border) bg-(--clay-surface) px-2 py-0.5 text-xs font-medium",
+                    isActive && "bg-(--clay-primary)/20 text-(--clay-primary)"
                   )}
                   aria-label={`React with ${reactionLabels[type]}`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-3 h-3" />
                 </button>
               );
             })}

@@ -67,7 +67,7 @@ export function GroupLayoutShell({
         <h1 className="text-2xl font-bold">{group.name}</h1>
         <p className="text-sm text-muted-foreground">Group workspace</p>
       </div>
-      <nav className="flex gap-2 overflow-x-auto border-b pb-2">
+      <nav className="flex gap-2 overflow-x-auto clay-surface p-2 rounded-[min(var(--radius-clay),12px)]">
         {visibleTabs.map((tab) => {
           const href = `${basePath}${tab.suffix}`;
           const isActive =
@@ -79,8 +79,9 @@ export function GroupLayoutShell({
               key={tab.suffix}
               href={href}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent",
-                isActive && "bg-accent text-accent-foreground",
+                "clay-btn px-3 py-1.5 text-sm font-medium",
+                isActive && "bg-(clay-surface-elevated) shadow-(shadow-clay-inner) text-zinc-900 dark:text-zinc-100",
+                !isActive && "hover:bg-(clay-surface-2)"
               )}
             >
               {tab.label}

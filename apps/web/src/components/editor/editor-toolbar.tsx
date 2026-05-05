@@ -50,7 +50,7 @@ function ToolbarButton({ onClick, active, title, disabled, children }: ToolbarBu
       disabled={disabled}
       title={title}
       className={cn(
-        "flex h-7 w-7 items-center justify-center rounded text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
+        "clay-btn h-7 w-7",
         active && "bg-(clay-surface-elevated) text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100",
         disabled && "cursor-not-allowed opacity-50"
       )}
@@ -61,7 +61,7 @@ function ToolbarButton({ onClick, active, title, disabled, children }: ToolbarBu
 }
 
 function ToolbarDivider() {
-  return <div className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />;
+  return <div className="mx-1 h-5 w-px bg-(clay-border-base)" />;
 }
 
 type EditorToolbarProps = {
@@ -209,8 +209,8 @@ export function EditorToolbar({
 
   const exportButtonDisabled = isExporting;
 
-  return (
-    <div className="flex flex-col">
+   return (
+     <div className="flex flex-col clay-surface">
     {/* Hidden file input */}
     <input
       ref={fileInputRef}
@@ -221,7 +221,7 @@ export function EditorToolbar({
       onChange={handleFileChange}
       data-testid="md-file-input"
     />
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-zinc-200 px-2 py-1 dark:border-zinc-800">
+    <div className="flex flex-wrap items-center gap-0.5 border-b border-(clay-border-base) bg-(clay-surface-2) px-2 py-1">
       {/* Text formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -363,20 +363,20 @@ export function EditorToolbar({
 
       {/* Import Markdown */}
       {enableImport && (
-        <>
-          <ToolbarButton
-            onClick={handleImportClick}
-            title={isImporting ? "Importing Markdown..." : "Import Markdown"}
-            disabled={isImporting}
-          >
-            <FileDown className="h-4 w-4" />
-          </ToolbarButton>
-          {isImporting && (
-            <span className="ml-2 text-xs text-zinc-500" data-testid="import-loading">
-              Importing...
-            </span>
-          )}
-        </>
+            <>
+              <ToolbarButton
+                onClick={handleImportClick}
+                title={isImporting ? "Importing Markdown..." : "Import Markdown"}
+                disabled={isImporting}
+              >
+                <FileDown className="h-4 w-4" />
+              </ToolbarButton>
+              {isImporting && (
+                <span className="ml-2 text-xs text-muted-foreground" data-testid="import-loading">
+                  Importing...
+                </span>
+              )}
+            </>
       )}
 
       <ToolbarDivider />
@@ -396,7 +396,7 @@ export function EditorToolbar({
         {showExportMenu && (
           <div
             role="menu"
-            className="absolute right-0 top-full z-50 mt-1 w-40 rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800"
+            className="clay-dialog absolute right-0 top-full z-50 mt-1 w-40 overflow-hidden py-1"
           >
             <button
               type="button"
@@ -404,8 +404,8 @@ export function EditorToolbar({
               disabled={!contentMarkdown}
               onClick={() => handleExportClick("Markdown", handleExportMarkdown)}
               className={cn(
-                "flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700",
-                !contentMarkdown && "cursor-not-allowed opacity-50",
+                "clay-btn h-auto w-full justify-start rounded-md px-3 py-1.5 text-sm",
+                contentMarkdown && "cursor-not-allowed opacity-50",
               )}
             >
               <FileText className="h-4 w-4" />
@@ -415,7 +415,7 @@ export function EditorToolbar({
               type="button"
               role="menuitem"
               onClick={() => handleExportClick("DOCX", handleExportDocx)}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              className="clay-btn h-auto w-full justify-start rounded-md px-3 py-1.5 text-sm"
             >
               <FileType className="h-4 w-4" />
               DOCX
@@ -424,7 +424,7 @@ export function EditorToolbar({
               type="button"
               role="menuitem"
               onClick={() => handleExportClick("PDF", handleExportPdf)}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              className="clay-btn h-auto w-full justify-start rounded-md px-3 py-1.5 text-sm"
             >
               <FileCode className="h-4 w-4" />
               PDF
@@ -433,7 +433,7 @@ export function EditorToolbar({
         )}
       </div>
       {isExporting && exportFormat && (
-        <span className="ml-2 text-xs text-zinc-500" data-testid="export-loading">
+        <span className="ml-2 text-xs text-muted-foreground" data-testid="export-loading">
           Exporting {exportFormat}...
         </span>
       )}
@@ -444,10 +444,10 @@ export function EditorToolbar({
           type="button"
           onClick={onToggleViewMode ?? (() => {})}
           className={cn(
-            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+            "clay-btn px-3 py-1.5 text-sm font-medium",
             isViewMode
-              ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
-              : "bg-violet-600 text-white hover:bg-violet-700 dark:bg-violet-700 dark:hover:bg-violet-600"
+              ? "bg-(clay-surface-3) text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
+              : "bg-(clay-primary) text-(clay-primary-foreground) border-0"
           )}
         >
           {isViewMode ? (
@@ -464,25 +464,25 @@ export function EditorToolbar({
         </button>
       </div>
     </div>
-    {exportError && (
-      <p
-        role="alert"
-        className="px-3 py-1 text-xs text-red-600 dark:text-red-400"
-        data-testid="export-error"
-      >
-        {exportError}
-      </p>
-    )}
-    {/* Inline validation error */}
-    {importError && (
-      <p
-        role="alert"
-        className="px-3 py-1 text-xs text-red-600 dark:text-red-400"
-        data-testid="import-error"
-      >
-        {importError}
-      </p>
-    )}
+      {exportError && (
+        <p
+          role="alert"
+          className="px-3 py-1 text-xs text-(clay-error-foreground) bg-(clay-error)/10 rounded-b-(radius-clay)"
+          data-testid="export-error"
+        >
+          {exportError}
+        </p>
+      )}
+      {/* Inline validation error */}
+      {importError && (
+        <p
+          role="alert"
+          className="px-3 py-1 text-xs text-(clay-error-foreground) bg-(clay-error)/10 rounded-b-(radius-clay)"
+          data-testid="import-error"
+        >
+          {importError}
+        </p>
+      )}
     </div>
   );
 }

@@ -24,41 +24,42 @@ export function ParagraphCommentTrigger({
   const commentCount = comments.length;
   const hasComments = commentCount > 0;
 
-  return (
-    <div className="group/paragraph relative">
-      <div className="absolute left-0 top-1/2 -translate-x-full mr-1 -translate-y-1/2 opacity-0 group-hover/paragraph:opacity-100 transition-opacity">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            "flex items-center justify-center w-6 h-6 rounded hover:bg-accent transition-colors",
-            hasComments && "text-primary",
-          )}
-          aria-label={hasComments ? `${commentCount} comments` : "Add comment"}>
-          {hasComments ? (
-            <div className="relative">
-              <MessageSquare className="w-4 h-4" />
-              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-medium w-4 h-4 rounded-full flex items-center justify-center">
-                {commentCount}
-              </span>
-            </div>
-          ) : (
-            <MessageSquarePlus className="w-4 h-4" />
-          )}
-        </button>
-      </div>
+   return (
+     <div className="group/paragraph relative">
+       <div className="absolute left-0 top-1/2 -translate-x-full mr-1 -translate-y-1/2 opacity-0 group-hover/paragraph:opacity-100 transition-opacity">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={cn(
+              "clay-btn rounded-full px-2 py-0.5 text-xs flex items-center justify-center",
+              hasComments && "bg-(--clay-primary)/10 text-(--clay-primary)",
+              !hasComments && "bg-(--clay-surface) text-(--clay-muted-foreground)",
+              "hover:bg-(--clay-primary)/20",
+              "border border-(--clay-border-base)"
+            )}
+            aria-label={hasComments ? `${commentCount} comments` : "Add comment"}>
+            {hasComments ? (
+              <div className="flex items-center gap-1">
+                <MessageSquare className="w-4 h-4 text-(--clay-primary)" />
+                <span className="text-(--clay-primary) text-sm font-medium">{commentCount}</span>
+              </div>
+            ) : (
+              <MessageSquarePlus className="w-4 h-4 text-(--clay-primary)" />
+            )}
+          </button>
+       </div>
 
-      {children}
+       {children}
 
-      {isOpen && (
-        <div className="mt-2 border-t pt-2">
-          <CommentThread
-            lessonId={lessonId}
-            lineRef={lineRef}
-            comments={comments}
-            onClose={() => setIsOpen(false)}
-          />
-        </div>
-      )}
-    </div>
-  );
+       {isOpen && (
+         <div className="mt-2 border-t pt-2">
+           <CommentThread
+             lessonId={lessonId}
+             lineRef={lineRef}
+             comments={comments}
+             onClose={() => setIsOpen(false)}
+           />
+         </div>
+       )}
+     </div>
+   );
 }

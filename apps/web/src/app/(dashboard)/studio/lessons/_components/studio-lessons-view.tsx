@@ -37,44 +37,45 @@ export function StudioLessonsView() {
         <Button onClick={() => setDialogOpen(true)}>New Lesson</Button>
       </div>
 
-      {isLoading && (
-        <div className="flex flex-col gap-2" aria-label="Loading lessons">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full rounded-lg" />
-          ))}
-        </div>
-      )}
+        {isLoading && (
+          <div className="flex flex-col gap-2" aria-label="Loading lessons">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-(radius-clay)" />
+            ))}
+          </div>
+        )}
 
-      {isError && (
-        <p className="text-sm text-destructive">
-          Failed to load lessons. Please refresh the page.
-        </p>
-      )}
+       {isError && (
+         <p className="text-sm text-destructive">
+           Failed to load lessons. Please refresh the page.
+         </p>
+       )}
 
-      {!isLoading && !isError && lessons && (
-        <>
-          {lessons.length === 0 ? (
-            <Empty
-              icon={BookOpen}
-              title="No lessons yet"
-              description="You haven't created any lessons yet. Start contributing!"
-              action={
-                <Button onClick={() => setDialogOpen(true)}>New Lesson</Button>
-              }
-            />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {lessons.map((lesson) => (
-                <LessonListItem
-                  key={lesson.id}
-                  lesson={lesson}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          )}
-        </>
-      )}
+       {!isLoading && !isError && lessons && (
+         <>
+           {lessons.length === 0 ? (
+             <Empty
+               icon={BookOpen}
+               title="No lessons yet"
+               description="You haven't created any lessons yet. Start contributing!"
+               action={
+                 <Button onClick={() => setDialogOpen(true)}>New Lesson</Button>
+               }
+             />
+            ) : (
+              <div className="grid gap-4">
+                {lessons.map((lesson) => (
+                  <div key={lesson.id} className="clay-card h-full">
+                    <LessonListItem
+                      lesson={lesson}
+                      onDelete={handleDelete}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+         </>
+       )}
 
       <NewLessonDialog open={dialogOpen} onOpenChange={setDialogOpen} />
       <DeleteLessonDialog

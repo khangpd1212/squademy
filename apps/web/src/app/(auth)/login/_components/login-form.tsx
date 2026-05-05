@@ -50,7 +50,7 @@ export function LoginForm() {
   }
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+    <form className="clay-card space-y-4 p-6" onSubmit={form.handleSubmit(onSubmit)} noValidate>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -81,7 +81,11 @@ export function LoginForm() {
         ) : null}
       </div>
 
-      {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
+      {submitError ? (
+        <p className="clay-error text-sm px-3 py-2 rounded-(radius-clay)" role="alert">
+          {submitError}
+        </p>
+      ) : null}
 
       <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
         {loginMutation.isPending ? "Logging in..." : "Log in"}
