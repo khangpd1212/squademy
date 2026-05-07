@@ -67,7 +67,7 @@ export function GroupLayoutShell({
         <h1 className="text-2xl font-bold">{group.name}</h1>
         <p className="text-sm text-muted-foreground">Group workspace</p>
       </div>
-      <nav className="flex gap-2 overflow-x-auto clay-surface p-2 rounded-[min(var(--radius-clay),12px)]">
+      <nav className="flex gap-2 overflow-x-auto clay-surface p-2 rounded-clay">
         {visibleTabs.map((tab) => {
           const href = `${basePath}${tab.suffix}`;
           const isActive =

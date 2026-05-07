@@ -53,7 +53,7 @@ export function GroupOverview({ groupId }: { groupId: string }) {
               path.
             </p>
           </div>
-          <div className="flex items-center justify-between gap-4 border-t border-(clay-border-base) bg-(clay-surface-3) px-6 py-4 rounded-b-(radius-clay-lg)">
+          <div className="flex items-center justify-between gap-4 border-t border-(clay-border-base) bg-(clay-surface-3) px-6 py-4 rounded-b-clay-lg)">
             <p className="text-sm text-muted-foreground">
               Members: {memberCount}{" "}
               {memberCount === 1 ? "member" : "members"}

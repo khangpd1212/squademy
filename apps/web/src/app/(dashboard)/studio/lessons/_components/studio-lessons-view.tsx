@@ -40,7 +40,7 @@ export function StudioLessonsView() {
         {isLoading && (
           <div className="flex flex-col gap-2" aria-label="Loading lessons">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-(radius-clay)" />
+              <Skeleton key={i} className="h-14 w-full rounded-clay" />
             ))}
           </div>
         )}

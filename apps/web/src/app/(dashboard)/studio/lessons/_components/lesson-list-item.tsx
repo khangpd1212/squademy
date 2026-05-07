@@ -21,9 +21,9 @@ export function LessonListItem({ lesson, onDelete }: Props) {
     <Link
       href={`/studio/lessons/${lesson.id}`}
       className={cn(
-        "flex w-full items-center justify-between rounded-(--radius-clay-lg) px-4 py-3 transition-colors group",
+        "flex w-full items-center justify-between rounded-clay-lg px-4 py-3 transition-colors group",
         "bg-(--clay-surface-2) hover:bg-(--clay-surface-1) hover:text-(--clay-primary)",
-        "border-2 border-(--clay-border-base) hover:shadow-(--shadow-clay-subtle)"
+        "border-2 border-(--clay-border-base) hover:shadow-clay-hover"
       )}
     >
       <div className="flex min-w-0 flex-col gap-0.5">

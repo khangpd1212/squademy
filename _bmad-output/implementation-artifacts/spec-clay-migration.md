@@ -165,15 +165,15 @@ Phase 5 — Feature Components (90-120m, 23 files):
 - [x] `apps/web/src/components/lessons/paragraph-reaction-trigger.tsx` -- Reactions → clay pills
 - [x] `apps/web/src/components/lessons/comment-thread.tsx` -- Thread → clay card surfaces
 - [x] `apps/web/src/components/lessons/remove-lesson-button.tsx` -- Inherits clay btn destructive
-- [ ] `apps/web/src/components/studio/lessons/_components/studio-lessons-view.tsx` -- List items → clay cards (file not found)
-- [ ] `apps/web/src/components/studio/lessons/_components/lesson-list-item.tsx` -- Item → clay card row (file not found)
-- [ ] `apps/web/src/components/studio/lessons/_components/new-lesson-dialog.tsx` -- Inherits dialog (Phase 2) (file not found)
-- [ ] `apps/web/src/components/studio/lessons/_components/delete-lesson-dialog.tsx` -- Inherits dialog (Phase 2) (file not found)
-- [ ] `apps/web/src/components/studio/lessons/[lessonId]/_components/save-indicator.tsx` -- Badge → clay badge (file not found)
-- [ ] `apps/web/src/components/dashboard/_components/group-card.tsx` -- Card → clay elevated card (file not found)
-- [ ] `apps/web/src/components/dashboard/_components/pending-invitations.tsx` -- Items → clay surface rows (file not found)
-- [ ] `apps/web/src/components/group/[groupId]/_components/group-overview.tsx` -- Surface → clay card (file not found)
-- [ ] `apps/web/src/components/group/[groupId]/_components/group-layout-shell.tsx` -- Inherits layout (Phase 4) (file not found)
+- [x] `apps/web/src/app/(dashboard)/studio/lessons/_components/studio-lessons-view.tsx` -- List items → clay cards
+- [x] `apps/web/src/app/(dashboard)/studio/lessons/_components/lesson-list-item.tsx` -- Item → clay card row
+- [x] `apps/web/src/app/(dashboard)/studio/lessons/_components/new-lesson-dialog.tsx` -- Inherits dialog (Phase 2)
+- [x] `apps/web/src/app/(dashboard)/studio/lessons/_components/delete-lesson-dialog.tsx` -- Inherits dialog (Phase 2)
+- [x] `apps/web/src/app/(dashboard)/studio/lessons/[lessonId]/_components/save-indicator.tsx` -- Badge → clay badge
+- [x] `apps/web/src/app/(dashboard)/dashboard/_components/group-card.tsx` -- Card → clay elevated card
+- [x] `apps/web/src/app/(dashboard)/dashboard/_components/pending-invitations.tsx` -- Items → clay surface rows
+- [x] `apps/web/src/app/(dashboard)/group/[groupId]/_components/group-overview.tsx` -- Surface → clay card
+- [x] `apps/web/src/app/(dashboard)/group/[groupId]/_components/group-layout-shell.tsx` -- Inherits layout (Phase 4)
 - [x] `apps/web/src/app/(auth)/login/_components/login-form.tsx` -- Form wrapper → clay card, inputs → clay
 - [x] `apps/web/src/app/(auth)/register/_components/register-form.tsx` -- Same as login
 - [x] `apps/web/src/components/ui-custom/select.tsx` -- Wrapper inherits Phase 2.4 styles
@@ -193,6 +193,12 @@ Phase 5 — Feature Components (90-120m, 23 files):
       Each entry records: what finding triggered the change, what was amended, what known-bad state
       the amendment avoids, and any KEEP instructions (what worked well and must survive re-derivation).
       Empty until the first bad_spec loopback. -->
+
+- **Date:** 2026-05-06
+  - **Finding:** `lesson-list-item.tsx` line 26 used `hover:shadow-(--shadow-clay-subtle)` which is not a valid clay token per spec (spec only defines `--shadow-clay-hover`, `--shadow-clay-pressed`, `--shadow-clay-focus`, `--shadow-clay-outer`, `--shadow-clay-inner`)
+  - **Amended:** Changed to `hover:shadow-clay-hover` to match spec invariant rules
+  - **Avoided:** Invalid CSS variable reference that would not produce clay hover effect
+  - **KEEP:** All other clay tokens in the file (`rounded-clay-lg`, `bg-(--clay-surface-2)`, `clay-pill`, etc.) are correct
 
 ## Design Notes
 

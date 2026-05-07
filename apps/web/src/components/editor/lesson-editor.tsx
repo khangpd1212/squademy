@@ -14,7 +14,6 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-// @ts-expect-error CSS import
 import "./editor-styles.css";
 import { EditorToolbar } from "./editor-toolbar";
 import { AliveText } from "./extensions/alive-text";

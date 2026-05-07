@@ -54,7 +54,7 @@ type GroupCardProps = {
 export function GroupCard({ group }: GroupCardProps) {
   return (
     <Link href={`/group/${group.id}`} className="block">
-      <div className="clay-card h-full transition-shadow hover:shadow-(shadow-clay-hover)">
+      <div className="clay-card clay-card-elevated h-full transition-shadow hover:shadow-(shadow-clay-hover)">
         <div className="space-y-3 p-6">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold leading-tight">{group.name}</h3>
