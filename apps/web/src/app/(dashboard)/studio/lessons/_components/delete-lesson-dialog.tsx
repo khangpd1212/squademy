@@ -50,7 +50,7 @@ export function DeleteLessonDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={!deleteLessonMutation.isPending} className="clay-dialog">
+      <DialogContent showCloseButton={!deleteLessonMutation.isPending}>
         <DialogHeader>
           <DialogTitle>Delete this lesson?</DialogTitle>
           <DialogDescription>

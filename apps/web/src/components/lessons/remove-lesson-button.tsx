@@ -48,7 +48,7 @@ export function RemoveLessonButton({
        <Button
          variant="ghost"
          size="sm"
-         className="text-(--clay-destructive) hover:text-(--clay-destructive)/80"
+          className="text-(--dash-danger) hover:text-(--dash-danger)/80"
          onClick={() => setIsOpen(true)}>
          Remove Content
        </Button>

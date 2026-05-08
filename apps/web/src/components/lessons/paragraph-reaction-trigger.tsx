@@ -50,20 +50,20 @@ export function ParagraphReactionTrigger({
               return (
            <div
              key={reaction.type}
-             className={cn(
-               "clay-pill px-2 py-0.5 text-xs font-medium",
-               reaction.userReacted && "bg-(--clay-primary)/20 text-(--clay-primary)",
-               !reaction.userReacted && "bg-(--clay-surface) text-(--clay-muted-foreground)"
-             )}
+              className={cn(
+                "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                reaction.userReacted && "bg-(--dash-primary)/20 text-(--dash-primary)",
+                !reaction.userReacted && "bg-(--dash-glass) text-(--dash-text-muted)"
+              )}
              title={`${reaction.count} ${reactionLabels[reaction.type]}${reaction.count > 1 ? "s" : ""}`}
            >
                   <Icon className="w-3 h-3" />
-                  {reaction.count > 1 && <span className="ml-1 text-(--clay-primary)">{reaction.count}</span>}
+                  {reaction.count > 1 && <span className="ml-1 text-(--dash-primary)">{reaction.count}</span>}
                 </div>
               );
             })}
             {totalCount > 3 && (
-              <span className="text-(--clay-primary) text-xs font-medium">+{totalCount - 3}</span>
+              <span className="text-(--dash-primary) text-xs font-medium">+{totalCount - 3}</span>
             )}
           </div>
         ) : (
@@ -79,8 +79,8 @@ export function ParagraphReactionTrigger({
                   onClick={() => handleReaction(type)}
                   disabled={isToggling}
                   className={cn(
-                    "inline-flex items-center rounded-full border border-(--clay-border) bg-(--clay-surface) px-2 py-0.5 text-xs font-medium",
-                    isActive && "bg-(--clay-primary)/20 text-(--clay-primary)"
+                    "inline-flex items-center rounded-full border border-(--dash-border) bg-(--dash-glass) px-2 py-0.5 text-xs font-medium",
+                    isActive && "bg-(--dash-primary)/20 text-(--dash-primary)"
                   )}
                   aria-label={`React with ${reactionLabels[type]}`}
                 >

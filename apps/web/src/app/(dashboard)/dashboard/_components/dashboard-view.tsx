@@ -66,7 +66,7 @@ export function DashboardView() {
       <h1 className="text-2xl font-bold">My Groups</h1>
 
       {showGroupDeletedMessage ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+        <div className="rounded-lg border border-(--dash-success)/30 bg-(--dash-success)/10 px-4 py-3 text-sm text-(--dash-success)">
           Group deleted.
         </div>
       ) : null}

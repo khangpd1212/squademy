@@ -9,11 +9,11 @@ import { GROUP_ROLES, MemberRole } from "@squademy/shared";
 function getRoleBadgeClass(role: MemberRole) {
   switch (role) {
     case GROUP_ROLES.ADMIN:
-      return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300";
+      return "bg-(--dash-primary)/15 text-(--dash-primary)";
     case GROUP_ROLES.EDITOR:
-      return "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300";
+      return "bg-(--dash-success)/15 text-(--dash-success)";
     default:
-      return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+      return "bg-(--dash-surface-elevated) text-(--dash-text-muted)";
   }
 }
 
@@ -54,11 +54,11 @@ type GroupCardProps = {
 export function GroupCard({ group }: GroupCardProps) {
   return (
     <Link href={`/group/${group.id}`} className="block">
-      <div className="clay-card clay-card-elevated h-full transition-shadow hover:shadow-(shadow-clay-hover)">
+      <div className="h-full rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl transition-shadow hover:shadow-(--dash-shadow-md)">
         <div className="space-y-3 p-6">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold leading-tight">{group.name}</h3>
-            <span className={cn("clay-pill px-2.5 py-0.5 text-xs font-medium capitalize", getRoleBadgeClass(group.role))}>
+            <span className={cn("inline-flex shrink-0 items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize", getRoleBadgeClass(group.role))}>
               {group.role}
             </span>
           </div>

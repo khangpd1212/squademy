@@ -307,7 +307,7 @@ export default function PracticeSessionPage({ params }: PageProps) {
   return (
     <div className="flex min-h-screen flex-col pb-20">
       {!isOnline && (
-        <div className="bg-yellow-100 px-4 py-2 text-center text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
+        <div className="bg-yellow-100 px-4 py-2 text-center text-yellow-800">
           Offline — changes will sync when connected
         </div>
       )}

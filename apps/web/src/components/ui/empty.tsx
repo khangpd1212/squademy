@@ -16,8 +16,8 @@ export function Empty({
   action,
 }: EmptyProps) {
   return (
-    <div className="clay-card flex flex-col items-center justify-center gap-4 border border-dashed p-8 text-center">
-      <div className="flex size-12 items-center justify-center rounded-clay-full) bg-(clay-surface-3)">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-(--dash-radius-lg) border border-dashed border-(--dash-border) bg-(--dash-glass) p-8 text-center">
+      <div className="flex size-12 items-center justify-center rounded-(--dash-radius-lg) bg-(--dash-glass-active)">
         <Icon className="size-8 text-muted-foreground" />
       </div>
       <div className="flex flex-col gap-1">

@@ -43,7 +43,7 @@ export function GroupOverview({ groupId }: { groupId: string }) {
       ) : null}
 
       {showEmptyState ? (
-        <div className="clay-card">
+        <div className="rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl">
           <div className="px-6 py-4">
             <h2 className="text-lg font-semibold">
               Your group is ready! Invite members to get started.
@@ -53,14 +53,14 @@ export function GroupOverview({ groupId }: { groupId: string }) {
               path.
             </p>
           </div>
-          <div className="flex items-center justify-between gap-4 border-t border-(clay-border-base) bg-(clay-surface-3) px-6 py-4 rounded-b-clay-lg)">
+          <div className="flex items-center justify-between gap-4 border-t border-(--dash-border-subtle) bg-(--dash-glass) px-6 py-4 rounded-b-(--dash-radius-lg)">
             <p className="text-sm text-muted-foreground">
               Members: {memberCount}{" "}
               {memberCount === 1 ? "member" : "members"}
             </p>
             <Link
               href={`/group/${groupId}/members`}
-              className="sq-btn sq-btn-green"
+              className="inline-flex h-8 items-center justify-center rounded-(--dash-radius) bg-(--dash-primary) px-3 text-sm font-medium text-white hover:bg-(--dash-primary-hover)"
             >
               Invite Members
             </Link>

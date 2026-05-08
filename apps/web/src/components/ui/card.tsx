@@ -12,7 +12,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-[min(var(--radius-clay),16px)] bg-card py-4 text-sm text-card-foreground shadow-(shadow-clay-subtle) ring-0 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-[min(var(--radius-clay),16px)] *:[img:last-child]:rounded-b-[min(var(--radius-clay),16px)]",
+        "group/card flex flex-col gap-4 overflow-hidden rounded-(--dash-radius-lg) bg-card py-4 text-sm text-card-foreground shadow-(--dash-shadow-sm) ring-0 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-(--dash-radius-lg) *:[img:last-child]:rounded-b-(--dash-radius-lg)",
         className
       )}
       {...props}
@@ -25,7 +25,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-[min(var(--radius-clay),16px)] px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-(--dash-radius-lg) px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
         className
       )}
       {...props}
@@ -84,7 +84,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center rounded-b-[min(var(--radius-clay),16px)] border-t bg-(clay-surface-3) p-4 group-data-[size=sm]/card:p-3",
+        "flex items-center rounded-b-(--dash-radius-lg) border-t border-(--dash-border-subtle) bg-(--dash-glass) p-4 group-data-[size=sm]/card:p-3",
         className
       )}
       {...props}

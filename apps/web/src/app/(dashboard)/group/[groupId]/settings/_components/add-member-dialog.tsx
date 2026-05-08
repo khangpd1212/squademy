@@ -110,7 +110,7 @@ export function AddMemberDialog({
                       ) : null}
                     </div>
                     {sentIds.has(profile.id) ? (
-                      <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                      <span className="text-xs text-emerald-600">
                         Invite sent!
                       </span>
                     ) : (

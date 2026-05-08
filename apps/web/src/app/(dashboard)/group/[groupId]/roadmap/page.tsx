@@ -136,7 +136,7 @@ export default function RoadmapPage({ params }: PageProps) {
 
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">
-                    {isLesson ? item.lesson!.title : item.deck!.title}
+                    {isLesson ? item.lesson?.title : item.deck?.title}
                   </p>
                   {isLesson && (
                     <p className="text-sm text-muted-foreground">

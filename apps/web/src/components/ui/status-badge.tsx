@@ -5,25 +5,25 @@ import { cn } from "@/lib/utils";
 const STATUS_STYLES = {
     draft: {
       label: "Draft",
-      className: "bg-(clay-surface-3) text-muted-foreground shadow-(shadow-clay-pressed)",
+      className: "bg-(--dash-surface-elevated) text-(--dash-text-muted)",
     },
     review: {
       label: "In Review",
       className:
-        "bg-(clay-warning)/20 text-(clay-warning-foreground)",
+        "bg-(--dash-warning)/20 text-(--dash-warning)",
     },
     published: {
       label: "Published",
       className:
-        "bg-(clay-success)/20 text-(clay-success-foreground)",
+        "bg-(--dash-success)/20 text-(--dash-success)",
     },
     rejected: {
       label: "Rejected",
-      className: "bg-(clay-error)/20 text-(clay-error-foreground)",
+      className: "bg-(--dash-danger)/20 text-(--dash-danger)",
     },
     deleted: {
       label: "Deleted",
-      className: "bg-(clay-error)/20 text-(clay-error-foreground)",
+      className: "bg-(--dash-danger)/20 text-(--dash-danger)",
     },
 } as const;
 

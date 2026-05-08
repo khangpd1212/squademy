@@ -43,16 +43,16 @@ export function PendingInvitations() {
   }
 
   return (
-    <div className="clay-card">
-      <div className="clay-surface px-6 py-4">
+    <div className="rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl">
+      <div className="px-6 py-4">
         <h2 className="text-lg font-semibold inline-flex items-center gap-2">
           <Mail className="h-5 w-5" />
           Pending Invitations
         </h2>
       </div>
-      <div className="divide-y divide-(clay-border-base)">
+      <div className="divide-y divide-(--dash-border-subtle)">
         {invitations.map((inv) => (
-          <div key={inv.id} className="clay-surface flex items-center justify-between gap-3 px-6 py-3 hover:bg-(clay-surface-2) transition-colors">
+          <div key={inv.id} className="flex items-center justify-between gap-3 px-6 py-3 transition-colors hover:bg-(--dash-glass-hover)">
             <div>
               <p className="text-sm font-medium">{inv.groupName}</p>
               <p className="text-xs text-muted-foreground">

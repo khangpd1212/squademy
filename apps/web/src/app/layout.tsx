@@ -36,7 +36,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale}>
       <body
         className={`${nunito.variable} ${inter.variable} ${firaCode.variable} font-sans antialiased`}
       >

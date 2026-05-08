@@ -50,8 +50,8 @@ function ToolbarButton({ onClick, active, title, disabled, children }: ToolbarBu
       disabled={disabled}
       title={title}
       className={cn(
-        "clay-btn h-7 w-7",
-        active && "bg-(clay-surface-elevated) text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100",
+        "inline-flex h-7 w-7 items-center justify-center rounded-(--dash-radius) text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)",
+        active && "bg-(--dash-glass-active) text-(--dash-text)",
         disabled && "cursor-not-allowed opacity-50"
       )}
     >
@@ -61,7 +61,7 @@ function ToolbarButton({ onClick, active, title, disabled, children }: ToolbarBu
 }
 
 function ToolbarDivider() {
-  return <div className="mx-1 h-5 w-px bg-(clay-border-base)" />;
+  return <div className="mx-1 h-5 w-px bg-(--dash-border)" />;
 }
 
 type EditorToolbarProps = {
@@ -210,7 +210,7 @@ export function EditorToolbar({
   const exportButtonDisabled = isExporting;
 
    return (
-     <div className="flex flex-col clay-surface">
+     <div className="flex flex-col rounded-(--dash-radius-lg) bg-(--dash-glass) backdrop-blur-xl">
     {/* Hidden file input */}
     <input
       ref={fileInputRef}
@@ -221,7 +221,7 @@ export function EditorToolbar({
       onChange={handleFileChange}
       data-testid="md-file-input"
     />
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-(clay-border-base) bg-(clay-surface-2) px-2 py-1">
+    <div className="flex flex-wrap items-center gap-0.5 border-b border-(--dash-border) bg-(--dash-surface-2) px-2 py-1">
       {/* Text formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -396,7 +396,7 @@ export function EditorToolbar({
         {showExportMenu && (
           <div
             role="menu"
-            className="clay-dialog absolute right-0 top-full z-50 mt-1 w-40 overflow-hidden py-1"
+            className="rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-surface-2) backdrop-blur-xl absolute right-0 top-full z-50 mt-1 w-40 overflow-hidden py-1 shadow-(--dash-shadow-lg)"
           >
             <button
               type="button"
@@ -404,8 +404,8 @@ export function EditorToolbar({
               disabled={!contentMarkdown}
               onClick={() => handleExportClick("Markdown", handleExportMarkdown)}
               className={cn(
-                "clay-btn h-auto w-full justify-start rounded-md px-3 py-1.5 text-sm",
-                contentMarkdown && "cursor-not-allowed opacity-50",
+                "flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)",
+                !contentMarkdown && "cursor-not-allowed opacity-50",
               )}
             >
               <FileText className="h-4 w-4" />
@@ -415,7 +415,7 @@ export function EditorToolbar({
               type="button"
               role="menuitem"
               onClick={() => handleExportClick("DOCX", handleExportDocx)}
-              className="clay-btn h-auto w-full justify-start rounded-md px-3 py-1.5 text-sm"
+              className="flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)"
             >
               <FileType className="h-4 w-4" />
               DOCX
@@ -424,7 +424,7 @@ export function EditorToolbar({
               type="button"
               role="menuitem"
               onClick={() => handleExportClick("PDF", handleExportPdf)}
-              className="clay-btn h-auto w-full justify-start rounded-md px-3 py-1.5 text-sm"
+              className="flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)"
             >
               <FileCode className="h-4 w-4" />
               PDF
@@ -444,10 +444,10 @@ export function EditorToolbar({
           type="button"
           onClick={onToggleViewMode ?? (() => {})}
           className={cn(
-            "clay-btn px-3 py-1.5 text-sm font-medium",
+            "inline-flex items-center gap-1.5 rounded-(--dash-radius) px-3 py-1.5 text-sm font-medium transition-colors",
             isViewMode
-              ? "bg-(clay-surface-3) text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
-              : "bg-(clay-primary) text-(clay-primary-foreground) border-0"
+              ? "bg-(--dash-glass-hover) text-(--dash-text)"
+              : "bg-(--dash-primary) text-white"
           )}
         >
           {isViewMode ? (
@@ -467,7 +467,7 @@ export function EditorToolbar({
       {exportError && (
         <p
           role="alert"
-          className="px-3 py-1 text-xs text-(clay-error-foreground) bg-(clay-error)/10 rounded-b-(radius-clay)"
+          className="px-3 py-1 text-xs text-(--dash-danger) bg-(--dash-danger)/10"
           data-testid="export-error"
         >
           {exportError}
@@ -477,7 +477,7 @@ export function EditorToolbar({
       {importError && (
         <p
           role="alert"
-          className="px-3 py-1 text-xs text-(clay-error-foreground) bg-(clay-error)/10 rounded-b-(radius-clay)"
+          className="px-3 py-1 text-xs text-(--dash-danger) bg-(--dash-danger)/10"
           data-testid="import-error"
         >
           {importError}

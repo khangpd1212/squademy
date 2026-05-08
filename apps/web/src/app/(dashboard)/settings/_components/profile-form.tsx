@@ -198,7 +198,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             {updateProfileMutation.isPending ? "Saving..." : "Save profile"}
           </Button>
           {saveSuccess ? (
-            <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
+            <p role="status" className="text-sm text-emerald-600">
               {saveSuccess}
             </p>
           ) : null}

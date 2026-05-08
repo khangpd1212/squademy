@@ -47,7 +47,7 @@ export function NewLessonDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="clay-dialog">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>New Lesson</DialogTitle>
           <DialogDescription>
