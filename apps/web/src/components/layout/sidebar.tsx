@@ -30,12 +30,6 @@ export function Sidebar() {
 
   return (
     <aside className="hidden w-64 shrink-0 border-r border-(--dash-border-subtle) bg-(--dash-surface) md:block">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-bold">
-          <BookOpen className="h-5 w-5" />
-          <span>Squademy</span>
-        </Link>
-      </div>
       <nav className="flex flex-col gap-1 p-4">
         {navItems.map((item) => {
           const Icon = item.icon;

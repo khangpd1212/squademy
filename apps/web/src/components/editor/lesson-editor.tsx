@@ -93,7 +93,7 @@ export function LessonEditor({
   const markdownToView = getMarkdown();
 
   return (
-    <div className="flex flex-col relative overflow-hidden rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl">
+    <div className="flex flex-col relative overflow-hidden rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl h-full">
       {editor && (
         <EditorToolbar
           editor={editor}
@@ -109,8 +109,8 @@ export function LessonEditor({
       )}
 
       {isViewMode ? (
-        <div className="editor-content view-mode flex-1 bg-(--dash-surface-1) p-4">
-          <div className="markdown-content">
+        <div className="flex-1 bg-(--dash-surface-1) overflow-y-auto">
+          <div className="text-slate-300 leading-relaxed text-base p-4 h-0">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {markdownToView}
             </ReactMarkdown>
@@ -119,7 +119,7 @@ export function LessonEditor({
       ) : (
         <EditorContent
           editor={editor}
-          className="editor-content flex-1 bg-(--dash-surface-1)"
+          className="flex-1 bg-(--dash-surface-1) overflow-y-auto"
         />
       )}
     </div>

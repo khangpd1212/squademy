@@ -305,12 +305,19 @@ Backend (`apps/api/src/`):
 - `invitations/` — InvitationsModule
 - `common/` — Shared filters, guards, decorators
 
-**Styling Rules:**
-- Tailwind CSS utility classes only — no custom CSS files (except `globals.css` for theme tokens)
-- Dark mode: use `dark:` variant — theme managed via `next-themes` class strategy
+**UI Design System — Dashboard (Dark Theme, Cloud-Platform Aesthetic):**
+- **Visual style:** modern, clean cloud-platform (Vercel/GitHub inspired), dark theme, subtle gradients, soft shadows, glass-like panels, rounded components
+- **Semantic color tokens** (define in `globals.css` `@theme inline`): `--color-primary: #0C5CAB; --color-secondary: #0a4a8a; --color-success: #10b981; --color-warning: #f59e0b; --color-danger: #ef4444; --color-surface: #09090b; --color-text: #fafafa`
+- **Fonts (dashboard):** IBM Plex Sans (headers/UI/body/mono) — overrides Nunito/Inter/Fira Code for dashboard pages; weights 100-900 available
+- **Typography scale:** 12/14/16/20/24/32px; 8pt baseline grid for spacing
+- **Component states must be explicit:** default, hover, focus-visible, active, disabled, loading, error for every interactive element
+- **Design for empty/loading/error/success states** on every data-driven view — never show a blank panel
 - Use `cn()` for conditional classes — import from `@/lib/utils`
+- Dark mode ONLY (`next-themes` class strategy) — dashboard is always dark
 - Mobile-first: base styles for mobile, `md:` for tablet/desktop breakpoints
-- Fonts: Nunito (headers/UI), Inter (body/reading), Fira Code (code/IPA)
+- keyboard-first interactions, visible focus states, 44px+ touch targets, reduced-motion support
+- Accessibility overrides aesthetics when they conflict (WCAG 2.2 AA)
+- Prefer semantic tokens over raw color values everywhere
 
 ### Development Workflow Rules
 

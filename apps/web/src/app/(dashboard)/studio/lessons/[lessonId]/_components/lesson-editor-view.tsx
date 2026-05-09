@@ -249,7 +249,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   return (
     <div className="flex h-full min-h-0 flex-row">
       {/* Main editor area */}
-      <div className="flex flex-1 flex-col overflow-auto">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header: title + save indicator + status/actions */}
         <div className="flex items-center gap-3 border-b border-zinc-200 px-6 py-3">
           <input
@@ -299,7 +299,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
         </div>
 
         {/* Editor / Content */}
-        <div className="flex-1 px-6 py-4">
+        <div className="min-h-0 flex-1 px-6 py-4">
           {isReadOnly ? (
             renderContent()
           ) : (
