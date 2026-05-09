@@ -35,7 +35,7 @@ describe("LearningPathCard", () => {
     render(<LearningPathCard item={mockLessonItem} groupId="group-1" />);
 
     const button = screen.getByRole("link", { name: /study/i });
-    expect(button).toHaveAttribute("href", "/group/group-1/lessons/lesson-1");
+    expect(button).toHaveAttribute("href", "/groups/group-1/lessons/lesson-1");
   });
 
   it("renders deck card with title and label", () => {

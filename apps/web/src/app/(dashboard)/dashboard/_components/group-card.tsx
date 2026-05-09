@@ -53,7 +53,7 @@ type GroupCardProps = {
 
 export function GroupCard({ group }: GroupCardProps) {
   return (
-    <Link href={`/group/${group.id}`} className="block">
+    <Link href={`/groups/${group.id}`} className="block">
       <div className="h-full rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl transition-shadow hover:shadow-(--dash-shadow-md)">
         <div className="space-y-3 p-6">
           <div className="flex items-center justify-between gap-2">

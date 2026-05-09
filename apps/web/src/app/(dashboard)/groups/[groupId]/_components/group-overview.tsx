@@ -59,7 +59,7 @@ export function GroupOverview({ groupId }: { groupId: string }) {
               {memberCount === 1 ? "member" : "members"}
             </p>
             <Link
-              href={`/group/${groupId}/members`}
+              href={`/groups/${groupId}/members`}
               className="inline-flex h-8 items-center justify-center rounded-(--dash-radius) bg-(--dash-primary) px-3 text-sm font-medium text-white hover:bg-(--dash-primary-hover)"
             >
               Invite Members

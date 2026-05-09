@@ -22,6 +22,6 @@ describe("GroupCard", () => {
     expect(screen.getByText("5 members")).toBeInTheDocument();
 
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/group/group-1");
+    expect(link).toHaveAttribute("href", "/groups/group-1");
   });
 });

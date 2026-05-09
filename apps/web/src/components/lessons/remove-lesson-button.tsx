@@ -34,7 +34,7 @@ export function RemoveLessonButton({
     setIsDeleting(true);
     try {
       await softDeleteMutation.mutateAsync(lessonId);
-      router.push(`/group/${groupId}`);
+      router.push(`/groups/${groupId}`);
     } catch (error) {
       console.error("Failed to soft delete lesson:", error);
     } finally {

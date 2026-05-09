@@ -66,7 +66,7 @@ export default async function JoinPage({
 
   const groupId = payload.data?.id ?? payload.group?.id;
   if (payload.ok && groupId) {
-    redirect(`/group/${groupId}`);
+    redirect(`/groups/${groupId}`);
   }
 
   return (

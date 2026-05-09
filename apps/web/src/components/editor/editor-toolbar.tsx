@@ -42,7 +42,13 @@ type ToolbarButtonProps = {
   children: React.ReactNode;
 };
 
-function ToolbarButton({ onClick, active, title, disabled, children }: ToolbarButtonProps) {
+function ToolbarButton({
+  onClick,
+  active,
+  title,
+  disabled,
+  children,
+}: ToolbarButtonProps) {
   return (
     <button
       type="button"
@@ -52,9 +58,8 @@ function ToolbarButton({ onClick, active, title, disabled, children }: ToolbarBu
       className={cn(
         "inline-flex h-7 w-7 items-center justify-center rounded-(--dash-radius) text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)",
         active && "bg-(--dash-glass-active) text-(--dash-text)",
-        disabled && "cursor-not-allowed opacity-50"
-      )}
-    >
+        disabled && "cursor-not-allowed opacity-50",
+      )}>
       {children}
     </button>
   );
@@ -74,9 +79,9 @@ type EditorToolbarProps = {
   onToggleViewMode?: () => void;
 };
 
-export function EditorToolbar({ 
-  editor, 
-  onMarkdownSelected, 
+export function EditorToolbar({
+  editor,
+  onMarkdownSelected,
   contentMarkdown,
   lessonTitle,
   enableImport = true,
@@ -99,18 +104,29 @@ export function EditorToolbar({
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (exportBtnRef.current && !exportBtnRef.current.contains(e.target as Node)) {
+      if (
+        exportBtnRef.current &&
+        !exportBtnRef.current.contains(e.target as Node)
+      ) {
         setShowExportMenu(false);
       }
-      if (linkBtnRef.current && !linkBtnRef.current.contains(e.target as Node)) {
+      if (
+        linkBtnRef.current &&
+        !linkBtnRef.current.contains(e.target as Node)
+      ) {
         setShowLinkPopover(false);
       }
-      if (imageBtnRef.current && !imageBtnRef.current.contains(e.target as Node)) {
+      if (
+        imageBtnRef.current &&
+        !imageBtnRef.current.contains(e.target as Node)
+      ) {
         setShowImageDialog(false);
       }
     };
@@ -132,7 +148,10 @@ export function EditorToolbar({
     setIsImporting(true);
 
     const hasValidExtension = file.name.toLowerCase().endsWith(".md");
-    const hasValidMime = file.type === "text/markdown" || file.type === "text/plain" || file.type === "";
+    const hasValidMime =
+      file.type === "text/markdown" ||
+      file.type === "text/plain" ||
+      file.type === "";
     const isUnderSizeLimit = file.size <= VALIDATION.MAX_MARKDOWN_FILE_SIZE; // 250KB as per AC 1
 
     if (!hasValidExtension || !hasValidMime) {
@@ -142,7 +161,9 @@ export function EditorToolbar({
     }
 
     if (!isUnderSizeLimit) {
-      setImportError(`File too large. Maximum size is ${VALIDATION.MAX_MARKDOWN_FILE_SIZE / 1024}KB.`);
+      setImportError(
+        `File too large. Maximum size is ${VALIDATION.MAX_MARKDOWN_FILE_SIZE / 1024}KB.`,
+      );
       setIsImporting(false);
       return;
     }
@@ -170,7 +191,9 @@ export function EditorToolbar({
     try {
       downloadMarkdown(contentMarkdown, lessonTitle || "lesson");
     } catch (e) {
-      setExportError(e instanceof Error ? e.message : "Markdown export failed.");
+      setExportError(
+        e instanceof Error ? e.message : "Markdown export failed.",
+      );
     }
   };
 
@@ -179,9 +202,15 @@ export function EditorToolbar({
       const json = editor.getJSON();
       const jsonString = JSON.stringify(json);
       if (jsonString.length > 500_000) {
-        throw new Error("Lesson too large for DOCX export. Try Markdown export instead.");
+        throw new Error(
+          "Lesson too large for DOCX export. Try Markdown export instead.",
+        );
       }
-      await downloadDocx(lessonTitle || "Lesson", jsonString, lessonTitle || "lesson");
+      await downloadDocx(
+        lessonTitle || "Lesson",
+        jsonString,
+        lessonTitle || "lesson",
+      );
     } catch (e) {
       setExportError(e instanceof Error ? e.message : "DOCX export failed.");
     }
@@ -195,7 +224,10 @@ export function EditorToolbar({
     }
   };
 
-  const handleExportClick = async (format: ExportFormat, handler: () => void | Promise<void>) => {
+  const handleExportClick = async (
+    format: ExportFormat,
+    handler: () => void | Promise<void>,
+  ) => {
     setIsExporting(true);
     setExportFormat(format);
     setExportError(null);
@@ -209,267 +241,267 @@ export function EditorToolbar({
 
   const exportButtonDisabled = isExporting;
 
-   return (
-     <div className="flex flex-col rounded-(--dash-radius-lg) bg-(--dash-glass) backdrop-blur-xl">
-    {/* Hidden file input */}
-    <input
-      ref={fileInputRef}
-      type="file"
-      accept=".md,text/markdown"
-      className="hidden"
-      aria-hidden="true"
-      onChange={handleFileChange}
-      data-testid="md-file-input"
-    />
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-(--dash-border) bg-(--dash-surface-2) px-2 py-1">
-      {/* Text formatting */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        active={editor.isActive("bold")}
-        title="Bold (Ctrl+B)"
-      >
-        <Bold className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        active={editor.isActive("italic")}
-        title="Italic (Ctrl+I)"
-      >
-        <Italic className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        active={editor.isActive("underline")}
-        title="Underline (Ctrl+U)"
-      >
-        <Underline className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        active={editor.isActive("strike")}
-        title="Strikethrough"
-      >
-        <Strikethrough className="h-4 w-4" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Headings */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        active={editor.isActive("heading", { level: 1 })}
-        title="Heading 1"
-      >
-        <Heading1 className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        active={editor.isActive("heading", { level: 2 })}
-        title="Heading 2"
-      >
-        <Heading2 className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        active={editor.isActive("heading", { level: 3 })}
-        title="Heading 3"
-      >
-        <Heading3 className="h-4 w-4" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Lists + Blockquote */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        active={editor.isActive("bulletList")}
-        title="Bullet List"
-      >
-        <List className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        active={editor.isActive("orderedList")}
-        title="Ordered List"
-      >
-        <ListOrdered className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        active={editor.isActive("blockquote")}
-        title="Blockquote"
-      >
-        <Quote className="h-4 w-4" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Insert: Link */}
-      <div ref={linkBtnRef} className="relative">
+  return (
+    <div className="flex flex-col rounded-(--dash-radius-lg) bg-(--dash-glass) backdrop-blur-xl">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".md,text/markdown"
+        className="hidden"
+        aria-hidden="true"
+        onChange={handleFileChange}
+        data-testid="md-file-input"
+      />
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-(--dash-border) bg-(--dash-surface-2) px-2 py-1">
+        {/* Text formatting */}
         <ToolbarButton
-          onClick={() => {
-            setShowImageDialog(false);
-            setShowLinkPopover((v) => !v);
-          }}
-          active={editor.isActive("link") || showLinkPopover}
-          title="Link"
-        >
-          <Link className="h-4 w-4" />
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          active={editor.isActive("bold")}
+          title="Bold (Ctrl+B)">
+          <Bold className="h-4 w-4" />
         </ToolbarButton>
-        {showLinkPopover && (
-          <LinkPopover editor={editor} onClose={() => setShowLinkPopover(false)} />
-        )}
-      </div>
-
-      {/* Insert: Image */}
-      <div ref={imageBtnRef} className="relative">
         <ToolbarButton
-          onClick={() => {
-            setShowLinkPopover(false);
-            setShowImageDialog((v) => !v);
-          }}
-          active={showImageDialog}
-          title="Image (URL)"
-        >
-          <ImagePlus className="h-4 w-4" />
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          active={editor.isActive("italic")}
+          title="Italic (Ctrl+I)">
+          <Italic className="h-4 w-4" />
         </ToolbarButton>
-        {showImageDialog && (
-          <ImageUrlDialog editor={editor} onClose={() => setShowImageDialog(false)} />
-        )}
-      </div>
-
-      {/* Insert: Table */}
-      <ToolbarButton
-        onClick={() =>
-          editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-        }
-        title="Insert Table"
-      >
-        <Table className="h-4 w-4" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Alive Text */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleAliveText().run()}
-        active={editor.isActive("alive_text")}
-        title="Alive Text Block"
-      >
-        <EyeOff className="h-4 w-4" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Import Markdown */}
-      {enableImport && (
-            <>
-              <ToolbarButton
-                onClick={handleImportClick}
-                title={isImporting ? "Importing Markdown..." : "Import Markdown"}
-                disabled={isImporting}
-              >
-                <FileDown className="h-4 w-4" />
-              </ToolbarButton>
-              {isImporting && (
-                <span className="ml-2 text-xs text-muted-foreground" data-testid="import-loading">
-                  Importing...
-                </span>
-              )}
-            </>
-      )}
-
-      <ToolbarDivider />
-
-      {/* Export dropdown */}
-      <div ref={exportBtnRef} className="relative">
         <ToolbarButton
-          onClick={() => setShowExportMenu(!showExportMenu)}
-          title="Export"
-          disabled={exportButtonDisabled}
-          aria-haspopup="true"
-          aria-expanded={showExportMenu}
-        >
-          <Download className="h-4 w-4" />
-          <ChevronDown className="ml-0.5 h-3 w-3" />
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          active={editor.isActive("underline")}
+          title="Underline (Ctrl+U)">
+          <Underline className="h-4 w-4" />
         </ToolbarButton>
-        {showExportMenu && (
-          <div
-            role="menu"
-            className="rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-surface-2) backdrop-blur-xl absolute right-0 top-full z-50 mt-1 w-40 overflow-hidden py-1 shadow-(--dash-shadow-lg)"
-          >
-            <button
-              type="button"
-              role="menuitem"
-              disabled={!contentMarkdown}
-              onClick={() => handleExportClick("Markdown", handleExportMarkdown)}
-              className={cn(
-                "flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)",
-                !contentMarkdown && "cursor-not-allowed opacity-50",
-              )}
-            >
-              <FileText className="h-4 w-4" />
-              Markdown
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => handleExportClick("DOCX", handleExportDocx)}
-              className="flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)"
-            >
-              <FileType className="h-4 w-4" />
-              DOCX
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => handleExportClick("PDF", handleExportPdf)}
-              className="flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)"
-            >
-              <FileCode className="h-4 w-4" />
-              PDF
-            </button>
-          </div>
-        )}
-      </div>
-      {isExporting && exportFormat && (
-        <span className="ml-2 text-xs text-muted-foreground" data-testid="export-loading">
-          Exporting {exportFormat}...
-        </span>
-      )}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          active={editor.isActive("strike")}
+          title="Strikethrough">
+          <Strikethrough className="h-4 w-4" />
+        </ToolbarButton>
 
-      <div className="ml-auto flex items-center gap-2">
-        {/* View/Edit Toggle */}
-        <button
-          type="button"
-          onClick={onToggleViewMode ?? (() => {})}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-(--dash-radius) px-3 py-1.5 text-sm font-medium transition-colors",
-            isViewMode
-              ? "bg-(--dash-glass-hover) text-(--dash-text)"
-              : "bg-(--dash-primary) text-white"
+        <ToolbarDivider />
+
+        {/* Headings */}
+        <ToolbarButton
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 1 }).run()
+          }
+          active={editor.isActive("heading", { level: 1 })}
+          title="Heading 1">
+          <Heading1 className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
+          active={editor.isActive("heading", { level: 2 })}
+          title="Heading 2">
+          <Heading2 className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
+          active={editor.isActive("heading", { level: 3 })}
+          title="Heading 3">
+          <Heading3 className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Lists + Blockquote */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          active={editor.isActive("bulletList")}
+          title="Bullet List">
+          <List className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          active={editor.isActive("orderedList")}
+          title="Ordered List">
+          <ListOrdered className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          active={editor.isActive("blockquote")}
+          title="Blockquote">
+          <Quote className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Insert: Link */}
+        <div ref={linkBtnRef} className="relative">
+          <ToolbarButton
+            onClick={() => {
+              setShowImageDialog(false);
+              setShowLinkPopover((v) => !v);
+            }}
+            active={editor.isActive("link") || showLinkPopover}
+            title="Link">
+            <Link className="h-4 w-4" />
+          </ToolbarButton>
+          {showLinkPopover && (
+            <LinkPopover
+              editor={editor}
+              onClose={() => setShowLinkPopover(false)}
+            />
           )}
-        >
-          {isViewMode ? (
-            <>
-              <Pencil className="h-4 w-4" />
-              Edit
-            </>
-          ) : (
-            <>
-              <Eye className="h-4 w-4" />
-              View
-            </>
+        </div>
+
+        {/* Insert: Image */}
+        <div ref={imageBtnRef} className="relative">
+          <ToolbarButton
+            onClick={() => {
+              setShowLinkPopover(false);
+              setShowImageDialog((v) => !v);
+            }}
+            active={showImageDialog}
+            title="Image (URL)">
+            <ImagePlus className="h-4 w-4" />
+          </ToolbarButton>
+          {showImageDialog && (
+            <ImageUrlDialog
+              editor={editor}
+              onClose={() => setShowImageDialog(false)}
+            />
           )}
-        </button>
+        </div>
+
+        {/* Insert: Table */}
+        <ToolbarButton
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+          title="Insert Table">
+          <Table className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Alive Text */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleAliveText().run()}
+          active={editor.isActive("alive_text")}
+          title="Alive Text Block">
+          <EyeOff className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Import Markdown */}
+        {enableImport && (
+          <>
+            <ToolbarButton
+              onClick={handleImportClick}
+              title={isImporting ? "Importing Markdown..." : "Import Markdown"}
+              disabled={isImporting}>
+              <FileDown className="h-4 w-4" />
+            </ToolbarButton>
+            {isImporting && (
+              <span
+                className="ml-2 text-xs text-muted-foreground"
+                data-testid="import-loading">
+                Importing...
+              </span>
+            )}
+          </>
+        )}
+
+        <ToolbarDivider />
+
+        {/* Export dropdown */}
+        <div ref={exportBtnRef} className="relative">
+          <ToolbarButton
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            title="Export"
+            disabled={exportButtonDisabled}
+            aria-haspopup="true"
+            aria-expanded={showExportMenu}>
+            <Download className="h-4 w-4" />
+            <ChevronDown className="ml-0.5 h-3 w-3" />
+          </ToolbarButton>
+          {showExportMenu && (
+            <div
+              role="menu"
+              className="rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-surface-2) backdrop-blur-xl absolute right-0 top-full z-50 mt-1 w-40 overflow-hidden py-1 shadow-(--dash-shadow-lg)">
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!contentMarkdown}
+                onClick={() =>
+                  handleExportClick("Markdown", handleExportMarkdown)
+                }
+                className={cn(
+                  "flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)",
+                  !contentMarkdown && "cursor-not-allowed opacity-50",
+                )}>
+                <FileText className="h-4 w-4" />
+                Markdown
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => handleExportClick("DOCX", handleExportDocx)}
+                className="flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)">
+                <FileType className="h-4 w-4" />
+                DOCX
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => handleExportClick("PDF", handleExportPdf)}
+                className="flex h-auto w-full items-center gap-2 rounded-(--dash-radius) px-3 py-1.5 text-sm text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)">
+                <FileCode className="h-4 w-4" />
+                PDF
+              </button>
+            </div>
+          )}
+        </div>
+        {isExporting && exportFormat && (
+          <span
+            className="ml-2 text-xs text-muted-foreground"
+            data-testid="export-loading">
+            Exporting {exportFormat}...
+          </span>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          {/* View/Edit Toggle */}
+          <button
+            type="button"
+            onClick={onToggleViewMode ?? (() => {})}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-(--dash-radius) px-3 py-1.5 text-sm font-medium transition-colors",
+              isViewMode
+                ? "bg-(--dash-glass-hover) text-(--dash-text)"
+                : "bg-(--dash-primary) text-white",
+            )}>
+            {isViewMode ? (
+              <>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4" />
+                View
+              </>
+            )}
+          </button>
+        </div>
       </div>
-    </div>
       {exportError && (
         <p
           role="alert"
           className="px-3 py-1 text-xs text-(--dash-danger) bg-(--dash-danger)/10"
-          data-testid="export-error"
-        >
+          data-testid="export-error">
           {exportError}
         </p>
       )}
@@ -478,8 +510,7 @@ export function EditorToolbar({
         <p
           role="alert"
           className="px-3 py-1 text-xs text-(--dash-danger) bg-(--dash-danger)/10"
-          data-testid="import-error"
-        >
+          data-testid="import-error">
           {importError}
         </p>
       )}

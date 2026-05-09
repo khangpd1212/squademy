@@ -17,7 +17,7 @@ export function GroupMiniBar({ groups }: GroupMiniBarProps) {
       {groups.map((group) => (
         <Link
           key={group.id}
-          href={`/group/${group.id}`}
+          href={`/groups/${group.id}`}
           className="inline-flex items-center gap-1.5 rounded-full border border-(--dash-border-subtle) bg-(--dash-glass) px-3 py-1 text-xs font-medium text-(--dash-text-muted) transition-colors hover:border-(--dash-border) hover:text-(--dash-text)"
         >
           {group.name}

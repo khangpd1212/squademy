@@ -59,7 +59,7 @@ export function GroupLayoutShell({
     );
   }
 
-  const basePath = `/group/${groupId}`;
+  const basePath = `/groups/${groupId}`;
 
   return (
     <div className="space-y-6">

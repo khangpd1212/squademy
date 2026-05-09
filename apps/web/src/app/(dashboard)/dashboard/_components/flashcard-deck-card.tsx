@@ -34,7 +34,7 @@ export function FlashcardDeckCard({ deck }: FlashcardDeckCardProps) {
   const color = getDeckColor(deck.id);
 
   return (
-    <Link href={`/group/${deck.groupId}/flashcards/${deck.id}`} className="block">
+    <Link href={`/groups/${deck.groupId}/flashcards/${deck.id}`} className="block">
       <div
         className={cn(
           "group relative overflow-hidden rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl transition-all hover:shadow-(--dash-shadow-md) hover:-translate-y-0.5",

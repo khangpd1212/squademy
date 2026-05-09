@@ -7,8 +7,8 @@ import {
   LayoutDashboard,
   Mail,
   MessageSquare,
-  Plus,
-  Settings
+  Settings,
+  Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,7 +19,7 @@ const navItems: { title: string; href: string; icon?: React.ComponentType<{ clas
   { title: "Flashcards", href: "/studio/flashcards", iconSrc: "/flash-cards.png" },
   { title: "Lesson Studio", href: "/studio/lessons", icon: BookOpen },
   { title: "Exercise Studio", href: "/studio/exercises", icon: Dumbbell },
-  { title: "Create Group", href: "/groups/create", icon: Plus },
+  { title: "Groups", href: "/groups", icon: Users },
   { title: "Invitations", href: "/invitations", icon: Mail },
   { title: "Peer Review", href: "/review", icon: MessageSquare },
   { title: "Settings", href: "/settings", icon: Settings },
@@ -33,7 +33,7 @@ export function Sidebar() {
       <nav className="flex flex-col gap-1 p-4">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}

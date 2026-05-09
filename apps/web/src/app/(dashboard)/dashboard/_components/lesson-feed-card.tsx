@@ -20,7 +20,7 @@ type LessonFeedCardProps = {
 export function LessonFeedCard({ lesson }: LessonFeedCardProps) {
   return (
     <Link
-      href={`/group/${lesson.groupId}/lessons/${lesson.id}`}
+      href={`/groups/${lesson.groupId}/lessons/${lesson.id}`}
       className="block"
     >
       <div className="group rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) p-5 backdrop-blur-xl transition-all hover:border-(--dash-border) hover:shadow-(--dash-shadow-md)">

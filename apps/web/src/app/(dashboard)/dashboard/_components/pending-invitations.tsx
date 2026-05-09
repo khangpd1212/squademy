@@ -24,7 +24,7 @@ export function PendingInvitations() {
     try {
       const result = await respondInvitationMutation.mutateAsync({ id, action });
       if (action === "accept" && result.groupId) {
-        router.push(`/group/${result.groupId}`);
+        router.push(`/groups/${result.groupId}`);
         return;
       }
     } catch (error) {

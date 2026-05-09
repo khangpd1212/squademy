@@ -26,7 +26,7 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
             <p className="text-xs text-muted-foreground truncate">Lesson</p>
           </div>
         </div>
-        <Link href={`/group/${groupId}/lessons/${item.lesson!.id}`}>
+        <Link href={`/groups/${groupId}/lessons/${item.lesson!.id}`}>
           <Button size="sm">Study</Button>
         </Link>
       </div>
@@ -45,7 +45,7 @@ export function LearningPathCard({ item, groupId }: LearningPathCardProps) {
             <p className="text-xs text-muted-foreground">Flashcard deck</p>
           </div>
         </div>
-        <Link href={`/group/${groupId}/flashcards/${item.deck!.id}`}>
+        <Link href={`/groups/${groupId}/flashcards/${item.deck!.id}`}>
           <Button size="sm">Study</Button>
         </Link>
       </div>

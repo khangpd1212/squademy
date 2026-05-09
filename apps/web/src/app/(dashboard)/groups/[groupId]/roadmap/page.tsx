@@ -38,7 +38,7 @@ export default function RoadmapPage({ params }: PageProps) {
   }
 
   if (!isEditorOrAdmin) {
-    router.replace(`/group/${groupId}`);
+    router.replace(`/groups/${groupId}`);
     return null;
   }
 

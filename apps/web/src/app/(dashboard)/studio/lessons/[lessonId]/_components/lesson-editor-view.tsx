@@ -260,7 +260,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
             readOnly={isReadOnly}
             placeholder="Untitled Lesson"
             className={cn(
-              "flex-1 bg-transparent text-2xl font-bold text-zinc-900 outline-none placeholder:text-zinc-300",
+              "flex-1 bg-transparent text-2xl font-bold text-white outline-none",
               isReadOnly && "cursor-default select-text",
             )}
           />
