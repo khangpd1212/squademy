@@ -1,6 +1,6 @@
 "use client";
 
-import { useImperativeHandle, type Ref } from "react";
+import { useImperativeHandle, useState, type Ref } from "react";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -16,8 +16,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./editor-styles.css";
 import { EditorToolbar } from "./editor-toolbar";
+import { EditorBubbleMenu } from "./editor-bubble-menu";
+import { EditorBlockPicker } from "./editor-block-picker";
 import { AliveText } from "./extensions/alive-text";
-import { useState } from "react";
 import { parseMarkdownToTiptap, tiptapDocToHtml } from "./markdown-import";
 
 type LessonEditorProps = {
@@ -117,10 +118,18 @@ export function LessonEditor({
           </div>
         </div>
       ) : (
-        <EditorContent
-          editor={editor}
-          className="flex-1 bg-(--dash-surface-1) overflow-y-auto"
-        />
+        <div className="relative flex-1">
+          <EditorContent
+            editor={editor}
+            className="h-full bg-(--dash-surface-1) overflow-y-auto"
+          />
+          {editor && (
+            <>
+              <EditorBubbleMenu editor={editor} />
+              <EditorBlockPicker editor={editor} />
+            </>
+          )}
+        </div>
       )}
     </div>
   );

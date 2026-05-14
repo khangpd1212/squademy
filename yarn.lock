@@ -2797,6 +2797,8 @@ __metadata:
     "@testing-library/jest-dom": "npm:^6.9.1"
     "@testing-library/react": "npm:^16.3.2"
     "@testing-library/user-event": "npm:^14.6.1"
+    "@tiptap/extension-bubble-menu": "npm:^3.23.1"
+    "@tiptap/extension-floating-menu": "npm:^3.23.1"
     "@tiptap/extension-image": "npm:^3.22.0"
     "@tiptap/extension-link": "npm:^3.22.0"
     "@tiptap/extension-placeholder": "npm:^3.22.0"
@@ -3310,6 +3312,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-bubble-menu@npm:^3.23.1":
+  version: 3.23.1
+  resolution: "@tiptap/extension-bubble-menu@npm:3.23.1"
+  dependencies:
+    "@floating-ui/dom": "npm:^1.0.0"
+  peerDependencies:
+    "@tiptap/core": 3.23.1
+    "@tiptap/pm": 3.23.1
+  checksum: 10c0/eb3b4e8d6b1191f444d0357dbf780639de9e7bad5e9b23595d12806ca4795dc7a2ca1fd751f1af8014ac598ab756150117729eaa9f698d2eed658edd57e19049
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-bullet-list@npm:^3.22.4":
   version: 3.22.4
   resolution: "@tiptap/extension-bullet-list@npm:3.22.4"
@@ -3364,6 +3378,17 @@ __metadata:
     "@tiptap/core": 3.22.4
     "@tiptap/pm": 3.22.4
   checksum: 10c0/ca83aad62cba2a38a07e5f5ae53af915b79e406e6167e85af1c593ba4398c4566f53b6cb230997f7f2b62588a21a3a2d3dc8a056e4eae91aab3249064b8b815b
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-floating-menu@npm:^3.23.1":
+  version: 3.23.1
+  resolution: "@tiptap/extension-floating-menu@npm:3.23.1"
+  peerDependencies:
+    "@floating-ui/dom": ^1.0.0
+    "@tiptap/core": 3.23.1
+    "@tiptap/pm": 3.23.1
+  checksum: 10c0/4777e9f93998a4c3f3179f6f14c450f9667b1f4e5cdbfb4200992653dd4a6f620b7707d073d5de409e9a2aa115e840045c77f62165d82acfa3d94f1fcc7dfbe2
   languageName: node
   linkType: hard
 
