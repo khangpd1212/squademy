@@ -16,7 +16,7 @@ export function ImageUrlDialog({ editor, onClose }: ImageUrlDialogProps) {
   }
 
   return (
-    <div className="clay-dialog absolute z-50 mt-1 overflow-hidden p-3">
+    <div className="rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-surface-2) backdrop-blur-xl shadow-(--dash-shadow-lg) absolute z-50 mt-1 overflow-hidden p-3">
       <p className="mb-2 text-xs font-medium text-muted-foreground">
         Image URL
       </p>
@@ -30,7 +30,7 @@ export function ImageUrlDialog({ editor, onClose }: ImageUrlDialogProps) {
             if (e.key === "Escape") onClose();
           }}
           placeholder="https://..."
-          className="clay-input w-64"
+          className="w-64 rounded-(--dash-radius) border border-(--dash-border) bg-(--dash-surface-1) px-3 py-1.5 text-sm text-(--dash-text) placeholder:text-(--dash-text-muted) outline-none focus:border-(--dash-primary) focus:ring-1 focus:ring-(--dash-primary)"
           autoFocus
         />
         {url && (
@@ -38,7 +38,7 @@ export function ImageUrlDialog({ editor, onClose }: ImageUrlDialogProps) {
           <img
             src={url}
             alt="preview"
-            className="max-h-24 max-w-full rounded-clay object-contain"
+            className="max-h-24 max-w-full rounded-(--dash-radius) object-contain"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";
             }}
@@ -48,13 +48,13 @@ export function ImageUrlDialog({ editor, onClose }: ImageUrlDialogProps) {
           <button
             onClick={handleInsert}
             disabled={!url.trim()}
-            className="clay-btn clay-btn-primary h-8 px-3 text-xs"
+            className="inline-flex h-8 items-center justify-center rounded-(--dash-radius) bg-(--dash-primary) px-3 text-xs font-medium text-white hover:bg-(--dash-primary-hover) disabled:opacity-50"
           >
             Insert
           </button>
           <button
             onClick={onClose}
-            className="clay-btn clay-btn-ghost h-8 px-3 text-xs"
+            className="inline-flex h-8 items-center justify-center rounded-(--dash-radius) px-3 text-xs font-medium text-(--dash-text-muted) transition-colors hover:bg-(--dash-glass-hover) hover:text-(--dash-text)"
           >
             Cancel
           </button>

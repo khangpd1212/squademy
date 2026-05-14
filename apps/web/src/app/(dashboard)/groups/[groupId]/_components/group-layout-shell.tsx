@@ -52,14 +52,14 @@ export function GroupLayoutShell({
         <p className="text-muted-foreground">
           This group doesn&apos;t exist or you don&apos;t have access to it.
         </p>
-        <Link href="/" className="sq-btn sq-btn-green inline-block">
+        <Link href="/" className="inline-flex h-8 items-center justify-center rounded-(--dash-radius) bg-(--dash-primary) px-3 text-sm font-medium text-white hover:bg-(--dash-primary-hover)">
           Back to home
         </Link>
       </div>
     );
   }
 
-  const basePath = `/group/${groupId}`;
+  const basePath = `/groups/${groupId}`;
 
   return (
     <div className="space-y-6">
@@ -67,7 +67,7 @@ export function GroupLayoutShell({
         <h1 className="text-2xl font-bold">{group.name}</h1>
         <p className="text-sm text-muted-foreground">Group workspace</p>
       </div>
-      <nav className="flex gap-2 overflow-x-auto clay-surface p-2 rounded-[min(var(--radius-clay),12px)]">
+      <nav className="flex gap-2 overflow-x-auto rounded-(--dash-radius-lg) bg-(--dash-surface-3) p-2">
         {visibleTabs.map((tab) => {
           const href = `${basePath}${tab.suffix}`;
           const isActive =
@@ -79,9 +79,9 @@ export function GroupLayoutShell({
               key={tab.suffix}
               href={href}
               className={cn(
-                "clay-btn px-3 py-1.5 text-sm font-medium",
-                isActive && "bg-(clay-surface-elevated) shadow-(shadow-clay-inner) text-zinc-900 dark:text-zinc-100",
-                !isActive && "hover:bg-(clay-surface-2)"
+                "rounded-(--dash-radius) px-3 py-1.5 text-sm font-medium transition-colors",
+                isActive && "bg-(--dash-surface-elevated) text-(--dash-text)",
+                !isActive && "text-(--dash-text-muted) hover:bg-(--dash-glass-hover) hover:text-(--dash-text)"
               )}
             >
               {tab.label}

@@ -113,7 +113,7 @@ export default function GroupLessonDetailPage({ params }: PageProps) {
       <div className="space-y-4">
         <Button
           variant="ghost"
-          onClick={() => router.push(`/group/${groupId}/lessons`)}>
+          onClick={() => router.push(`/groups/${groupId}/lessons`)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Lessons
         </Button>
@@ -129,7 +129,7 @@ export default function GroupLessonDetailPage({ params }: PageProps) {
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
-          onClick={() => router.push(`/group/${groupId}/lessons`)}>
+          onClick={() => router.push(`/groups/${groupId}/lessons`)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Lessons
         </Button>
@@ -151,7 +151,7 @@ export default function GroupLessonDetailPage({ params }: PageProps) {
           </div>
           <Button
             onClick={() =>
-              router.push(`/group/${groupId}/lessons/${nextLesson.lesson!.id}`)
+              router.push(`/groups/${groupId}/lessons/${nextLesson.lesson!.id}`)
             }
             className="w-full justify-between">
             <span>{nextLesson.lesson!.title}</span>

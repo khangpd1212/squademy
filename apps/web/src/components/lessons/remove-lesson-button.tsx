@@ -34,7 +34,7 @@ export function RemoveLessonButton({
     setIsDeleting(true);
     try {
       await softDeleteMutation.mutateAsync(lessonId);
-      router.push(`/group/${groupId}`);
+      router.push(`/groups/${groupId}`);
     } catch (error) {
       console.error("Failed to soft delete lesson:", error);
     } finally {
@@ -48,7 +48,7 @@ export function RemoveLessonButton({
        <Button
          variant="ghost"
          size="sm"
-         className="text-(--clay-destructive) hover:text-(--clay-destructive)/80"
+          className="text-(--dash-danger) hover:text-(--dash-danger)/80"
          onClick={() => setIsOpen(true)}>
          Remove Content
        </Button>

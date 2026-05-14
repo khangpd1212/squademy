@@ -7,9 +7,11 @@ import { useGroupMemberRole } from "@/hooks/api/use-member-queries";
 import { GROUP_ROLES } from "@squademy/shared";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AddToLearningPathModal } from "@/components/learning-path/add-to-learning-path-modal";
 import { toast } from "sonner";
 import { ChevronUp, ChevronDown, Plus, Trash2, BookOpen, FileText } from "lucide-react";
 import { Empty } from "@/components/ui/empty";
+import { Badge } from "@/components/ui/badge";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -24,6 +26,7 @@ export default function RoadmapPage({ params }: PageProps) {
   const addMutation = useAddToLearningPath(groupId);
   const removeMutation = useRemoveFromLearningPath(groupId);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
   const isEditorOrAdmin = myRole === GROUP_ROLES.ADMIN || myRole === GROUP_ROLES.EDITOR;
 
@@ -38,7 +41,7 @@ export default function RoadmapPage({ params }: PageProps) {
   }
 
   if (!isEditorOrAdmin) {
-    router.replace(`/group/${groupId}`);
+    router.replace(`/groups/${groupId}`);
     return null;
   }
 
@@ -64,12 +67,16 @@ export default function RoadmapPage({ params }: PageProps) {
     toast.success("Removed from learning path");
   };
 
-  const handleAdd = async (type: "lesson" | "deck", itemId: string) => {
-    await addMutation.mutateAsync(
-      type === "lesson" ? { lessonId: itemId } : { deckId: itemId }
-    );
-    toast.success("Added to learning path");
+  const handleAdd = async (items: { type: "lesson" | "deck"; id: string }[]) => {
+    setIsAdding(true);
+    for (const item of items) {
+      await addMutation.mutateAsync(
+        item.type === "lesson" ? { lessonId: item.id } : { deckId: item.id }
+      );
+    }
+    setIsAdding(false);
     setShowAddModal(false);
+    toast.success(`Added ${items.length} item(s) to learning path`);
   };
 
   const hasAvailableItems = availableLessons.length > 0 || availableDecks.length > 0;
@@ -136,7 +143,7 @@ export default function RoadmapPage({ params }: PageProps) {
 
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">
-                    {isLesson ? item.lesson!.title : item.deck!.title}
+                    {isLesson ? item.lesson?.title : item.deck?.title}
                   </p>
                   {isLesson && (
                     <p className="text-sm text-muted-foreground">
@@ -145,9 +152,9 @@ export default function RoadmapPage({ params }: PageProps) {
                   )}
                 </div>
 
-                <span className="text-xs px-2 py-1 rounded bg-muted">
-                  {isLesson ? item.lesson!.status : "deck"}
-                </span>
+                <Badge variant="secondary">
+                  {isLesson ? "Lesson" : "Deck"}
+                </Badge>
 
                 <Button
                   variant="ghost"
@@ -165,72 +172,14 @@ export default function RoadmapPage({ params }: PageProps) {
       )}
 
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Add to Learning Path</h2>
-
-            {availableLessons.length > 0 && (
-              <div className="mb-4">
-                <h3 className="font-medium mb-2">Lessons</h3>
-                <div className="space-y-2">
-                  {availableLessons.map(lesson => (
-                    <div
-                      key={lesson.id}
-                      className="flex items-center justify-between p-2 border rounded"
-                    >
-                      <div>
-                        <p className="font-medium">{lesson.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          by {lesson.author?.displayName}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAdd("lesson", lesson.id)}
-                        disabled={addMutation.isPending}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {availableDecks.length > 0 && (
-              <div>
-                <h3 className="font-medium mb-2">Flashcard Decks</h3>
-                <div className="space-y-2">
-                  {availableDecks.map(deck => (
-                    <div
-                      key={deck.id}
-                      className="flex items-center justify-between p-2 border rounded"
-                    >
-                      <p className="font-medium">{deck.title}</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAdd("deck", deck.id)}
-                        disabled={addMutation.isPending}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => setShowAddModal(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
+        <AddToLearningPathModal
+          open={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          availableLessons={availableLessons}
+          availableDecks={availableDecks}
+          onAdd={handleAdd}
+          isPending={isAdding}
+        />
       )}
     </div>
   );

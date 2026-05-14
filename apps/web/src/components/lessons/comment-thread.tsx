@@ -95,7 +95,7 @@ export function CommentThread({
     return (
       <div className="space-y-4">
         {topLevelComments.map((comment) => (
-          <div key={comment.id} className="clay-card p-4 space-y-2">
+          <div key={comment.id} className="rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl p-4 space-y-2">
            <div className="flex gap-3">
              <Avatar className="h-8 w-8">
                <AvatarImage src={comment.author.avatarUrl ?? undefined} />
@@ -109,15 +109,15 @@ export function CommentThread({
                    <span className="font-medium text-sm">
                      {comment.author.displayName ?? "Anonymous"}
                    </span>
-                   <span className="text-(--clay-muted-foreground) text-xs">
-                     {formatDate(comment.createdAt)}
-                   </span>
+                    <span className="text-(--dash-text-muted) text-xs">
+                      {formatDate(comment.createdAt)}
+                    </span>
                  </div>
                  {user?.userId && comment.author && (comment as { userId?: string }).userId === user.userId && (
                    <button
                      onClick={() => handleDelete(comment.id)}
-                     disabled={deleteComment.isPending}
-                     className="text-(--clay-destructive) text-xs hover:underline"
+                      disabled={deleteComment.isPending}
+                      className="text-(--dash-danger) text-xs hover:underline"
                    >
                      {deleteComment.isPending ? "Deleting..." : "Delete"}
                    </button>
@@ -127,7 +127,7 @@ export function CommentThread({
                <button
                  onClick={() => setReplyTo(comment.id)}
                  className={cn(
-                   "flex items-center gap-1 text-(--clay-muted-foreground) text-xs hover:text-(--clay-foreground) transition-colors"
+                    "flex items-center gap-1 text-(--dash-text-muted) text-xs hover:text-(--dash-text) transition-colors"
                  )}
                >
                  <Reply className="w-3 h-3" />
@@ -150,19 +150,19 @@ export function CommentThread({
                      <span className="font-medium text-sm">
                        {reply.author.displayName ?? "Anonymous"}
                      </span>
-                     <span className="text-(--clay-muted-foreground) text-xs">
-                       {formatDate(reply.createdAt)}
-                     </span>
+                      <span className="text-(--dash-text-muted) text-xs">
+                        {formatDate(reply.createdAt)}
+                      </span>
                    </div>
-                   {user?.userId && reply.author && (reply as { userId?: string }).userId === user.userId && (
-                     <button
-                       onClick={() => handleDelete(reply.id)}
-                       disabled={deleteComment.isPending}
-                       className="text-(--clay-destructive) text-xs hover:underline"
-                     >
-                       {deleteComment.isPending ? "Deleting..." : "Delete"}
-                     </button>
-                   )}
+                  {user?.userId && reply.author && (reply as { userId?: string }).userId === user.userId && (
+                    <button
+                      onClick={() => handleDelete(reply.id)}
+                      disabled={deleteComment.isPending}
+                      className="text-(--dash-danger) text-xs hover:underline"
+                    >
+                      {deleteComment.isPending ? "Deleting..." : "Delete"}
+                    </button>
+                  )}
                  </div>
                  <p className="text-sm">{reply.body}</p>
                </div>
@@ -175,13 +175,13 @@ export function CommentThread({
                  value={replyText}
                  onChange={(e) => setReplyText(e.target.value)}
                  placeholder="Write a reply..."
-                 className="min-h-20 text-(--clay-input) bg-(--clay-surface) border border-(--clay-border) rounded-md focus:ring-(--clay-ring) focus:ring-offset-[--clay-ring-offset] px-3 py-2"
-                 maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
+                className="min-h-20 text-(--dash-text) bg-(--dash-surface-1) border border-(--dash-border) rounded-(--dash-radius) px-3 py-2 outline-none focus:border-(--dash-primary) focus:ring-1 focus:ring-(--dash-primary) placeholder:text-(--dash-text-muted)"
+                  maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
                />
                <div className="flex justify-between items-center">
-                 <span className="text-(--clay-muted-foreground) text-xs">
-                   {replyText.length}/{VALIDATION.REVIEW_COMMENT_BODY_MAX}
-                 </span>
+                    <span className="text-(--dash-text-muted) text-xs">
+                      {replyText.length}/{VALIDATION.REVIEW_COMMENT_BODY_MAX}
+                    </span>
                  <div className="flex gap-2">
                    <Button
                      variant="ghost"
@@ -209,19 +209,19 @@ export function CommentThread({
 
        <div className="space-y-2 pt-2">
          {error && (
-           <p className="text-(--clay-destructive) text-xs">{error}</p>
+            <p className="text-(--dash-danger) text-xs">{error}</p>
          )}
          <Textarea
            ref={textareaRef}
            value={newComment}
            onChange={(e) => setNewComment(e.target.value)}
            placeholder="Write a comment..."
-           className="min-h-20 text-(--clay-input) bg-(--clay-surface) border border-(--clay-border) rounded-md focus:ring-(--clay-ring) focus:ring-offset-[--clay-ring-offset] px-3 py-2"
-           maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
+            className="min-h-20 text-(--dash-text) bg-(--dash-surface-1) border border-(--dash-border) rounded-(--dash-radius) px-3 py-2 outline-none focus:border-(--dash-primary) focus:ring-1 focus:ring-(--dash-primary) placeholder:text-(--dash-text-muted)"
+            maxLength={VALIDATION.REVIEW_COMMENT_BODY_MAX}
          />
          <div className="flex justify-between items-center">
-           <span className="text-(--clay-muted-foreground) text-xs">
-             {newComment.length}/{VALIDATION.REVIEW_COMMENT_BODY_MAX}
+            <span className="text-(--dash-text-muted) text-xs">
+              {newComment.length}/{VALIDATION.REVIEW_COMMENT_BODY_MAX}
            </span>
            <Button
              size="sm"
@@ -237,11 +237,11 @@ export function CommentThread({
          <button
            onClick={onClose}
            className={cn(
-             "absolute top-2 right-2 p-1 rounded hover:bg-(--clay-accent) transition-colors"
+              "absolute top-2 right-2 p-1 rounded-(--dash-radius) hover:bg-(--dash-glass-hover) transition-colors"
            )}
            aria-label="Close"
          >
-           <X className="w-4 h-4 text-(--clay-muted-foreground)" />
+            <X className="w-4 h-4 text-(--dash-text-muted)" />
          </button>
        )}
      </div>

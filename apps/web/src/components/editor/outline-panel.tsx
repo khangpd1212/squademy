@@ -51,7 +51,7 @@ export function OutlinePanel({ editor }: OutlinePanelProps) {
 
   if (headings.length === 0) {
     return (
-      <div className="clay-dialog px-3 py-4">
+      <div className="px-3 py-4">
         <Empty icon={Heading} title="No headings yet" />
       </div>
     );
@@ -67,7 +67,7 @@ export function OutlinePanel({ editor }: OutlinePanelProps) {
   }
 
    return (
-     <nav className="clay-surface px-2 py-3">
+     <nav className="rounded-(--dash-radius-lg) bg-(--dash-surface-3) px-2 py-3">
       <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Outline
       </p>
@@ -76,10 +76,10 @@ export function OutlinePanel({ editor }: OutlinePanelProps) {
           <li key={`${h.pos}-${h.level}`}>
             <button
               onClick={() => scrollToHeading(h.pos)}
-              className={`block w-full truncate rounded px-2 py-1 text-left text-xs hover:bg-(clay-surface-2) transition-colors ${
+               className={`block w-full truncate rounded-(--dash-radius) px-2 py-1 text-left text-xs hover:bg-(--dash-glass-hover) transition-colors ${
                 h.level === 1
-                  ? "font-semibold text-zinc-700 dark:text-zinc-300"
-                  : "pl-4 text-zinc-500 dark:text-zinc-500"
+                  ? "font-semibold text-zinc-700"
+                  : "pl-4 text-zinc-500"
               }`}
               title={h.text}
             >

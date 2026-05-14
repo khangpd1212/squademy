@@ -1,8 +1,8 @@
 @import "../../app/globals.css";
 
 @layer base {
-  .markdown-content {
-    @apply text-slate-300 leading-relaxed text-base;
+  .tiptap {
+    @apply p-4 min-h-full border-none outline-none h-0;
   }
 
   .markdown-content h1 {

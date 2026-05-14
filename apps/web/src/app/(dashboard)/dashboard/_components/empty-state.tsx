@@ -32,7 +32,7 @@ export function EmptyState() {
 
     try {
       const groupId = await joinGroupMutation.mutateAsync(inviteCode);
-      router.push(`/group/${groupId}`);
+      router.push(`/groups/${groupId}`);
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : "Could not join group. Please try again.",

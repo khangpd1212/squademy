@@ -64,7 +64,7 @@ export function AliveTextReveal({
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="inline-flex items-center clay-pill px-2 py-0.5 text-xs font-medium text-(clay-primary-foreground) opacity-90"
+        className="inline-flex items-center rounded-full bg-(--dash-primary)/20 px-2 py-0.5 text-xs font-medium text-(--dash-primary) opacity-90"
       >
         {children}
       </motion.span>

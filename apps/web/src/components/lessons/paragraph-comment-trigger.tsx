@@ -30,20 +30,20 @@ export function ParagraphCommentTrigger({
           <button
             onClick={() => setIsOpen(!isOpen)}
             className={cn(
-              "clay-btn rounded-full px-2 py-0.5 text-xs flex items-center justify-center",
-              hasComments && "bg-(--clay-primary)/10 text-(--clay-primary)",
-              !hasComments && "bg-(--clay-surface) text-(--clay-muted-foreground)",
-              "hover:bg-(--clay-primary)/20",
-              "border border-(--clay-border-base)"
+              "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs",
+              hasComments && "bg-(--dash-primary)/10 text-(--dash-primary)",
+              !hasComments && "bg-(--dash-glass) text-(--dash-text-muted)",
+              "hover:bg-(--dash-primary)/20",
+              "border border-(--dash-border-subtle)"
             )}
             aria-label={hasComments ? `${commentCount} comments` : "Add comment"}>
             {hasComments ? (
               <div className="flex items-center gap-1">
-                <MessageSquare className="w-4 h-4 text-(--clay-primary)" />
-                <span className="text-(--clay-primary) text-sm font-medium">{commentCount}</span>
+                <MessageSquare className="w-4 h-4 text-(--dash-primary)" />
+                <span className="text-(--dash-primary) text-sm font-medium">{commentCount}</span>
               </div>
             ) : (
-              <MessageSquarePlus className="w-4 h-4 text-(--clay-primary)" />
+              <MessageSquarePlus className="w-4 h-4 text-(--dash-primary)" />
             )}
           </button>
        </div>

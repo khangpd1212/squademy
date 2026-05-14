@@ -58,6 +58,14 @@ jest.mock("@tiptap/extension-placeholder", () => ({
 }));
 jest.mock("./extensions/alive-text", () => ({ AliveText: {} }));
 
+jest.mock("./editor-bubble-menu", () => ({
+  EditorBubbleMenu: () => <div data-testid="editor-bubble-menu" />,
+}));
+
+jest.mock("./editor-block-picker", () => ({
+  EditorBlockPicker: () => <div data-testid="editor-block-picker" />,
+}));
+
 jest.mock("./editor-toolbar", () => ({
   EditorToolbar: ({ onMarkdownSelected }: { onMarkdownSelected?: (text: string) => void }) => (
     <div data-testid="editor-toolbar">

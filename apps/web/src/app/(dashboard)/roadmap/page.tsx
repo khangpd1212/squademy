@@ -44,7 +44,7 @@ export default function RoadmapStudioPage() {
         {groups.map((group) => (
           <Link
             key={group.id}
-            href={`/group/${group.id}/roadmap`}
+            href={`/groups/${group.id}/roadmap`}
             className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
           >
             <div className="flex shrink-0 items-center justify-center w-12 h-12 rounded-full bg-primary/10">

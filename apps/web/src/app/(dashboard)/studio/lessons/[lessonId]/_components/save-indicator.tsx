@@ -12,23 +12,23 @@ export function SaveIndicator({ status }: SaveIndicatorProps) {
   if (status === "idle") return null;
 
   return (
-    <span className="flex items-center gap-1 clay-pill text-xs px-2 py-0.5">
+    <span className="flex items-center gap-1 rounded-full bg-(--dash-glass) px-2 py-0.5 text-xs">
       {status === "saving" && (
         <>
-          <Loader2 className="h-3 w-3 animate-spin text-(--clay-muted-foreground)" />
-          <span className="text-(--clay-muted-foreground)">Saving...</span>
+          <Loader2 className="h-3 w-3 animate-spin text-(--dash-text-muted)" />
+          <span className="text-(--dash-text-muted)">Saving...</span>
         </>
       )}
       {status === "saved" && (
         <>
-          <CheckCircle className="h-3 w-3 text-(--clay-success-foreground)" />
-          <span className="text-(--clay-success-foreground)">Saved</span>
+          <CheckCircle className="h-3 w-3 text-(--dash-success)" />
+          <span className="text-(--dash-success)">Saved</span>
         </>
       )}
       {status === "error" && (
         <>
-          <XCircle className="h-3 w-3 text-(--clay-error-foreground)" />
-          <span className="text-(--clay-error-foreground)">Failed to save</span>
+          <XCircle className="h-3 w-3 text-(--dash-danger)" />
+          <span className="text-(--dash-danger)">Failed to save</span>
         </>
       )}
     </span>

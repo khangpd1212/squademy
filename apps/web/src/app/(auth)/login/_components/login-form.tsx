@@ -50,7 +50,7 @@ export function LoginForm() {
   }
 
   return (
-    <form className="clay-card space-y-4 p-6" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+    <form className="rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl space-y-4 p-6" onSubmit={form.handleSubmit(onSubmit)} noValidate>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -82,7 +82,7 @@ export function LoginForm() {
       </div>
 
       {submitError ? (
-        <p className="clay-error text-sm px-3 py-2 rounded-(radius-clay)" role="alert">
+        <p className="text-sm px-3 py-2 rounded-(--dash-radius) bg-(--dash-danger)/10 text-(--dash-danger)" role="alert">
           {submitError}
         </p>
       ) : null}

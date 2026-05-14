@@ -16,7 +16,7 @@ export function FlashcardDeckCard({ deck, groupId }: FlashcardDeckCardProps) {
       toast.error("This deck has no cards to practice");
       return;
     }
-    window.location.href = `/group/${groupId}/flashcards/${deck.id}`
+    window.location.href = `/groups/${groupId}/flashcards/${deck.id}`
   };
 
   return (

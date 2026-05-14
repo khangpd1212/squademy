@@ -48,7 +48,7 @@ export default function GroupLessonsPage({ params }: PageProps) {
         {lessons.map((lesson) => (
           <Link
             key={lesson.id}
-            href={`/group/${groupId}/lessons/${lesson.id}`}
+            href={`/groups/${groupId}/lessons/${lesson.id}`}
             className="group block rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
           >
             <h3 className="font-medium group-hover:text-primary">

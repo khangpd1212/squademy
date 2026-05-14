@@ -188,7 +188,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   const renderContent = () => {
     if (isReadOnly && contentRef && contentRef.length > 0) {
       return (
-        <div id="lesson-content-container" className="prose prose-sm max-w-none dark:prose-invert">
+        <div id="lesson-content-container" className="prose prose-sm max-w-none">
           {contentRef.map(({ lineRef, html }) => {
             const lineComments = getCommentsForLine(lineRef);
             return (
@@ -226,9 +226,9 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 p-6">
-        <div className="h-8 w-1/2 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-4 w-1/4 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-        <div className="mt-4 h-64 animate-pulse rounded bg-zinc-100 dark:bg-zinc-900" />
+        <div className="h-8 w-1/2 animate-pulse rounded bg-zinc-200" />
+        <div className="h-4 w-1/4 animate-pulse rounded bg-zinc-200" />
+        <div className="mt-4 h-64 animate-pulse rounded bg-zinc-100" />
       </div>
     );
   }
@@ -236,7 +236,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   if (isError || !lesson) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
-        <p className="text-lg font-medium text-zinc-700 dark:text-zinc-300">
+        <p className="text-lg font-medium text-zinc-700">
           Lesson not found
         </p>
         <p className="mt-1 text-sm text-zinc-500">
@@ -249,9 +249,9 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
   return (
     <div className="flex h-full min-h-0 flex-row">
       {/* Main editor area */}
-      <div className="flex flex-1 flex-col overflow-auto">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header: title + save indicator + status/actions */}
-        <div className="flex items-center gap-3 border-b border-zinc-200 px-6 py-3 dark:border-zinc-800">
+        <div className="flex items-center gap-3 border-b border-zinc-200 px-6 py-3">
           <input
             type="text"
             value={title}
@@ -260,7 +260,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
             readOnly={isReadOnly}
             placeholder="Untitled Lesson"
             className={cn(
-              "flex-1 bg-transparent text-2xl font-bold text-zinc-900 outline-none placeholder:text-zinc-300 dark:text-zinc-100 dark:placeholder:text-zinc-700",
+              "flex-1 bg-transparent text-2xl font-bold text-white outline-none",
               isReadOnly && "cursor-default select-text",
             )}
           />
@@ -299,7 +299,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
         </div>
 
         {/* Editor / Content */}
-        <div className="flex-1 px-6 py-4">
+        <div className="min-h-0 flex-1 px-6 py-4">
           {isReadOnly ? (
             renderContent()
           ) : (
@@ -320,7 +320,7 @@ export function LessonEditorView({ lessonId }: LessonEditorViewProps) {
       </div>
 
       {/* Outline sidebar — hidden on mobile */}
-      <aside className="hidden w-50 shrink-0 border-l border-zinc-200 dark:border-zinc-800 md:block">
+      <aside className="hidden w-50 shrink-0 border-l border-zinc-200 md:block">
         <OutlinePanel editor={editorInstance} />
       </aside>
     </div>

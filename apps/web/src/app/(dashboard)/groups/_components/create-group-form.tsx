@@ -14,7 +14,7 @@ import {
   type CreateGroupInput,
 } from "@squademy/shared";
 
-export function CreateGroupForm() {
+export function CreateGroupForm({ onSuccess }: { onSuccess?: () => void }) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const createGroupMutation = useCreateGroup();
@@ -41,7 +41,8 @@ export function CreateGroupForm() {
         return;
       }
 
-      router.push(`/group/${group.id}`);
+      onSuccess?.();
+      router.push(`/groups/${group.id}`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Network error. Please try again.";

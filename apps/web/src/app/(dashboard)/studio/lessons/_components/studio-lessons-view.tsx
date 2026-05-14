@@ -40,7 +40,7 @@ export function StudioLessonsView() {
         {isLoading && (
           <div className="flex flex-col gap-2" aria-label="Loading lessons">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-(radius-clay)" />
+              <Skeleton key={i} className="h-14 w-full rounded-(--dash-radius-lg)" />
             ))}
           </div>
         )}
@@ -65,7 +65,7 @@ export function StudioLessonsView() {
             ) : (
               <div className="grid gap-4">
                 {lessons.map((lesson) => (
-                  <div key={lesson.id} className="clay-card h-full">
+                  <div key={lesson.id} className="h-full">
                     <LessonListItem
                       lesson={lesson}
                       onDelete={handleDelete}

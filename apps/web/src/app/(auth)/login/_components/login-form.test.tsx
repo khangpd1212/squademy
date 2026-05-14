@@ -68,7 +68,7 @@ describe("LoginForm", () => {
 
   it("preserves redirect query when login succeeds", async () => {
     const user = userEvent.setup();
-    searchParamsMock.set("redirect", "/group/abc/exercises");
+    searchParamsMock.set("redirect", "/groups/abc/exercises");
     apiRequestMock.mockResolvedValue({
       data: {
         accessToken: "token-a",
@@ -90,7 +90,7 @@ describe("LoginForm", () => {
         expect.objectContaining({ method: "POST" })
       );
       expect(setAuthTokensMock).toHaveBeenCalledWith("token-a", "token-r");
-      expect(pushMock).toHaveBeenCalledWith("/group/abc/exercises");
+      expect(pushMock).toHaveBeenCalledWith("/groups/abc/exercises");
     });
   });
 

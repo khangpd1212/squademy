@@ -21,32 +21,32 @@ export function LessonListItem({ lesson, onDelete }: Props) {
     <Link
       href={`/studio/lessons/${lesson.id}`}
       className={cn(
-        "flex w-full items-center justify-between rounded-(--radius-clay-lg) px-4 py-3 transition-colors group",
-        "bg-(--clay-surface-2) hover:bg-(--clay-surface-1) hover:text-(--clay-primary)",
-        "border-2 border-(--clay-border-base) hover:shadow-(--shadow-clay-subtle)"
+        "flex w-full items-center justify-between rounded-(--dash-radius-lg) px-4 py-3 transition-colors group",
+        "bg-(--dash-glass) hover:bg-(--dash-glass-hover) hover:text-(--dash-primary)",
+        "border border-(--dash-border-subtle) hover:shadow-(--dash-shadow-md)"
       )}
     >
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate font-medium">{lesson.title}</span>
-        <span className="text-(--clay-muted-foreground) text-xs">
+        <span className="text-(--dash-text-muted) text-xs">
           {lesson.group.name}
         </span>
       </div>
       <div className="ml-4 flex shrink-0 items-center gap-3">
-        <span
-          className={cn(
-            "clay-pill px-2.5 py-0.5 text-xs font-medium",
-            status.className,
-          )}>
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+              status.className,
+            )}>
           {status.label}
         </span>
-        <span className="text-(--clay-muted-foreground) text-xs">
+        <span className="text-(--dash-text-muted) text-xs">
           {formatRelativeTime(lesson.updatedAt)}
         </span>
         {canDelete && (
           <button
             type="button"
-            className="clay-btn clay-btn-ghost h-8 w-8 p-0 text-(--clay-destructive) hover:bg-(--clay-destructive)/10"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-(--dash-radius) text-(--dash-danger) transition-colors hover:bg-(--dash-danger)/10"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

@@ -1,31 +1,7 @@
 "use client";
 
+import { STATUS_STYLES } from "@/lib/status-styles";
 import { cn } from "@/lib/utils";
-
-const STATUS_STYLES = {
-    draft: {
-      label: "Draft",
-      className: "bg-(clay-surface-3) text-muted-foreground shadow-(shadow-clay-pressed)",
-    },
-    review: {
-      label: "In Review",
-      className:
-        "bg-(clay-warning)/20 text-(clay-warning-foreground)",
-    },
-    published: {
-      label: "Published",
-      className:
-        "bg-(clay-success)/20 text-(clay-success-foreground)",
-    },
-    rejected: {
-      label: "Rejected",
-      className: "bg-(clay-error)/20 text-(clay-error-foreground)",
-    },
-    deleted: {
-      label: "Deleted",
-      className: "bg-(clay-error)/20 text-(clay-error-foreground)",
-    },
-} as const;
 
 interface StatusBadgeProps {
   status: string;

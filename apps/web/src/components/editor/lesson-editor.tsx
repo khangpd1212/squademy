@@ -1,6 +1,6 @@
 "use client";
 
-import { useImperativeHandle, type Ref } from "react";
+import { useImperativeHandle, useState, type Ref } from "react";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -14,11 +14,11 @@ import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-// @ts-expect-error CSS import
 import "./editor-styles.css";
 import { EditorToolbar } from "./editor-toolbar";
+import { EditorBubbleMenu } from "./editor-bubble-menu";
+import { EditorBlockPicker } from "./editor-block-picker";
 import { AliveText } from "./extensions/alive-text";
-import { useState } from "react";
 import { parseMarkdownToTiptap, tiptapDocToHtml } from "./markdown-import";
 
 type LessonEditorProps = {
@@ -94,7 +94,7 @@ export function LessonEditor({
   const markdownToView = getMarkdown();
 
   return (
-    <div className="clay-card flex flex-col relative overflow-hidden">
+    <div className="flex flex-col relative overflow-hidden rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-glass) backdrop-blur-xl h-full">
       {editor && (
         <EditorToolbar
           editor={editor}
@@ -110,18 +110,26 @@ export function LessonEditor({
       )}
 
       {isViewMode ? (
-        <div className="clay-surface-inset editor-content view-mode flex-1 p-4">
-          <div className="markdown-content">
+        <div className="flex-1 bg-(--dash-surface-1) overflow-y-auto">
+          <div className="text-slate-300 leading-relaxed text-base p-4 h-0">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {markdownToView}
             </ReactMarkdown>
           </div>
         </div>
       ) : (
-        <EditorContent
-          editor={editor}
-          className="clay-surface-inset editor-content flex-1"
-        />
+        <div className="relative flex-1">
+          <EditorContent
+            editor={editor}
+            className="h-full bg-(--dash-surface-1) overflow-y-auto"
+          />
+          {editor && (
+            <>
+              <EditorBubbleMenu editor={editor} />
+              <EditorBlockPicker editor={editor} />
+            </>
+          )}
+        </div>
       )}
     </div>
   );

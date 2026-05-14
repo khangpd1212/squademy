@@ -31,7 +31,7 @@ export function InvitationList({ invitations: initial }: InvitationListProps) {
         action,
       });
       if (action === "accept" && result.groupId) {
-        router.push(`/group/${result.groupId}`);
+        router.push(`/groups/${result.groupId}`);
         return;
       }
 

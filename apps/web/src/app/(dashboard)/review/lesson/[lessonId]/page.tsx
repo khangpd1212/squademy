@@ -54,7 +54,7 @@ export default function LessonReviewDetailPage({ params }: PageProps) {
   const renderContent = () => {
     if (contentRef && contentRef.length > 0) {
       return (
-        <div id="lesson-content-container" className="prose prose-sm max-w-none dark:prose-invert">
+        <div id="lesson-content-container" className="prose prose-sm max-w-none">
           {contentRef.map(({ lineRef, html }) => {
             const lineComments = getCommentsForLine(lineRef);
             return (
