@@ -18,7 +18,6 @@ import { SaveIndicator } from "./save-indicator";
 import { ParagraphCommentTrigger } from "@/components/lessons/paragraph-comment-trigger";
 import { cn } from "@/lib/utils";
 import MarkdownRenderer from "@/components/markdown-renderer";
-import "@/components/editor/editor-styles.css";
 import { STATUS_STYLES } from "@/lib/status-styles";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";

@@ -1,6 +1,5 @@
 "use client";
 
-import { useImperativeHandle, useState, type Ref } from "react";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -9,16 +8,19 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
+import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Markdown } from "@tiptap/markdown";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { useEffect, useImperativeHandle, useState, type Ref } from "react";
+import { EditorBlockPicker } from "./editor-block-picker";
+
+import { type Node } from "@tiptap/pm/model";
+import MarkdownRenderer from "../markdown-renderer";
+import { EditorBubbleMenu } from "./editor-bubble-menu";
 import "./editor-styles.css";
 import { EditorToolbar } from "./editor-toolbar";
-import { EditorBubbleMenu } from "./editor-bubble-menu";
-import { EditorBlockPicker } from "./editor-block-picker";
 import { AliveText } from "./extensions/alive-text";
+import { createBlockNodeViews } from "./extensions/block-wrapper";
 import { parseMarkdownToTiptap, tiptapDocToHtml } from "./markdown-import";
 
 type LessonEditorProps = {
@@ -43,9 +45,14 @@ export function LessonEditor({
 }: LessonEditorProps) {
   const [isViewMode, setIsViewMode] = useState(false);
   const [importedMarkdown, setImportedMarkdown] = useState<string | null>(null);
+  const handleAddBlock = (pos: number, node: Node) => {
+    if (!editor) return;
+    const insertPos = pos + node.nodeSize;
+    editor.chain().focus().insertContentAt(insertPos, { type: "paragraph" }).run();
+  };
+
 
   const editor = useEditor({
-    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
@@ -57,7 +64,17 @@ export function LessonEditor({
       TableRow,
       TableCell,
       TableHeader,
-      Placeholder.configure({ placeholder: "Start writing your lesson..." }),
+      Placeholder.configure({
+        placeholder: ({ node }) => {
+          if (node.type.name === "heading") {
+            return `Heading ${node.attrs.level}`;
+          }
+          return "Start writing your lesson...";
+        },
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: false,
+        includeChildren: true,
+      }),
       AliveText,
       Markdown.configure({
         markedOptions: { gfm: true, breaks: false },
@@ -66,11 +83,22 @@ export function LessonEditor({
     content: content ?? null,
     contentType: "markdown",
     editable: editable && !isViewMode,
+    immediatelyRender: true,
   });
 
   useImperativeHandle<Editor | null, Editor | null>(ref, () => editor, [
     editor,
   ]);
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.view.setProps({
+      nodeViews: createBlockNodeViews({
+        onAddBlock: handleAddBlock,
+      }),
+    });
+  }, [editor, handleAddBlock]);
+
 
   const handleMarkdownSelected = (text: string) => {
     if (!editor) return;
@@ -112,16 +140,14 @@ export function LessonEditor({
       {isViewMode ? (
         <div className="flex-1 bg-(--dash-surface-1) overflow-y-auto">
           <div className="text-slate-300 leading-relaxed text-base p-4 h-0">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {markdownToView}
-            </ReactMarkdown>
+            <MarkdownRenderer content={markdownToView} />
           </div>
         </div>
       ) : (
         <div className="relative flex-1">
           <EditorContent
             editor={editor}
-            className="h-full bg-(--dash-surface-1) overflow-y-auto"
+            className="h-full bg-(--dash-surface-1) overflow-y-auto markdown-content"
           />
           {editor && (
             <>
