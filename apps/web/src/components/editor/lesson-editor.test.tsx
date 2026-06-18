@@ -12,7 +12,7 @@ const mockEditor = {
   getJSON: jest.fn(() => ({ type: "doc", content: [] })),
   getText: jest.fn(() => ""),
   state: { doc: { descendants: jest.fn() } },
-  view: { nodeDOM: jest.fn() },
+  view: { nodeDOM: jest.fn(), setProps: jest.fn() },
   commands: {
     setTextSelection: jest.fn(),
     setContent: jest.fn(),

@@ -393,11 +393,11 @@ export function EditorToolbar({
           <EyeOff className="h-4 w-4" />
         </ToolbarButton>
 
-        <ToolbarDivider />
-
         {/* Import Markdown */}
         {enableImport && (
           <>
+            <ToolbarDivider />
+            
             <ToolbarButton
               onClick={handleImportClick}
               title={isImporting ? "Importing Markdown..." : "Import Markdown"}

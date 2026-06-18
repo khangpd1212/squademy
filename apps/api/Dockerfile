@@ -31,6 +31,9 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY apps/api/entrypoint.sh ./apps/api/entrypoint.sh
+
+RUN chmod +x apps/api/entrypoint.sh
 
 EXPOSE 8080
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["sh", "apps/api/entrypoint.sh"]

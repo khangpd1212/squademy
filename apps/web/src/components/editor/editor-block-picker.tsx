@@ -124,28 +124,61 @@ const BLOCK_ITEMS: BlockItem[] = [
   },
 ];
 
+const NESTED_PARENT_TYPES = ["listItem", "tableCell", "blockquote"];
+
+function isCursorInNestedBlock($anchor: typeof import("@tiptap/pm/model").ResolvedPos.prototype): boolean {
+  for (let d = 1; d < $anchor.depth; d++) {
+    if (NESTED_PARENT_TYPES.includes($anchor.node(d).type.name)) return true;
+  }
+  return false;
+}
+
+function isSlashActive(editor: Editor): boolean {
+  const { state } = editor;
+  const { selection } = state;
+  const { $anchor, empty } = selection;
+
+  if (!empty || !$anchor.parent.isTextblock) return false;
+  if (isCursorInNestedBlock($anchor)) return false;
+
+  const text = $anchor.parent.textContent;
+  return text.startsWith("/") && !text.slice(1).includes(" ");
+}
+
+function getSlashQuery(editor: Editor): string {
+  const { state } = editor;
+  const { from } = state.selection;
+  const textBefore = state.doc.textBetween(0, from);
+  const lastLineStart = textBefore.lastIndexOf("\n") + 1;
+  const currentLineText = textBefore.slice(lastLineStart);
+
+  if (currentLineText.startsWith("/")) {
+    return currentLineText.slice(1);
+  }
+  return "";
+}
+
+function getCurrentLineStart(editor: Editor): number {
+  const { $anchor } = editor.state.selection;
+  return $anchor.pos - $anchor.parentOffset;
+}
+
 type EditorBlockPickerProps = {
   editor: Editor;
 };
 
 export function EditorBlockPicker({ editor }: EditorBlockPickerProps) {
-  const [show, setShow] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const showRef = useRef(false);
-  const queryRef = useRef("");
   const selectedIndexRef = useRef(0);
 
   useEffect(() => {
-    showRef.current = show;
-    queryRef.current = query;
     selectedIndexRef.current = selectedIndex;
-  }, [show, query, selectedIndex]);
+  }, [query, selectedIndex]);
 
   const filteredItems = filterBlockItems(BLOCK_ITEMS, query);
 
   const close = useCallback(() => {
-    setShow(false);
     setQuery("");
     setSelectedIndex(0);
   }, []);
@@ -154,16 +187,22 @@ export function EditorBlockPicker({ editor }: EditorBlockPickerProps) {
     (item: BlockItem) => {
       const { state } = editor;
       const { from } = state.selection;
-      const textBefore = state.doc.textBetween(0, from);
-      const lastLineStart = textBefore.lastIndexOf("\n") + 1;
+      const $pos = state.doc.resolve(from);
+      const start = $pos.pos - $pos.parentOffset;
 
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from: lastLineStart, to: from })
-        .run();
+      if (item.id.startsWith("heading")) {
+        const level = Number(item.id.replace("heading", "")) as 1 | 2 | 3;
+        editor
+          .chain()
+          .focus()
+          .deleteRange({ from: start, to: from })
+          .toggleHeading({ level })
+          .run();
+      } else {
+        editor.chain().focus().deleteRange({ from: start, to: from }).run();
 
-      item.command(editor);
+        item.command(editor);
+      }
       close();
     },
     [editor, close],
@@ -172,50 +211,52 @@ export function EditorBlockPicker({ editor }: EditorBlockPickerProps) {
   useEffect(() => {
     if (!editor) return;
 
+    const handleUpdate = () => {
+      const content = getSlashQuery(editor);
+      if (content !== undefined) {
+        if (content.includes(" ")) {
+          close();
+        } else {
+          setQuery(content);
+          setSelectedIndex(0);
+        }
+      }
+    };
+
+    editor.on("update", handleUpdate);
+    editor.on("selectionUpdate", handleUpdate);
+    return () => {
+      editor.off("update", handleUpdate);
+      editor.off("selectionUpdate", handleUpdate);
+    };
+  }, [editor, close]);
+
+  useEffect(() => {
+    if (!editor) return;
+
     const editorDom = editor.view.dom;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!showRef.current) {
-        if (
-          event.key === "/" &&
-          !event.shiftKey &&
-          !event.metaKey &&
-          !event.ctrlKey
-        ) {
-          const { state } = editor;
-          const { from } = state.selection;
-          const textBefore = state.doc.textBetween(0, from);
-          const lastLineStart = textBefore.lastIndexOf("\n") + 1;
-          const currentLineText = textBefore.slice(lastLineStart);
-
-          if (currentLineText.length === 0) {
-            requestAnimationFrame(() => {
-              setShow(true);
-              setQuery("");
-              setSelectedIndex(0);
-            });
-            return;
-          }
-        }
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const items = filterBlockItems(BLOCK_ITEMS, queryRef.current);
+      if (!isSlashActive(editor)) return;
 
       if (event.key === "ArrowDown") {
-        setSelectedIndex((prev) => (prev + 1) % items.length);
+        event.preventDefault();
+        setSelectedIndex((prev) => (prev + 1) % filteredItems.length);
       } else if (event.key === "ArrowUp") {
+        event.preventDefault();
         setSelectedIndex(
-          (prev) => (prev - 1 + items.length) % items.length,
+          (prev) => (prev - 1 + filteredItems.length) % filteredItems.length,
         );
       } else if (event.key === "Enter") {
-        if (items[selectedIndexRef.current]) {
-          commitItem(items[selectedIndexRef.current]);
+        event.preventDefault();
+        if (filteredItems[selectedIndexRef.current]) {
+          commitItem(filteredItems[selectedIndexRef.current]);
         }
       } else if (event.key === "Escape") {
+        event.preventDefault();
+        const lineStart = getCurrentLineStart(editor);
+        const { from } = editor.state.selection;
+        editor.chain().focus().deleteRange({ from: lineStart, to: from }).run();
         close();
       }
     };
@@ -224,48 +265,28 @@ export function EditorBlockPicker({ editor }: EditorBlockPickerProps) {
     return () => editorDom.removeEventListener("keydown", handleKeyDown);
   }, [editor, commitItem, close]);
 
-  useEffect(() => {
-    if (!editor || !show) return;
-
-    const handleUpdate = () => {
-      if (!showRef.current) return;
-
-      const { state } = editor;
-      const { from } = state.selection;
-      const textBefore = state.doc.textBetween(0, from);
-      const lastLineStart = textBefore.lastIndexOf("\n") + 1;
-      const currentLineText = textBefore.slice(lastLineStart);
-
-      if (currentLineText.startsWith("/")) {
-        const content = currentLineText.slice(1);
-        if (content.includes(" ")) {
-          close();
-        } else {
-          setQuery(content);
-          setSelectedIndex(0);
-        }
-      } else {
-        close();
-      }
-    };
-
-    editor.on("update", handleUpdate);
-    return () => {
-      editor.off("update", handleUpdate);
-    };
-  }, [editor, show, close]);
-
   return (
     <FloatingMenu
       editor={editor}
-      shouldShow={() => show}
+      shouldShow={({ view, state }) => {
+        if (!view.hasFocus()) return false;
+
+        const { selection } = state;
+        const { $anchor, empty } = selection;
+
+        if (!empty || !$anchor.parent.isTextblock) return false;
+        if (isCursorInNestedBlock($anchor)) return false;
+
+        const text = $anchor.parent.textContent;
+        return text.startsWith("/") && !text.slice(1).includes(" ");
+      }}
       options={{
         placement: "bottom-start",
         offset: 4,
       }}>
       <div className="w-64 rounded-(--dash-radius-lg) border border-(--dash-border-subtle) bg-(--dash-surface-2) backdrop-blur-xl shadow-(--dash-shadow-lg) overflow-hidden">
         <div className="px-3 py-2 text-xs font-medium text-(--dash-text-muted) border-b border-(--dash-border)">
-          {show ? (query ? `Filtering: "${query}"` : "Blocks") : "\u00A0"}
+          {query ? `Filtering: "${query}"` : "Blocks"}
         </div>
         <div className="max-h-64 overflow-y-auto py-1">
           {filteredItems.map((item, index) => {

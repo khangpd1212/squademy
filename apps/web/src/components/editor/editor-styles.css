@@ -2,43 +2,136 @@
 
 @layer base {
   .tiptap {
-    @apply p-4 min-h-full border-none outline-none h-0;
+    @apply min-h-full border-none outline-none h-0 p-0;
+  }
+
+  .tiptap .ProseMirror {
+    @apply px-6 py-4;
+  }
+
+  .block-wrapper {
+    @apply relative flex items-start gap-6 rounded p-1.5 transition-opacity;
+  }
+
+  .block-handle {
+    @apply flex items-center gap-px opacity-0 shrink-0 cursor-grab transition-opacity;
+  }
+
+  .block-wrapper:hover > .block-handle,
+  .block-wrapper:focus-within > .block-handle {
+    @apply opacity-100;
+  }
+
+  li > .block-wrapper > .block-handle,
+  blockquote > .block-wrapper > .block-handle,
+  td > .block-wrapper > .block-handle {
+    @apply hidden;
+  }
+
+  .block-handle-btn {
+    @apply inline-flex items-center justify-center w-6 h-6 border-none rounded bg-transparent cursor-pointer transition-[color,background-color] duration-100;
+    color: var(--dash-text-muted, #888);
+  }
+
+  .block-handle-btn:hover {
+    color: var(--dash-text, #eee);
+    background-color: var(--dash-glass-hover, rgba(255, 255, 255, 0.06));
+  }
+
+  .block-handle-add:active {
+    color: var(--dash-accent, #3b82f6);
+  }
+
+  .block-wrapper-table {
+    @apply w-full pt-2 pb-6 pe-11;
+  }
+
+  .wrapper-table {
+    @apply relative w-full;
+  }
+
+  .table-add-col-wrapper,
+  .table-add-row-wrapper {
+    @apply absolute z-10 pointer-events-none transition-opacity;
+  }
+
+  .table-add-col-wrapper {
+    @apply top-0 bottom-0 ps-2;
+    inset-inline-end: -24px;
+  }
+
+  .table-add-row-wrapper {
+    @apply inset-x-0 pt-2 -bottom-6;
+  }
+
+  .table-add-col-btn,
+  .table-add-row-btn {
+    @apply flex items-center justify-center border border-(--dash-glass-hover) bg-transparent text-white/50 cursor-pointer p-0 opacity-0 rounded pointer-events-auto transition-[background-color,border-color] duration-150;
+  }
+
+  .table-add-col-btn {
+    @apply w-4 h-full;
+  }
+
+  .table-add-row-btn {
+    @apply h-4 w-full;
+  }
+
+  .table-add-col-btn:hover,
+  .table-add-row-btn:hover {
+    @apply bg-(--dash-glass-hover) border-(--dash-glass-hover);
+  }
+
+  .table-add-col-wrapper:hover .table-add-col-btn,
+  .table-add-row-wrapper:hover .table-add-row-btn,
+  .wrapper-table:has(table tr:last-child:hover) .table-add-row-btn,
+  .wrapper-table:has(table tr :is(td, th):last-child:hover) .table-add-col-btn {
+    @apply opacity-100;
+  }
+
+  .block-wrapper .content-editable-leaf-rtl {
+    @apply w-full max-w-full wrap-break-word whitespace-break-spaces text-(--dash-text);
+    -webkit-text-fill-color: var(--dash-text);
+  }
+
+  .block-wrapper.is-empty div.content-editable-leaf-rtl::before,
+  .block-wrapper.is-empty h1.content-editable-leaf-rtl::before,
+  .block-wrapper.is-empty h2.content-editable-leaf-rtl::before,
+  .block-wrapper.is-empty h3.content-editable-leaf-rtl::before {
+    @apply float-left h-0 pointer-events-none content-[attr(placeholder)] text-(--color-input);
+    -webkit-text-fill-color: var(--color-input);
   }
 
   .markdown-content h1 {
-    @apply text-3xl sm:text-4xl font-extrabold mt-8 mb-6 text-white tracking-tight;
+    @apply scroll-m-20 text-4xl font-extrabold tracking-tight text-balance;
   }
 
   .markdown-content h2 {
-    @apply text-2xl sm:text-3xl font-bold mt-12 mb-6 text-white border-b border-slate-700 pb-4 tracking-tight;
+    @apply scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0;
   }
 
   .markdown-content h3 {
-    @apply text-xl sm:text-2xl font-semibold mt-8 mb-4 text-slate-200;
+    @apply scroll-m-20 text-2xl font-semibold tracking-tight;
   }
 
   .markdown-content p {
-    @apply mb-6;
+    @apply leading-7 not-first:mt-6;
   }
 
   .markdown-content ul {
-    @apply list-disc pl-6 mb-6 space-y-2 marker:text-indigo-400;
+    @apply ml-6 list-disc;
   }
 
   .markdown-content ol {
-    @apply list-decimal pl-6 mb-6 space-y-2 marker:text-indigo-400 font-medium;
-  }
-
-  .markdown-content li {
-    @apply pl-1;
+    @apply list-decimal ml-6 font-medium;
   }
 
   .markdown-content table {
-    @apply w-full text-left border-collapse mb-8 rounded-xl overflow-hidden shadow-sm ring-1 ring-slate-700 block sm:table overflow-x-auto whitespace-nowrap sm:whitespace-normal;
+    @apply w-full text-left border-collapse rounded-xl overflow-hidden shadow-sm ring-1 ring-slate-700 block sm:table overflow-x-auto whitespace-nowrap sm:whitespace-normal;
   }
 
   .markdown-content th {
-    @apply bg-slate-800 text-slate-100 font-semibold p-4 border-b border-slate-700 text-sm sm:text-base;
+    @apply bg-slate-800 text-slate-100 font-semibold p-4 border-slate-700 text-sm sm:text-base;
   }
 
   .markdown-content th:first-child {
@@ -49,31 +142,39 @@
     @apply rounded-tr-xl;
   }
 
-  .markdown-content tbody tr:last-child td:first-child{
+  /* .markdown-content tbody tr:last-child td:first-child{
     @apply rounded-bl-xl;
   }
   .markdown-content tbody tr:last-child td:last-child{
     @apply rounded-br-xl;
-  }
+  } */
 
   .markdown-content td {
-    @apply p-4 border-b border-slate-700 bg-slate-900 text-sm sm:text-base text-slate-300 align-top;
+    @apply p-4 border-slate-700 bg-slate-900 text-sm sm:text-base text-slate-300 align-top;
   }
 
-  .markdown-content tr:last-child td {
-    @apply border-b-0;
+  .markdown-content tr {
+    @apply divide-x;
   }
 
-  .markdown-content tr:nth-child(even) td {
-    @apply bg-slate-800/50;
+  .markdown-content tr:not(:first-child) {
+    @apply border-t border-slate-700;
+  }
+
+  .markdown-content tr:last-child td:first-child {
+    @apply rounded-bl-xl;
+  }
+
+  .markdown-content tr:last-child td:last-child {
+    @apply rounded-br-xl;
   }
 
   .markdown-content strong {
-    @apply font-bold text-white;
+    @apply font-bold;
   }
 
   .markdown-content blockquote {
-    @apply border-l-4 border-amber-500 bg-amber-900/20 p-5 rounded-r-xl italic mb-8 text-amber-200;
+    @apply border-l-2 pl-6 italic;
   }
 
   .markdown-content blockquote strong {
@@ -81,7 +182,7 @@
   }
 
   .markdown-content code {
-    @apply bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded-md text-sm font-mono font-medium border border-slate-700;
+    @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold;
   }
 
   .markdown-content hr {
