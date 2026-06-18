@@ -2,8 +2,7 @@
 
 @layer base {
   .tiptap {
-    @apply min-h-full border-none outline-none h-0;
-    padding: 0;
+    @apply min-h-full border-none outline-none h-0 p-0;
   }
 
   .tiptap .ProseMirror {
@@ -11,52 +10,27 @@
   }
 
   .block-wrapper {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 24px;
-    border-radius: 4px;
-    transition: background-color 0.12s ease;
-    padding: 6px;
-  }
-
-  .block-wrapper:hover {
-    background-color: rgba(255, 255, 255, 0.02);
+    @apply relative flex items-start gap-6 rounded p-1.5 transition-opacity;
   }
 
   .block-handle {
-    display: flex;
-    align-items: center;
-    gap: 1px;
-    opacity: 0;
-    transition: opacity 0.12s ease;
-    flex-shrink: 0;
-    cursor: grab;
+    @apply flex items-center gap-px opacity-0 shrink-0 cursor-grab transition-opacity;
   }
 
   .block-wrapper:hover > .block-handle,
   .block-wrapper:focus-within > .block-handle {
-    opacity: 1;
+    @apply opacity-100;
   }
 
   li > .block-wrapper > .block-handle,
   blockquote > .block-wrapper > .block-handle,
   td > .block-wrapper > .block-handle {
-    display: none;
+    @apply hidden;
   }
 
   .block-handle-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border: none;
-    border-radius: 4px;
-    background: transparent;
+    @apply inline-flex items-center justify-center w-6 h-6 border-none rounded bg-transparent cursor-pointer transition-[color,background-color] duration-100;
     color: var(--dash-text-muted, #888);
-    cursor: pointer;
-    transition: color 0.1s ease, background-color 0.1s ease;
   }
 
   .block-handle-btn:hover {
@@ -68,27 +42,64 @@
     color: var(--dash-accent, #3b82f6);
   }
 
+  .block-wrapper-table {
+    @apply w-full pt-2 pb-6 pe-11;
+  }
+
+  .wrapper-table {
+    @apply relative w-full;
+  }
+
+  .table-add-col-wrapper,
+  .table-add-row-wrapper {
+    @apply absolute z-10 pointer-events-none transition-opacity;
+  }
+
+  .table-add-col-wrapper {
+    @apply top-0 bottom-0 ps-2;
+    inset-inline-end: -24px;
+  }
+
+  .table-add-row-wrapper {
+    @apply inset-x-0 pt-2 -bottom-6;
+  }
+
+  .table-add-col-btn,
+  .table-add-row-btn {
+    @apply flex items-center justify-center border border-(--dash-glass-hover) bg-transparent text-white/50 cursor-pointer p-0 opacity-0 rounded pointer-events-auto transition-[background-color,border-color] duration-150;
+  }
+
+  .table-add-col-btn {
+    @apply w-4 h-full;
+  }
+
+  .table-add-row-btn {
+    @apply h-4 w-full;
+  }
+
+  .table-add-col-btn:hover,
+  .table-add-row-btn:hover {
+    @apply bg-(--dash-glass-hover) border-(--dash-glass-hover);
+  }
+
+  .table-add-col-wrapper:hover .table-add-col-btn,
+  .table-add-row-wrapper:hover .table-add-row-btn,
+  .wrapper-table:has(table tr:last-child:hover) .table-add-row-btn,
+  .wrapper-table:has(table tr :is(td, th):last-child:hover) .table-add-col-btn {
+    @apply opacity-100;
+  }
+
   .block-wrapper .content-editable-leaf-rtl {
-    max-width: 100%;
-    width: 100%;
-    white-space: break-spaces;
-    word-break: break-word;
-    caret-color: var(--dash-text);
-    color: var(--dash-text);
+    @apply w-full max-w-full wrap-break-word whitespace-break-spaces text-(--dash-text);
     -webkit-text-fill-color: var(--dash-text);
-    unicode-bidi: plaintext;
   }
 
   .block-wrapper.is-empty div.content-editable-leaf-rtl::before,
   .block-wrapper.is-empty h1.content-editable-leaf-rtl::before,
   .block-wrapper.is-empty h2.content-editable-leaf-rtl::before,
   .block-wrapper.is-empty h3.content-editable-leaf-rtl::before {
-    content: attr(placeholder) / "";
-    float: left;
-    height: 0;
-    pointer-events: none;
+    @apply float-left h-0 pointer-events-none content-[attr(placeholder)] text-(--color-input);
     -webkit-text-fill-color: var(--color-input);
-    color: var(--color-input);
   }
 
   .markdown-content h1 {
@@ -116,7 +127,7 @@
   }
 
   .markdown-content table {
-    @apply w-full text-left border-collapse mb-8 rounded-xl overflow-hidden shadow-sm ring-1 ring-slate-700 block sm:table overflow-x-auto whitespace-nowrap sm:whitespace-normal;
+    @apply w-full text-left border-collapse rounded-xl overflow-hidden shadow-sm ring-1 ring-slate-700 block sm:table overflow-x-auto whitespace-nowrap sm:whitespace-normal;
   }
 
   .markdown-content th {
@@ -130,7 +141,6 @@
   .markdown-content th:last-child {
     @apply rounded-tr-xl;
   }
-
 
   /* .markdown-content tbody tr:last-child td:first-child{
     @apply rounded-bl-xl;
@@ -150,13 +160,13 @@
   .markdown-content tr:not(:first-child) {
     @apply border-t border-slate-700;
   }
-  
+
   .markdown-content tr:last-child td:first-child {
-    @apply rounded-bl-xl; 
+    @apply rounded-bl-xl;
   }
 
-   .markdown-content tr:last-child td:last-child {
-    @apply rounded-br-xl; 
+  .markdown-content tr:last-child td:last-child {
+    @apply rounded-br-xl;
   }
 
   .markdown-content strong {

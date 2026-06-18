@@ -80,7 +80,7 @@ export function LessonEditor({
         markedOptions: { gfm: true, breaks: false },
       }),
     ],
-    content: content ?? null,
+    content: content ?? contentMarkdown ?? importedMarkdown,
     contentType: "markdown",
     editable: editable && !isViewMode,
     immediatelyRender: true,
@@ -114,8 +114,8 @@ export function LessonEditor({
   };
 
   const getMarkdown = () => {
-    if (importedMarkdown) return importedMarkdown;
-    if (contentMarkdown) return contentMarkdown;
+    // if (importedMarkdown) return importedMarkdown;
+    // if (contentMarkdown) return contentMarkdown;
     return editor?.getText() ?? "";
   };
 
