@@ -15,7 +15,7 @@
     "db:generate": "turbo db:generate",
     "db:migrate": "turbo db:migrate",
     "db:seed-root": "yarn workspace @squademy/database db:seed-root",
-    "deploy:api": "fly deploy --config apps/api/fly.toml --dockerfile apps/api/Dockerfile",
+    "deploy:api": "git push origin main",
     "db:proxy": "fly proxy 5433:5432 -a squademy-db"
   },
   "devDependencies": {
