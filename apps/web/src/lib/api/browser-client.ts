@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001/api";
+const API_BASE_URL = "/api";
 const AUTH_STORAGE_KEY = "squademy.auth.tokens";
 
 type StoredTokens = {

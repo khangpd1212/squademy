@@ -1,7 +1,7 @@
 # Plan: Migrate BE từ Render → Oracle Cloud VM
 
 - **Ngày lập:** 2026-08-15
-- **Trạng thái:** Đang thực thi — Phase 0 xong (trừ Security List), Phase 1 đã implement
+- **Trạng thái:** Đang thực thi — Phase 0 xong (trừ Security List), Phase 1 đã implement, Phase 3 đã chốt **proxy qua Next.js** (bỏ nginx/domain)
 - **VM:** Oracle Cloud `VM.Standard.E2.1.Micro` (x86, 1/8 OCPU, 1GB RAM, Always Free)
 - **Repo:** `github.com/khangpd1212/squademy`
 - **GHCR image:** `ghcr.io/khangpd1212/squademy-api`
@@ -15,13 +15,13 @@
 | Frontend | Vercel (`squademy-web.vercel.app`) | Vercel (giữ nguyên) |
 | API | Render `squademy-api` (Docker, free plan) | Oracle VM `E2.1.Micro` |
 | DB | **Supabase** (Postgres) | **Supabase** (giữ nguyên — không migrate data) |
-| Domain | `*.onrender.com` | **Public IP Oracle** + HTTP (chưa domain/SSL) |
+| Domain | `*.onrender.com` | **Proxy cùng nguồn Next.js**: browser gọi `/api/*` → `rewrites()` → `http://161.118.198.102:3001` (Vercel lo HTTPS; không cần domain/nginx/certbot) |
 | Build | Render tự build | GitHub Actions → GHCR → VM pull |
 
 ## Quyết định đã chốt
 
 1. **DB giữ ở Supabase** — không cần di chuyển dữ liệu, chỉ đổi connection string trong môi trường VM.
-2. **Dùng public IP + HTTP trước** — chưa có domain; SSL/domain làm ở Phase 5 (tuỳ chọn).
+2. **Proxy qua Next.js (đã chốt 15/08)** — không dùng nginx/domain: web gọi API qua `/api/*` + `rewrites()` tới `http://161.118.198.102:3001`. Trước đó từng tính public IP + HTTP, rồi DuckDNS — đều đã huỷ.
 3. **Build qua GitHub Actions → GHCR** — VM 1GB RAM không build nổi NestJS+Prisma, tránh OOM.
 4. **Cơ chế deploy: GitHub Actions SSH deploy (Cách A)** — GH Actions build + push image lên GHCR, rồi SSH vào VM `pull && up -d`.
 5. **SSH thủ công**: dùng key đã tải về (`ssh-key-2026-08-14.key`) với user `ubuntu` — Cloud Shell cũng được.
@@ -132,25 +132,15 @@ Các bước:
 
 ---
 
-## Phase 3 — Nginx + Cutover
+## Phase 3 — Proxy qua Next.js (đã chốt 15/08/2026, thay thế nginx)
 
-1. **Nginx trên VM** (bản HTTP, port 80, `server_name _;` proxy `127.0.0.1:3001`). Tạm tắt nhánh SSL trong `deploy/nginx/api.squademy.com.conf` hiện có; giữ nguyên cấu trúc để Phase 5 bật lại.
-   ```nginx
-   server {
-       listen 80;
-       server_name _;
-       location / {
-           proxy_pass http://127.0.0.1:3001;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           proxy_set_header X-Forwarded-Proto $scheme;
-       }
-   }
-   ```
-2. **Vercel**: đổi env `NEXT_PUBLIC_API_URL` → `http://<oracle-ip>/api` rồi **redeploy web** (env bị nén vào bundle lúc build, phải redeploy mới có hiệu lực).
-3. **CORS**: không cần đổi `FRONTEND_URL` — CORS kiểm tra origin của caller (Vercel), không phải origin của API.
-4. **Verify end-to-end**: đăng nhập → tạo group → mời thành viên → các endpoint chính hoạt động bình thường trên production.
+**Quyết định:** Không dùng nginx/domain như plan cũ — browser gọi API qua **cùng nguồn Next.js** (`/api/*`), `next.config.ts` dùng `rewrites()` forward tới `http://161.118.198.102:3001`. Hết mixed-content, không cần mở port 80/443, Vercel xử lý HTTPS. API trên VM chỉ bind `127.0.0.1:3001` → không public trực tiếp (chủ ý).
+
+1. **`apps/web/next.config.ts`** — thêm `rewrites()`: `source: "/api/:path*"` → `${apiBase}/:path*`, với `apiBase = process.env.API_URL || (NODE_ENV === "production" ? "http://161.118.198.102:3001/api" : "http://localhost:4001/api")`.
+2. **`browser-client.ts`** — `API_BASE_URL = "/api"` (bỏ `NEXT_PUBLIC_API_URL`; token vẫn localStorage, header `Authorization: Bearer` giữ nguyên).
+3. **Vercel env**: đặt `API_URL=http://161.118.198.102:3001/api` (server-only), **xoá** `NEXT_PUBLIC_API_URL`, rồi **redeploy** (env dùng lúc build).
+4. **CORS**: không cần đổi — rewrite forward nguyên Origin của caller (Vercel), đã nằm trong `FRONTEND_URL` whitelist.
+5. **Verify end-to-end**: `curl -s https://squademy-web.vercel.app/api/version` → `{"version":"1.0.3",...}`; rồi đăng nhập → tạo group → mời member → CRUD lesson/card trên production.
 
 ---
 
@@ -166,23 +156,19 @@ Các bước:
 
 ---
 
-## Phase 5 — (Tuỳ chọn) Domain + SSL
+## Phase 5 — (Tuỳ chọn) Domain riêng cho API — KHÔNG cần nữa
 
-1. Trỏ domain `api.<tên>.com` → A record về public IP Oracle.
-2. Cài certbot: `sudo certbot --nginx -d api.<tên>.com` (cần nginx config hoàn chỉnh trước).
-3. Bật nhánh SSL trong `deploy/nginx/api.squademy.com.conf` (file tham chiếu đã tồn tại trong repo).
-4. Đổi Vercel `NEXT_PUBLIC_API_URL` → `https://api.<tên>.com/api`, redeploy web.
-5. Crontab tự gia hạn certbot:
-   ```
-   0 3 * * * certbot renew --quiet
-   ```
+Proxy Next.js đã giải quyết đường truy cập công khai + HTTPS. Chỉ làm tiếp nếu muốn expose API trực tiếp qua domain riêng:
+
+1. Trỏ domain `api.<tên>.com` → A record về public IP Oracle + nginx SSL (`deploy/nginx/api.squademy.com.conf` đã có sẵn trong repo).
 
 ---
 
 ## Rủi ro & Lưu ý
 
 - **1GB RAM**: đã xử lý bằng swap + build image ở cloud (không build trên VM). Tránh cài thêm service không cần thiết trên VM.
-- **Chưa SSL tạm thời**: token đi qua Bearer header (không phải cookie) nên rủi ro thấp, nhưng nên sớm làm Phase 5.
+- **Không cần SSL riêng cho API**: mọi traffic browser→API đi qua Vercel HTTPS (rewrite cùng nguồn), không còn mixed-content. Token vẫn qua Bearer header.
+- **Latency rewrite**: Vercel edge → VM thêm vài chục ms so với gọi thẳng, chấp nhận được ở quy mô hiện tại.
 - **Downtime cutover**: ~vài phút (đổi env Vercel + redeploy). Làm giờ thấp điểm nếu cần.
 - **Rollback**: giữ Render active ít nhất 1 tuần sau cutover.
 - **GitHub Actions cần mở port 22** cho IP của GitHub runner từ ngoài internet — lưu ý khi cấu hình Security List (không giới hạn quá chặt sẽ chặn mất deploy).
@@ -192,9 +178,9 @@ Các bước:
 
 ## Checklist triển khai
 
-- [ ] Phase 0: ✅ swap, ✅ Docker (Ubuntu/apt), ⏳ Security List 22/80/443 (mở trước Phase 3)
+- [ ] Phase 0: ✅ swap, ✅ Docker (Ubuntu/apt), ⏳ Security List mở **22** (SSH deploy; 80/443 không cần cho proxy)
 - [ ] Phase 1: `deploy/docker-compose.prod.yml`, `.github/workflows/deploy-api.yml`, 5 GitHub Secrets
 - [ ] Phase 2: `.env.prod` trên VM, `docker login`, `up -d`, test `/api/version`
-- [ ] Phase 3: nginx HTTP, đổi `NEXT_PUBLIC_API_URL` + redeploy Vercel, verify E2E
+- [ ] Phase 3: proxy `rewrites()` + `API_BASE_URL=/api` + Vercel env `API_URL` (xoá `NEXT_PUBLIC_API_URL`) + redeploy + verify E2E
 - [ ] Phase 4: giữ Render inactive 1 tuần, rồi dừng hẳn; xoá render.yaml; cập nhật docs
 - [ ] (Tuỳ chọn) Phase 5: domain + certbot SSL

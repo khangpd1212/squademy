@@ -13,7 +13,6 @@ describe("browser-client auth flow", () => {
     clearAuthTokens();
     localStorage.clear();
     global.fetch = jest.fn();
-    process.env.NEXT_PUBLIC_API_URL = "http://localhost:4001/api";
   });
 
   afterEach(() => {
@@ -65,5 +64,10 @@ describe("browser-client auth flow", () => {
     expect(getAccessToken()).toBe("new-access");
     expect(getRefreshToken()).toBe("new-refresh");
     expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+      "/api/groups/g-1",
+      "/api/auth/refresh",
+      "/api/groups/g-1",
+    ]);
   });
 });
