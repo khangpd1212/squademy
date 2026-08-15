@@ -52,4 +52,15 @@ jobs:
             cd /opt/squademy
             docker compose -f deploy/docker-compose.prod.yml pull
             docker compose -f deploy/docker-compose.prod.yml up -d
-            curl -f http://127.0.0.1:3001/api/version
+            echo "Waiting for API to become healthy..."
+            for i in $(seq 1 45); do
+              if curl -fsS http://127.0.0.1:3001/api/version >/tmp/health.json 2>/dev/null; then
+                echo "API healthy: $(cat /tmp/health.json)"
+                exit 0
+              fi
+              echo "  retry $i/45... ($(docker ps --filter name=squademy-api --format '{{.Status}}'))"
+              sleep 2
+            done
+            echo "API did not become healthy within timeout"
+            docker logs --tail 50 squademy-api
+            exit 1
