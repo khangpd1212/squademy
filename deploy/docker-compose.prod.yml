@@ -5,4 +5,4 @@ services:
     restart: unless-stopped
     env_file: /opt/squademy/.env.prod
     ports:
-      - "127.0.0.1:3001:8080"
+      - "0.0.0.0:3001:8080"
