@@ -1,6 +1,10 @@
 import { cookies } from "next/headers";
 
-const API_BASE_URL = process.env.API_URL || "http://localhost:4001/api";
+const API_BASE_URL =
+  process.env.API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "http://161.118.198.102:3001/api"
+    : "http://localhost:4001/api");
 
 type FetchOptions = {
   method?: string;
