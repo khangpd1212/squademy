@@ -121,7 +121,9 @@ Các bước:
    - **Giữ nguyên JWT secrets** → người dùng không bị đăng xuất hàng loạt (refresh token cũ vẫn hợp lệ). Đổi secret = mọi phiên đăng nhập chết.
    - `PORT=8080` khớp Dockerfile (container nghe 8080; compose map host `127.0.0.1:3001` → container `8080`).
    - Supabase free không có IP allowlist → Oracle IP không bị chặn.
-   - Dùng **direct connection** (cổng `5432`), không dùng transaction pooler — Prisma không hợp prepared statements. Nếu cần pooler, dùng **session pooler**.
+   - ⚠️ **Không dùng được direct connection**: host direct `db.<ref>.supabase.co` và `<ref>.pooler.supabase.com` **chỉ resolve ra IPv6**, mà Oracle VM không có IPv6 → "Network is unreachable". Bắt buộc dùng host pooler **IPv4**: `aws-1-ap-south-1.pooler.supabase.com` (A record, port 5432 reachable từ VM).
+   - Giá trị chạy được (đã verify production 15/08/2026): `postgresql://postgres.<ref>:<pass>@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require`
+   - Session pooler `:6543` **treo** với `prisma migrate deploy` (`can-connect-to-database` không trả lời) → dùng transaction pooler `:5432` (khớp URL local dev đang chạy tốt với Prisma).
 3. `docker login ghcr.io` bằng `GHCR_TOKEN`, rồi:
    ```bash
    docker compose -f deploy/docker-compose.prod.yml up -d
