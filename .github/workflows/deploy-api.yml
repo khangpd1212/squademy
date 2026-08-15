@@ -1,0 +1,55 @@
+name: Deploy API to Oracle VM
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'packages/database/**'
+      - 'packages/shared/**'
+      - 'deploy/**'
+      - '.dockerignore'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build & push image
+        run: |
+          docker build -t ghcr.io/khangpd1212/squademy-api:latest \
+                       -t ghcr.io/khangpd1212/squademy-api:${{ github.sha }} \
+                       -f apps/api/Dockerfile .
+          docker push ghcr.io/khangpd1212/squademy-api:latest
+          docker push ghcr.io/khangpd1212/squademy-api:${{ github.sha }}
+
+      - name: Sync compose file to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_SSH_USER }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          port: ${{ secrets.ORACLE_SSH_PORT }}
+          source: "deploy/docker-compose.prod.yml"
+          target: "/opt/squademy"
+
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_SSH_USER }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          port: ${{ secrets.ORACLE_SSH_PORT }}
+          script: |
+            cd /opt/squademy
+            docker compose -f deploy/docker-compose.prod.yml pull
+            docker compose -f deploy/docker-compose.prod.yml up -d
+            curl -f http://127.0.0.1:3001/api/version
